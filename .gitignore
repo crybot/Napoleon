@@ -1,5 +1,7 @@
 # C++ objects and libs
 
+*.
+*.txt
 *.slo
 *.lo
 *.o
@@ -12,6 +14,7 @@
 
 # Qt-es
 
+*.pro
 *.pro.user
 *.pro.user.*
 moc_*.cpp
