@@ -13,7 +13,7 @@ namespace Napoleon
         bool BlackCanCastleOO;
         bool BlackCanCastleOOO;
         int EnPassantSquare;
-        char SideToMove;
+        Byte SideToMove;
 
         Piece pieceSet[64];
 
@@ -25,7 +25,10 @@ namespace Napoleon
         Board();
         void AddPiece(Piece, Square);
         void Equip();
-        void Display();
+        void Display() const;
+        BitBoard GetPlayerPieces() const;
+        BitBoard GetEnemyPieces() const;
+        BitBoard GetPieceSet(Byte, Byte) const;
 
     private:
         int kingSquare[2]; // by color

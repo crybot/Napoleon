@@ -119,7 +119,6 @@ namespace Napoleon
 
                 return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
             }
-
         }
 
         namespace Piece
@@ -155,7 +154,6 @@ namespace Napoleon
                     throw std::exception(); // TODO
             }
         }
-
     }
 }
 

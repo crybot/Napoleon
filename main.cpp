@@ -5,6 +5,10 @@
 #include "piece.h"
 #include "compassrose.h"
 #include "board.h"
+#include "pawn.h"
+#include "knight.h"
+#include "king.h"
+#include "movedatabase.h"
 #include <cstdio>
 #include <ctime>
 
@@ -32,24 +36,40 @@ BitBoard Random()
     return res;
 }
 
-void Bench(int (*f)(BitBoard))
+//void Bench(int (*f)(BitBoard))
+//{
+
+//    BitBoard x = Random();
+//    StopWatch watch;
+//    watch.Start();
+
+//    for(unsigned long it=0; it<=(1ul<<26); ++it)
+//    {
+//        f(x);
+//    }
+
+//    cout << watch.Stop().ElapsedMilliseconds() << " ms" << endl;
+//}
+
+void Bench(int (*f)(BitBoard, Board& ))
 {
 
-    BitBoard x = Random();
+    Board board;
+    board.Equip();
     StopWatch watch;
     watch.Start();
 
-    for(unsigned long it=0; it<=(1ul<<26); ++it)
+    for(unsigned long it=0; it<=(1ul<<23); ++it)
     {
-        f(x);
+        f(board.GetPieceSet(PieceColor::White, PieceType::King), board);
     }
 
     cout << watch.Stop().ElapsedMilliseconds() << " ms" << endl;
 }
 
-int popcount1(BitBoard bitBoard)
+int popcount1(BitBoard b, Board& c)
 {
-    Piece piece(1,1);
+    King::GetAllTargets(b, c);
     return 0;
 }
 
@@ -77,12 +97,16 @@ int popcount3(BitBoard x)
 int main()
 {
     srand(time(NULL));
+
     Board board;
     board.Equip();
-    board.Display();
 
 
-    cin.get();
+
+
+    cout << "Tempo Impiegato: "; Bench(popcount1);
+
+
 
 
     return 0;

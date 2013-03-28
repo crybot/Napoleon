@@ -9,7 +9,6 @@ namespace Napoleon
     {
 
     public:
-
         const Byte FromSquare;
         const Byte ToSquare;
         const Byte PieceMoved; // overloaded to manage castle (KING)

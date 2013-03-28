@@ -26,7 +26,7 @@ namespace Napoleon
     public:
         Byte Type;
         Byte Color;
-        Piece(Byte,Byte);
+        Piece(Byte, Byte);
         Piece();
     };
 }

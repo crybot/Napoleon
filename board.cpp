@@ -1,12 +1,13 @@
 #include "board.h"
 #include "utils.h"
 #include "console.h"
+#include "movedatabase.h"
 
 namespace Napoleon
 {
     Board::Board()
     {
-        //MOVEDATABASE INITIALIZATION
+        MoveDatabase::InitAttacks();
 
         WhitePieces = Constants::Empty;
         BlackPieces = Constants::Empty;
@@ -31,6 +32,7 @@ namespace Napoleon
     void Board::initializePieceSet()
     {
         clearPieceSet();
+
         AddPiece(Piece(PieceType::Pawn, PieceColor::White), 8);
         AddPiece(Piece(PieceType::Pawn, PieceColor::White), 9);
         AddPiece(Piece(PieceType::Pawn, PieceColor::White), 10);
@@ -145,7 +147,7 @@ namespace Napoleon
         EmptySquares = ~OccupiedSquares;
     }
 
-    void Board::Display()
+    void Board::Display() const
     {
         Piece piece;
 
@@ -161,7 +163,7 @@ namespace Napoleon
                 std::cout << '[';
                 if (piece.Type != PieceType::None)
                 {
-                    std::cout << ((piece.Color == PieceColor::White) ? Console::Green : Console::Red);
+                    std::cout << (piece.Color == PieceColor::White ? Console::Green : Console::Red);
 
                     std::cout << Utils::Piece::GetInitial(pieceSet[Utils::Square::GetSquareIndex(c, r)].Type);
                 }
@@ -177,5 +179,21 @@ namespace Napoleon
             std::cout << std::endl;
         }
         std::cout << "\n    A  B  C  D  E  F  G  H";
+    }
+
+    BitBoard Board::GetPlayerPieces() const
+    {
+        return SideToMove == PieceColor::White ? WhitePieces : BlackPieces;
+    }
+
+    BitBoard Board::GetEnemyPieces() const
+    {
+        return SideToMove == PieceColor::White ? BlackPieces : WhitePieces;
+    }
+
+    BitBoard Board::GetPieceSet(Byte pieceColor, Byte pieceType) const
+    {
+        return bitBoardSet[pieceColor][pieceType];
+        //return pieceColor == PieceColor.White ? whiteBitBoardSet[pieceType] : blackBitBoardSet[pieceType];
     }
 }

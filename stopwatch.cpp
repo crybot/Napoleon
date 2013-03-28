@@ -1,10 +1,7 @@
 #include "stopwatch.h"
 
 
-StopWatch::StopWatch()
-{
-
-}
+StopWatch::StopWatch() { }
 
 void StopWatch::Start()
 {
