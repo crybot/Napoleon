@@ -1,6 +1,9 @@
 #include "utils.h"
 #include "piece.h"
+#include "constants.h"
 #include "console.h"
+#include <algorithm>
+#include <iostream>
 #include <cassert>
 
 namespace Napoleon
@@ -9,40 +12,6 @@ namespace Napoleon
     {
         namespace Square
         {
-            int GetA1H8DiagonalIndex(int file, int rank)
-            {
-                return 7 + rank - file;
-            }
-
-            int GetA1H8DiagonalIndex(int squareIndex)
-            {
-                return 7 + GetRankIndex(squareIndex) - GetFileIndex(squareIndex);
-            }
-
-            int GetH1A8AntiDiagonalIndex(int file, int rank)
-            {
-                return rank + file;
-            }
-
-            int GetH1A8AntiDiagonalIndex(int squareIndex)
-            {
-                return GetRankIndex(squareIndex) + GetFileIndex(squareIndex);
-            }
-
-            int GetFileIndex(int squareIndex)
-            {
-                return squareIndex & 7;
-            }
-
-            int GetRankIndex(int squareIndex)
-            {
-                return squareIndex >> 3;
-            }
-
-            int GetSquareIndex(int file, int rank)
-            {
-                return file + 8 * rank;
-            }
 
             int Parse(std::string square)
             {

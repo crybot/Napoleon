@@ -2,6 +2,8 @@
 #include "utils.h"
 #include "console.h"
 #include "movedatabase.h"
+#include "piece.h"
+#include <iostream>
 
 namespace Napoleon
 {
@@ -33,61 +35,61 @@ namespace Napoleon
     {
         clearPieceSet();
 
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 8);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 9);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 10);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 11);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 12);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 13);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 14);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::White), 15);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 8);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 9);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 10);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 11);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 12);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 13);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 14);
+        AddPiece(Piece(PieceColor::White, PieceType::Pawn), 15);
         //
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 48);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 49);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 50);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 51);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 52);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 53);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 54);
-        AddPiece(Piece(PieceType::Pawn, PieceColor::Black), 55);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 48);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 49);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 50);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 51);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 52);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 53);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 54);
+        AddPiece(Piece(PieceColor::Black, PieceType::Pawn), 55);
 
         /*TORRI*/
-        AddPiece(Piece(PieceType::Rook, PieceColor::White), 0);
-        AddPiece(Piece(PieceType::Rook, PieceColor::White), 7);
+        AddPiece(Piece(PieceColor::White, PieceType::Rook), 0);
+        AddPiece(Piece(PieceColor::White, PieceType::Rook), 7);
         //
-        AddPiece(Piece(PieceType::Rook, PieceColor::Black), 56);
-        AddPiece(Piece(PieceType::Rook, PieceColor::Black), 63);
+        AddPiece(Piece(PieceColor::Black, PieceType::Rook), 56);
+        AddPiece(Piece(PieceColor::Black, PieceType::Rook), 63);
 
         /*CAVALLI*/
-        AddPiece(Piece(PieceType::Knight, PieceColor::White), 1);
-        AddPiece(Piece(PieceType::Knight, PieceColor::White), 6);
+        AddPiece(Piece(PieceColor::White, PieceType::Knight), 1);
+        AddPiece(Piece(PieceColor::White, PieceType::Knight), 6);
         //
-        AddPiece(Piece(PieceType::Knight, PieceColor::Black), 57);
-        AddPiece(Piece(PieceType::Knight, PieceColor::Black), 62);
+        AddPiece(Piece(PieceColor::Black, PieceType::Knight), 57);
+        AddPiece(Piece(PieceColor::Black, PieceType::Knight), 62);
 
         /*ALFIERI*/
-        AddPiece(Piece(PieceType::Bishop, PieceColor::White), 2);
-        AddPiece(Piece(PieceType::Bishop, PieceColor::White), 5);
+        AddPiece(Piece(PieceColor::White, PieceType::Bishop), 2);
+        AddPiece(Piece(PieceColor::White, PieceType::Bishop), 5);
         //
-        AddPiece(Piece(PieceType::Bishop, PieceColor::Black), 58);
-        AddPiece(Piece(PieceType::Bishop, PieceColor::Black), 61);
+        AddPiece(Piece(PieceColor::Black, PieceType::Bishop), 58);
+        AddPiece(Piece(PieceColor::Black, PieceType::Bishop), 61);
 
         /*RE*/
-        AddPiece(Piece(PieceType::King, PieceColor::White), 4);
+        AddPiece(Piece(PieceColor::White, PieceType::King), 4);
         //
-        AddPiece(Piece(PieceType::King, PieceColor::Black), 60);
+        AddPiece(Piece(PieceColor::Black, PieceType::King), 60);
 
         /*REGINE*/
-        AddPiece(Piece(PieceType::Queen, PieceColor::White), 3);
+        AddPiece(Piece(PieceColor::White, PieceType::Queen), 3);
         //
-        AddPiece(Piece(PieceType::Queen, PieceColor::Black), 59);
+        AddPiece(Piece(PieceColor::Black, PieceType::Queen), 59);
     }
 
     void Board::clearPieceSet()
     {
         for (int i=0; i<64; i++)
         {
-            pieceSet[i] = Piece(PieceType::None, PieceColor::None);
+            pieceSet[i] = Piece(PieceColor::None, PieceType::None);
         }
     }
 
@@ -181,19 +183,5 @@ namespace Napoleon
         std::cout << "\n    A  B  C  D  E  F  G  H";
     }
 
-    BitBoard Board::GetPlayerPieces() const
-    {
-        return SideToMove == PieceColor::White ? WhitePieces : BlackPieces;
-    }
 
-    BitBoard Board::GetEnemyPieces() const
-    {
-        return SideToMove == PieceColor::White ? BlackPieces : WhitePieces;
-    }
-
-    BitBoard Board::GetPieceSet(Byte pieceColor, Byte pieceType) const
-    {
-        return bitBoardSet[pieceColor][pieceType];
-        //return pieceColor == PieceColor.White ? whiteBitBoardSet[pieceType] : blackBitBoardSet[pieceType];
-    }
 }

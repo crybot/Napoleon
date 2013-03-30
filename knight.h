@@ -1,10 +1,10 @@
 #ifndef KNIGHT_H
 #define KNIGHT_H
 #include "defines.h"
-#include "board.h"
 
 namespace Napoleon
 {
+    class Board;
     class Knight
     {
     public:

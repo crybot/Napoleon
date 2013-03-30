@@ -1,10 +1,10 @@
 #ifndef BOARD_H
 #define BOARD_H
 #include "constants.h"
-#include "piece.h"
 
 namespace Napoleon
 {
+    class Piece;
     class Board
     {
     public:
@@ -31,8 +31,8 @@ namespace Napoleon
         BitBoard GetPieceSet(Byte, Byte) const;
 
     private:
-        int kingSquare[2]; // by color
-        BitBoard bitBoardSet[2][6] = { { Constants::Empty } };
+        int kingSquare[2]; // color
+        BitBoard bitBoardSet[2][6] = { { Constants::Empty } }; // color, type
 
         void initializePieceSet();
         void initializeCastlingStatus();
@@ -43,6 +43,21 @@ namespace Napoleon
         void updateGenericBitBoards();
 
     };
+
+    __always_inline BitBoard Board::GetPlayerPieces() const
+    {
+        return SideToMove == PieceColor::White ? WhitePieces : BlackPieces;
+    }
+
+    __always_inline BitBoard Board::GetEnemyPieces() const
+    {
+        return SideToMove == PieceColor::White ? BlackPieces : WhitePieces;
+    }
+
+    __always_inline BitBoard Board::GetPieceSet(Byte pieceColor, Byte pieceType) const
+    {
+        return bitBoardSet[pieceColor][pieceType];
+    }
 }
 
 #endif // BOARD_H

@@ -1,8 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
-#include "constants.h"
 #include "defines.h"
-#include "piece.h"
+#include <string>
 
 namespace Napoleon
 {
@@ -27,7 +26,7 @@ namespace Napoleon
             void Display(Napoleon::BitBoard);
 
             int PopCount(Napoleon::BitBoard bitBoard);
-            int BitScanForward(Napoleon::BitBoard bitBoard);
+            int BitScanForward( Napoleon::BitBoard bitBoard);
             int BitScanForwardReset(Napoleon::BitBoard& bitBoard);
         }
 
@@ -36,6 +35,42 @@ namespace Napoleon
             char GetInitial(Byte);
             char GetOpposite(Byte);
         }
+
+        __always_inline int Square::GetA1H8DiagonalIndex(int file, int rank)
+        {
+            return 7 + rank - file;
+        }
+
+        __always_inline int Square::GetA1H8DiagonalIndex(int squareIndex)
+        {
+            return 7 + GetRankIndex(squareIndex) - GetFileIndex(squareIndex);
+        }
+
+        __always_inline int Square::GetH1A8AntiDiagonalIndex(int file, int rank)
+        {
+            return rank + file;
+        }
+
+        __always_inline int Square::GetH1A8AntiDiagonalIndex(int squareIndex)
+        {
+            return GetRankIndex(squareIndex) + GetFileIndex(squareIndex);
+        }
+
+        __always_inline int Square::GetFileIndex(int squareIndex)
+        {
+            return squareIndex & 7;
+        }
+
+        __always_inline int Square::GetRankIndex(int squareIndex)
+        {
+            return squareIndex >> 3;
+        }
+
+        __always_inline int Square::GetSquareIndex(int file, int rank)
+        {
+            return file + 8 * rank;
+        }
+
     }
 }
 #endif // UTILS_H

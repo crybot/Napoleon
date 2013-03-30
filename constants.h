@@ -1,9 +1,5 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
-
-#include <iostream>
-#include <string>
-#include <algorithm>
 #include "move.h"
 #include "piece.h"
 #include "defines.h"

@@ -1,10 +1,10 @@
 #ifndef KING_H
 #define KING_H
 #include "defines.h"
-#include "board.h"
 
 namespace Napoleon
 {
+    class Board;
     class King
     {
 

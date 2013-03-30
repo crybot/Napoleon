@@ -8,6 +8,9 @@
 #include "pawn.h"
 #include "knight.h"
 #include "king.h"
+#include "rook.h"
+#include "bishop.h"
+#include "queen.h"
 #include "movedatabase.h"
 #include <cstdio>
 #include <ctime>
@@ -36,20 +39,20 @@ BitBoard Random()
     return res;
 }
 
-//void Bench(int (*f)(BitBoard))
-//{
+void Bench(int (*f)(const BitBoard))
+{
 
-//    BitBoard x = Random();
-//    StopWatch watch;
-//    watch.Start();
+    BitBoard x = Random();
+    StopWatch watch;
+    watch.Start();
 
-//    for(unsigned long it=0; it<=(1ul<<26); ++it)
-//    {
-//        f(x);
-//    }
+    for(unsigned long it=0; it<=(1ul<<29); ++it)
+    {
+        f(x);
+    }
 
-//    cout << watch.Stop().ElapsedMilliseconds() << " ms" << endl;
-//}
+    cout << watch.Stop().ElapsedMilliseconds() << " ms" << endl;
+}
 
 void Bench(int (*f)(BitBoard, Board& ))
 {
@@ -59,39 +62,18 @@ void Bench(int (*f)(BitBoard, Board& ))
     StopWatch watch;
     watch.Start();
 
-    for(unsigned long it=0; it<=(1ul<<23); ++it)
+    for(unsigned long it=0; it<=(1ul<<27); ++it)
     {
-        f(board.GetPieceSet(PieceColor::White, PieceType::King), board);
+        f(board.GetPieceSet(PieceColor::White, PieceType::Queen), board);
     }
 
     cout << watch.Stop().ElapsedMilliseconds() << " ms" << endl;
 }
 
-int popcount1(BitBoard b, Board& c)
+int test(BitBoard b, Board& c)
 {
-    King::GetAllTargets(b, c);
+    Queen::GetAllTargets(b, c);
     return 0;
-}
-
-int popcount2(BitBoard x)
-{
-    x-=(x>>1)&m1;//put count of each 2 bits into those 2 bits
-    x=(x&m2)+((x>>2)&m2);//put count of each 4 bits into those 4 bits
-    x=(x+(x>>4))&m4; //put count of each 8 bits into those 8 bits
-    x+=x>>8;//put count of each 16 bits into their lowest 8 bits
-    x+=x>>16;
-    x+=x>>32;
-    return x&0x7f;
-}
-
-int popcount3(BitBoard x)
-{
-    BitBoard  count;
-    for(count=0; x; count++)
-    {
-        x&=x-1;
-    }
-    return count;
 }
 
 int main()
@@ -101,10 +83,7 @@ int main()
     Board board;
     board.Equip();
 
-
-
-
-    cout << "Tempo Impiegato: "; Bench(popcount1);
+    cout << "Tempo Impiegato: "; Bench(test);
 
 
 

@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "movedatabase.h"
 #include "compassrose.h"
+#include "board.h"
 
 namespace Napoleon
 {

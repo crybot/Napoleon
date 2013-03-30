@@ -2,13 +2,13 @@
 #include "compassrose.h"
 #include "movedatabase.h"
 #include "utils.h"
+#include "board.h"
 
 namespace Napoleon
 {
     BitBoard Knight::GetAllTargets(BitBoard knights, Board& board)
     {
         BitBoard targets = MoveDatabase::KnightAttacks[(Utils::BitBoard::BitScanForward(knights))];
-
         return targets & ~board.GetPlayerPieces();
     }
 

@@ -2,9 +2,9 @@
 
 namespace Napoleon
 {
-    Piece::Piece(Byte type, Byte color)
-        :Type(type), Color(color) { }
+    Piece::Piece(Byte color, Byte type)
+        :Color(color), Type(type) { }
 
     Piece::Piece()
-        :Type(PieceType::None), Color(PieceColor::None) { }
+        :Color(PieceColor::None), Type(PieceType::None) { }
 }
