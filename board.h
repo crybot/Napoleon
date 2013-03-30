@@ -4,7 +4,7 @@
 
 namespace Napoleon
 {
-    class Piece;
+    class FenString;
     class Board
     {
     public:
@@ -23,24 +23,30 @@ namespace Napoleon
         BitBoard EmptySquares;
 
         Board();
-        void AddPiece(Piece, Square);
         void Equip();
         void Display() const;
+        void AddPiece(Piece, Square);
         BitBoard GetPlayerPieces() const;
         BitBoard GetEnemyPieces() const;
         BitBoard GetPieceSet(Byte, Byte) const;
+        void LoadGame(const FenString&);
 
     private:
         int kingSquare[2]; // color
         BitBoard bitBoardSet[2][6] = { { Constants::Empty } }; // color, type
 
+        void clearPieceSet();
+        void updateGenericBitBoards();
         void initializePieceSet();
         void initializeCastlingStatus();
         void initializeSideToMove();
         void initializeEnPassantSquare();
         void initializeBitBoards();
-        void clearPieceSet();
-        void updateGenericBitBoards();
+        void initializeBitBoards(const FenString&);
+        void initializeSideToMove(const FenString&);
+        void initializeCastlingStatus(const FenString&);
+        void initializeEnPassantSquare(const FenString&);
+        void initializePieceSet(const FenString&);
 
     };
 

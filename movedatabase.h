@@ -21,6 +21,7 @@ namespace Napoleon
         static BitBoard GetFileAttacks(BitBoard, int);
         static BitBoard GetA1H8DiagonalAttacks(BitBoard, int);
         static BitBoard GetH1A8DiagonalAttacks(BitBoard, int);
+
         static void InitAttacks();
 
     private:

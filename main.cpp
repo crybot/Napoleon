@@ -12,6 +12,7 @@
 #include "bishop.h"
 #include "queen.h"
 #include "movedatabase.h"
+#include "fenstring.h"
 #include <cstdio>
 #include <ctime>
 
@@ -81,9 +82,10 @@ int main()
     srand(time(NULL));
 
     Board board;
-    board.Equip();
+    board.LoadGame(FenString("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"));
+    board.Display();
 
-    cout << "Tempo Impiegato: "; Bench(test);
+    //    cout << "Tempo Impiegato: "; Bench(test);
 
 
 

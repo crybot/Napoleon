@@ -12,7 +12,6 @@ namespace Napoleon
     {
         namespace Square
         {
-
             int Parse(std::string square)
             {
                 // converte la notazione algebrica (es. a1) in coordinate decimali

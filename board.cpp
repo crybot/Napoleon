@@ -3,6 +3,7 @@
 #include "console.h"
 #include "movedatabase.h"
 #include "piece.h"
+#include "fenstring.h"
 #include <iostream>
 
 namespace Napoleon
@@ -183,5 +184,52 @@ namespace Napoleon
         std::cout << "\n    A  B  C  D  E  F  G  H";
     }
 
+    void Board::LoadGame(const FenString& fenString)
+    {
+        initializeCastlingStatus(fenString);
+        initializeSideToMove(fenString);
+        initializePieceSet(fenString);
+        initializeEnPassantSquare(fenString);
+        initializeBitBoards(fenString);
+    }
+
+    void Board::initializeCastlingStatus(const FenString& fenString)
+    {
+        WhiteCanCastleOO = fenString.CanWhiteShortCastle;
+        WhiteCanCastleOOO = fenString.CanWhiteLongCastle;
+        BlackCanCastleOO = fenString.CanBlackShortCastle;
+        BlackCanCastleOOO = fenString.CanBlackLongCastle;
+    }
+
+    void Board::initializeSideToMove(const FenString& fenString)
+    {
+        SideToMove = fenString.SideToMove;
+    }
+
+    void Board::initializePieceSet(const FenString& fenString)
+    {
+        for (int i=0; i<64; i++)
+        {
+            pieceSet[i] = fenString.PiecePlacement[i];
+        }
+    }
+
+    void Board::initializeEnPassantSquare(const FenString& fenString)
+    {
+        EnPassantSquare = fenString.EnPassantSquare;
+    }
+
+    void Board::initializeBitBoards(const FenString& fenString)
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            if (fenString.PiecePlacement[i].Type == PieceType::King)
+                kingSquare[fenString.PiecePlacement[i].Color] = i;
+            if (fenString.PiecePlacement[i].Color != PieceColor::None)
+                bitBoardSet[fenString.PiecePlacement[i].Color][fenString.PiecePlacement[i].Type] |= Constants::Masks::SquareMask[i];
+        }
+
+        updateGenericBitBoards();
+    }
 
 }
