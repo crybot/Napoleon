@@ -4,12 +4,18 @@
 
 namespace Napoleon
 {   
-    BitBoard Pawn::GetAllTargets(Byte color, BitBoard pawns, Board& board)
+    BitBoard Pawn::GetAllTargets(BitBoard pawns, Board& board)
     {
         BitBoard empty = board.EmptySquares;
 
-        return GetQuietTargets(color, pawns, empty) | GetAnyAttack(color, pawns, board);
+        return GetQuietTargets(board.SideToMove, pawns, empty) | GetAnyAttack(pawns, board);
     }
+
+    BitBoard Pawn::GetAnyAttack(BitBoard pawns, Board& board)
+    {
+        return (GetEastAttacks(board.SideToMove, pawns) | GetWestAttacks(board.SideToMove, pawns)) & board.GetEnemyPieces();
+    }
+
 
     BitBoard Pawn::GetQuietTargets(Byte color, BitBoard pawns, BitBoard empty)
     {
@@ -71,11 +77,5 @@ namespace Napoleon
     {
         return color == PieceColor::White ? CompassRose::OneStepNorthWest(pawns) : CompassRose::OneStepSouthWest(pawns);
     }
-
-    BitBoard Pawn::GetAnyAttack(Byte color, BitBoard pawns, Board& board)
-    {
-        return (GetEastAttacks(color, pawns) | GetWestAttacks(color, pawns)) & board.GetEnemyPieces();
-    }
-
 
 }

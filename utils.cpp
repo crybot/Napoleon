@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
+#include <boost/lexical_cast.hpp>
 
 namespace Napoleon
 {
@@ -25,7 +26,7 @@ namespace Napoleon
             {
                 std::string str = "";
                 str += (char)(GetFileIndex(square) + 97);
-                str += (int)(GetRankIndex(square) + 1);
+                str += boost::lexical_cast<std::string>(GetRankIndex(square) + 1);
 
                 return str;
             }

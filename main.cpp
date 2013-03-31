@@ -13,6 +13,7 @@
 #include "queen.h"
 #include "movedatabase.h"
 #include "fenstring.h"
+#include "movegenerator.h"
 #include <cstdio>
 #include <ctime>
 
@@ -80,10 +81,26 @@ int test(BitBoard b, Board& c)
 int main()
 {
     srand(time(NULL));
-
     Board board;
-    board.LoadGame(FenString("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2"));
-    board.Display();
+    board.LoadGame(FenString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+
+    Move* moves[100];
+    int pos = 0;
+    MoveGenerator::GetAllMoves(moves, pos, board);
+
+    StopWatch watch;
+    watch.Start();
+
+    for (int i=0; i<pos; i++)
+    {
+        string s = moves[i]->ToAlgebraic();
+        cout << s << endl;
+    }
+
+    watch.Stop();
+
+    cout << "Tempo Impiegato: " << watch.ElapsedMilliseconds() << endl;
+
 
     //    cout << "Tempo Impiegato: "; Bench(test);
 

@@ -10,8 +10,8 @@ namespace Napoleon
 
     public:
 
-        static BitBoard GetAllTargets(Byte color, BitBoard pawns, Board& board);
-        __always_inline static BitBoard GetAnyAttack(Byte color, BitBoard pawns, Board& board);
+        static BitBoard GetAllTargets(BitBoard pawns, Board& board);
+        __always_inline static BitBoard GetAnyAttack(BitBoard pawns, Board& board);
 
     private:
         __always_inline static BitBoard GetQuietTargets(Byte color, BitBoard pawns, BitBoard empty);
@@ -23,7 +23,6 @@ namespace Napoleon
         __always_inline static BitBoard GetWestAttacks(Byte color, BitBoard pawns);
 
     };
-
 }
 
 #endif // PAWN_H

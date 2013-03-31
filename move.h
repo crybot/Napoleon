@@ -9,11 +9,11 @@ namespace Napoleon
     {
 
     public:
-        const Byte FromSquare;
-        const Byte ToSquare;
-        const Byte PieceMoved; // overloaded to manage castle (KING)
-        const Byte PieceCaptured;
-        const Byte PiecePromoted;// overloaded to manage castle (ROOK) // overloaded to manage en-passant (PAWN)
+        Byte FromSquare;
+        Byte ToSquare;
+        Byte PieceMoved; // overloaded to manage castle (KING)
+        Byte PieceCaptured;
+        Byte PiecePromoted;// overloaded to manage castle (ROOK) // overloaded to manage en-passant (PAWN)
 
         Move(Byte, Byte, Byte, Byte, Byte);
 
@@ -29,6 +29,5 @@ namespace Napoleon
         std::string ToAlgebraic() const;
 
     };
-
 }
 #endif // MOVE_H
