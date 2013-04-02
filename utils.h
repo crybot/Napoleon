@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 #include "defines.h"
+#include "constants.h"
 #include <string>
 
 namespace Napoleon
@@ -33,44 +34,64 @@ namespace Napoleon
         namespace Piece
         {
             char GetInitial(Byte);
-            char GetOpposite(Byte);
+            Byte GetOpposite(Byte);
         }
 
-        __always_inline int Square::GetA1H8DiagonalIndex(int file, int rank)
+        INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
+        {
+#ifdef __GNUG__
+            return  __builtin_ctzll(bitBoard); // conta il numero di 0 precedenti al primo bit piu` significativo
+#else
+            return Constants::DeBrujinTable[((bitBoard & -bitBoard) * Constants::DeBrujinValue) >> 58];
+#endif
+        }
+
+
+        INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
+        {
+            Napoleon::BitBoard bb = bitBoard;
+            bitBoard &= (bitBoard - 1);
+#ifdef __GNUG__
+            return  __builtin_ctzll(bb); // conta il numero di 0 precedenti al primo bit piu` significativo
+#else
+            return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
+#endif
+        }
+
+        INLINE int Square::GetA1H8DiagonalIndex(int file, int rank)
         {
             return 7 + rank - file;
         }
 
-        __always_inline int Square::GetA1H8DiagonalIndex(int squareIndex)
+        INLINE int Square::GetA1H8DiagonalIndex(int squareIndex)
         {
             return 7 + GetRankIndex(squareIndex) - GetFileIndex(squareIndex);
         }
 
-        __always_inline int Square::GetH1A8AntiDiagonalIndex(int file, int rank)
+        INLINE int Square::GetH1A8AntiDiagonalIndex(int file, int rank)
         {
             return rank + file;
         }
 
-        __always_inline int Square::GetH1A8AntiDiagonalIndex(int squareIndex)
+        INLINE int Square::GetH1A8AntiDiagonalIndex(int squareIndex)
         {
             return GetRankIndex(squareIndex) + GetFileIndex(squareIndex);
         }
 
-        __always_inline int Square::GetFileIndex(int squareIndex)
+        INLINE int Square::GetFileIndex(int squareIndex)
         {
             return squareIndex & 7;
         }
 
-        __always_inline int Square::GetRankIndex(int squareIndex)
+        INLINE int Square::GetRankIndex(int squareIndex)
         {
             return squareIndex >> 3;
         }
 
-        __always_inline int Square::GetSquareIndex(int file, int rank)
+        INLINE int Square::GetSquareIndex(int file, int rank)
         {
             return file + 8 * rank;
         }
-
     }
 }
 #endif // UTILS_H

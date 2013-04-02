@@ -4,8 +4,6 @@
 
 namespace Napoleon
 {
-    Move::Move(Byte fromSquare, Byte toSquare, Byte pieceMoved, Byte pieceCaptured, Byte piecePromoted)
-        :FromSquare(fromSquare), ToSquare(toSquare), PieceMoved(pieceMoved), PieceCaptured(pieceCaptured), PiecePromoted(piecePromoted) { }
 
     bool Move::operator==(const Move& other) const
     {
@@ -67,7 +65,7 @@ namespace Napoleon
 
         else
         {
-            //algebraic.Append(PieceMoved.GetInitial());
+//            algebraic += Utils::Piece::GetInitial(PieceMoved);
             algebraic += Utils::Square::ToAlgebraic(FromSquare);
 
             if (IsCapture())

@@ -14,10 +14,7 @@ namespace Napoleon
         static BitBoard GetAllTargets(BitBoard queens, Board& board);
     };
 
-    __always_inline BitBoard Queen::GetAllTargets(BitBoard queens, Board& board)
-    {
-        return Rook::GetAllTargets(queens, board) | Bishop::GetAllTargets(queens, board);
-    }
+
 }
 
 #endif // QUEEN_H

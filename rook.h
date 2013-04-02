@@ -14,7 +14,7 @@ namespace Napoleon
 
     };
 
-    __always_inline BitBoard Rook::GetAllTargets(BitBoard rooks, Board& board)
+    INLINE BitBoard Rook::GetAllTargets(BitBoard rooks, Board& board)
     {
         BitBoard occupiedSquares = board.OccupiedSquares;
         BitBoard targets = Constants::Empty;

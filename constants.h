@@ -35,6 +35,16 @@ namespace Napoleon
 
         namespace Squares
         {
+            enum enumSquare {
+                IntA1, IntB1, IntC1, IntD1, IntE1, IntF1, IntG1, IntH1,
+                IntA2, IntB2, IntC2, IntD2, IntE2, IntF2, IntG2, IntH2,
+                IntA3, IntB3, IntC3, IntD3, IntE3, IntF3, IntG3, IntH3,
+                IntA4, IntB4, IntC4, IntD4, IntE4, IntF4, IntG4, IntH4,
+                IntA5, IntB5, IntC5, IntD5, IntE5, IntF5, IntG5, IntH5,
+                IntA6, IntB6, IntC6, IntD6, IntE6, IntF6, IntG6, IntH6,
+                IntA7, IntB7, IntC7, IntD7, IntE7, IntF7, IntG7, IntH7,
+                IntA8, IntB8, IntC8, IntD8, IntE8, IntF8, IntG8, IntH8
+            };
 
             const int Invalid = -1;
             const BitBoard A1 = 0x0000000000000001;

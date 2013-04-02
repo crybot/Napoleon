@@ -1,13 +1,11 @@
 #ifndef MOVE_H
 #define MOVE_H
-#include <string>
 #include "defines.h"
 
 namespace Napoleon
 {
     class Move
     {
-
     public:
         Byte FromSquare;
         Byte ToSquare;
@@ -16,6 +14,9 @@ namespace Napoleon
         Byte PiecePromoted;// overloaded to manage castle (ROOK) // overloaded to manage en-passant (PAWN)
 
         Move(Byte, Byte, Byte, Byte, Byte);
+        Move();
+
+        void SetMove(Byte, Byte, Byte, Byte, Byte);
 
         bool operator== (const Move&) const;
         bool operator!= (const Move&) const;
@@ -29,5 +30,10 @@ namespace Napoleon
         std::string ToAlgebraic() const;
 
     };
+
+    INLINE Move::Move(Byte fromSquare, Byte toSquare, Byte pieceMoved, Byte pieceCaptured, Byte piecePromoted)
+        :FromSquare(fromSquare), ToSquare(toSquare), PieceMoved(pieceMoved), PieceCaptured(pieceCaptured), PiecePromoted(piecePromoted) { }
+
+    INLINE Move::Move() {}
 }
 #endif // MOVE_H

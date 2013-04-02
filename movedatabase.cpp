@@ -14,6 +14,11 @@ namespace Napoleon
     BitBoard MoveDatabase::FileAttacks[64][64]; // square, occupancy
     BitBoard MoveDatabase::A1H8DiagonalAttacks[64][64]; // square , occupancy
     BitBoard MoveDatabase::H1A8DiagonalAttacks[64][64]; // square , occupancy
+    BitBoard MoveDatabase::PseudoRookAttacks[64]; // square
+    BitBoard MoveDatabase::PseudoBishopAttacks[64]; // square
+
+    BitBoard MoveDatabase::ObstructedTable[64][64];
+
 
     /* all this operation will be executed before the engine gets active, so it is not needed optimization */
 
@@ -26,6 +31,8 @@ namespace Napoleon
         initFileAttacks();
         initDiagonalAttacks();
         initAntiDiagonalAttacks();
+        initPseudoAttacks();
+        initObstructedTable();
     }
 
     void MoveDatabase::initPawnAttacks()
@@ -193,13 +200,39 @@ namespace Napoleon
             }
         }
     }
-    //    static void InitPseudoAttacks()
-    //    {
-    //        for (int i = 0; i < 64; i++)
-    //        {
-    //            PseudoRookAttacks[i] = RankAttacks[i][0] | FileAttacks[i][0];
-    //            PseudoBishopAttacks[i] = A1H8DiagonalAttacks[i][0] | H1A8DiagonalAttacks[i][0];
-    //        }
-    //    }
+
+    void MoveDatabase::initPseudoAttacks()
+    {
+        for (int i = 0; i < 64; i++)
+        {
+            PseudoRookAttacks[i] = RankAttacks[i][0] | FileAttacks[i][0];
+            PseudoBishopAttacks[i] = A1H8DiagonalAttacks[i][0] | H1A8DiagonalAttacks[i][0];
+        }
+    }
+
+    void MoveDatabase::initObstructedTable()
+    {
+        const BitBoard m1   = C64(-1);
+        const BitBoard a2a7 = C64(0x0001010101010100);
+        const BitBoard b2g7 = C64(0x0040201008040200);
+        const BitBoard h1b7 = C64(0x0002040810204080);
+        BitBoard btwn, line, rank, file;
+
+        for (int sq1 = 0; sq1<64; sq1++)
+        {
+            for (int sq2 = 0; sq2<64; sq2++)
+            {
+                btwn  = (m1 << sq1) ^ (m1 << sq2);
+                file  =   (sq2 & 7) - (sq1   & 7);
+                rank  =  ((sq2 | 7) -  sq1) >> 3 ;
+                line  =      (   (file  & 0xff) - 1) & a2a7;
+                line += 2 * ((   (rank  & 0xff) - 1) >> 58);
+                line += (((rank - file) & 0xff) - 1) & b2g7;
+                line += (((rank + file) & 0xff) - 1) & h1b7; // h1b7 if same antidiag
+                line *= btwn & -btwn; // mul acts like shift by smaller square
+                ObstructedTable[sq1][sq2] =  line & btwn;   // return the bits on that line inbetween
+            }
+        }
+    }
 
 }

@@ -7,7 +7,6 @@ namespace Napoleon
     class Board;
     class King
     {
-
     public:
         static BitBoard GetAllTargets(BitBoard, Board&);
         static BitBoard GetKingAttacks(BitBoard);

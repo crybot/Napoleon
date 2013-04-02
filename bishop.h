@@ -14,7 +14,7 @@ namespace Napoleon
 
     };
 
-    __always_inline BitBoard Bishop::GetAllTargets(BitBoard bishops, Board& board)
+    INLINE BitBoard Bishop::GetAllTargets(BitBoard bishops, Board& board)
     {
         BitBoard occupiedSquares = board.OccupiedSquares;
         BitBoard targets = Constants::Empty;

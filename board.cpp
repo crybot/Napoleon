@@ -181,7 +181,16 @@ namespace Napoleon
             }
             std::cout << std::endl;
         }
-        std::cout << "\n    A  B  C  D  E  F  G  H";
+        std::cout << "\n    A  B  C  D  E  F  G  H" << std::endl;
+
+        std::cout << "Enpassant Square: " << Utils::Square::ToAlgebraic(EnPassantSquare) << std::endl;
+        std::stack<int> temp = enpSquares;
+        std::cout << "Enpassant Stack: ";
+        for (unsigned i=0; i<temp.size(); i++)
+        {
+            std::cout << Utils::Square::ToAlgebraic(temp.top()) << " ";
+            temp.pop();
+        }
     }
 
     void Board::LoadGame(const FenString& fenString)
@@ -217,6 +226,7 @@ namespace Napoleon
     void Board::initializeEnPassantSquare(const FenString& fenString)
     {
         EnPassantSquare = fenString.EnPassantSquare;
+        enpSquares.push(EnPassantSquare);
     }
 
     void Board::initializeBitBoards(const FenString& fenString)

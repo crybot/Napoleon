@@ -24,6 +24,9 @@ namespace Napoleon
 
             std::string ToAlgebraic(int square)
             {
+                if (square == Constants::Squares::Invalid)
+                    return "Invalid";
+
                 std::string str = "";
                 str += (char)(GetFileIndex(square) + 97);
                 str += boost::lexical_cast<std::string>(GetRankIndex(square) + 1);
@@ -68,26 +71,16 @@ namespace Napoleon
 
             int PopCount(Napoleon::BitBoard bitBoard)
             {
+#ifdef __GNUG__
+                return __builtin_popcount(bitBoard);
+#else
                 bitBoard -= ((bitBoard >> 1) & 0x5555555555555555UL);
                 bitBoard = ((bitBoard >> 2) & 0x3333333333333333UL) + (bitBoard & 0x3333333333333333UL);
                 bitBoard = ((bitBoard >> 4) + bitBoard) & 0x0F0F0F0F0F0F0F0FUL;
                 return (int)((bitBoard * 0x0101010101010101UL) >> 56);
+#endif
             }
 
-            int BitScanForward(Napoleon::BitBoard bitBoard)
-            {
-                assert(bitBoard != 0);
-                return Constants::DeBrujinTable[((bitBoard & -bitBoard) * Constants::DeBrujinValue) >> 58];
-            }
-
-            int BitScanForwardReset(Napoleon::BitBoard& bitBoard)
-            {
-                assert(bitBoard != 0);
-                Napoleon::BitBoard bb = bitBoard;
-                bitBoard &= (bitBoard - 1);
-
-                return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
-            }
         }
 
         namespace Piece
@@ -113,14 +106,9 @@ namespace Napoleon
                 }
             }
 
-            char GetOpposite(Byte color)
+            Byte GetOpposite(Byte color)
             {
-                if (color == PieceColor::White)
-                    return PieceColor::Black;
-                else if (color == PieceColor::Black)
-                    return PieceColor::White;
-                else
-                    throw std::exception(); // TODO
+                return PieceColor::Black - color;
             }
         }
     }
