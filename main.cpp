@@ -14,6 +14,8 @@
 #include "movedatabase.h"
 #include "fenstring.h"
 #include "movegenerator.h"
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 #include <cstdio>
 #include <ctime>
 
@@ -78,7 +80,7 @@ int test(BitBoard b, Board& c)
     return 0;
 }
 
-int Perft(int depth, Board& board)
+unsigned long long Perft(int depth, Board& board)
 {
     int pos = 0;
     Move moves[Constants::MaxMoves + 2];
@@ -107,9 +109,10 @@ int Perft(int depth, Board& board)
 void Divide(int depth, Board& board)
 {
     int pos = 0;
-    int total = 0;
+    unsigned long long total = 0;
     int temp = 0;
     int NumMoves = 0;
+    int cap = 0;
 
     Move moves[Constants::MaxMoves + 2];
     MoveGenerator::GetLegalMoves(moves, pos, board);
@@ -118,16 +121,20 @@ void Divide(int depth, Board& board)
 
     for (int i = 0; i < pos; i++)
     {
+        if (moves[i].IsCapture())
+            cap++;
         board.MakeMove(moves[i]);
         temp = Perft(depth - 1, board);
         total += temp;
         std::cout << moves[i].ToAlgebraic() << "\t" << temp << std::endl;
         board.UndoMove(moves[i]);
         NumMoves++;
+
     }
 
     std::cout << "Total Nodes: " << total << std::endl;
     std::cout << "Moves: " << NumMoves << std::endl;
+    std::cout << "Captures: " << cap << std::endl;
 
 }
 
@@ -135,15 +142,11 @@ int main()
 {
     using namespace Constants;
     using namespace Constants::Squares;
-    srand(time(NULL));
-    Board board;
-    board.LoadGame(FenString("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"));
+    Board initialBoard;
+    //    srand(time(NULL));
 
     //    Move moves[100];
     //    int pos;
-
-    StopWatch watch;
-    watch.Start();
 
     //    board.Display();
     //    cin.get();
@@ -172,38 +175,107 @@ int main()
     //    board.Display();
     //    cin.get();
 
-    //    cout << "BitBoard dopo Enpassant: " << endl;
-    //    cin.get();
-    //    cout << "Pezzi Bianchi : " << endl;
-    //    Utils::BitBoard::Display(board.WhitePieces);
-    //    cin.get();
+    StopWatch watch;
+    Board board;
+    board.LoadGame(FenString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w - - 0 1"));
 
-    //    cout << "Pezzi Neri : " << endl;
-    //    Utils::BitBoard::Display(board.BlackPieces);
-    //    cin.get();
+    while(1)
+    {
+        cout << "Napoleon: ";
+        vector<string> fields;
+        string cmd;
+        std::getline(cin, cmd);
 
-    //    cout << "Caselle occupate : " << endl;
-    //    Utils::BitBoard::Display(board.OccupiedSquares);
-    //    cin.get();
+        boost::split(fields, cmd, boost::is_any_of(" "));
 
-    //    cout << "Caselle libere : " << endl;
-    //    Utils::BitBoard::Display(board.EmptySquares);
-    //    cin.get();
+        if (fields[0] == "perft")
+        {
+            if (fields.size() > 1)
+            {
+                int depth = boost::lexical_cast<int>(fields[1]);
+                watch.Start();
+                cout << "Perft(" << depth << "): ";
+                cout << "Total Nodes: " << Perft(depth, board) << endl;
+                cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
+                //                assert(initialBoard.WhitePieces ==  board.WhitePieces);
+                //                assert(initialBoard.BlackPieces ==  board.BlackPieces);
+                //                assert(initialBoard.EmptySquares ==  board.EmptySquares);
+                //                assert(initialBoard.OccupiedSquares ==  board.OccupiedSquares);
+                //                assert(initialBoard.EnPassantSquare ==  board.EnPassantSquare);
+            }
+        }
 
-    //    cout << "Pedoni bianchi: " << endl;
-    //    Utils::BitBoard::Display(board.GetPieceSet(PieceColor::White, PieceType::Pawn));
-    //    cin.get();
+        if (fields[0] == "divide")
+        {
+            if (fields.size() > 1)
+            {
+                watch.Start();
+                Divide(boost::lexical_cast<int>(fields[1]), board);
+                cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
+                //                assert(initialBoard.WhitePieces ==  board.WhitePieces);
+                //                assert(initialBoard.BlackPieces ==  board.BlackPieces);
+                //                assert(initialBoard.EmptySquares ==  board.EmptySquares);
+                //                assert(initialBoard.OccupiedSquares ==  board.OccupiedSquares);
+                //                assert(initialBoard.EnPassantSquare ==  board.EnPassantSquare);
+            }
+        }
 
-    //    cout << "Pedoni neri: " << endl;
-    //    Utils::BitBoard::Display(board.GetPieceSet(PieceColor::Black, PieceType::Pawn));
-    //    cin.get();
 
+        if (fields[0] == "set")
+        {
+            if (fields.size() == 7)
+            {
+                board.LoadGame(FenString(cmd.substr(fields[0].size()+1)));
+            }
+        }
 
+        if (cmd == "display")
+        {
+            board.Display();
+        }
 
+        if (cmd == "debug")
+        {
+            cout << "Pezzi bianchi: "; Utils::BitBoard::Display(board.WhitePieces);
+            cin.get();
+            cout << "Pezzi Neri: "; Utils::BitBoard::Display(board.BlackPieces);
+            cin.get();
+            cout << "Caselle occupate: "; Utils::BitBoard::Display(board.OccupiedSquares);
+            cin.get();
+            cout << "Caselle libere: "; Utils::BitBoard::Display(board.EmptySquares);
+            cin.get();
+        }
 
-    Divide(1, board);
-    watch.Stop();
-    cout << "Tempo Impiegato (ms): " << watch.ElapsedMilliseconds() << endl;
+        if (cmd == "new")
+        {
+            board = Board();
+            board.Equip();
+        }
+
+        if (cmd == "pinned")
+        {
+            cout << "Pinned Pieces: " << endl;
+            Utils::BitBoard::Display(board.GetPinnedPieces());
+        }
+
+        if (fields[0] == "move")
+        {
+            if (fields.size() == 2)
+            {
+                board.MakeMove(board.ParseMove(fields[1]));
+            }
+        }
+
+        if (fields[0] == "undo")
+        {
+            if (fields.size() == 2)
+            {
+                board.UndoMove(board.ParseMove(fields[1]));
+            }
+        }
+
+        cout << endl;
+    }
 
     return 0;
 }

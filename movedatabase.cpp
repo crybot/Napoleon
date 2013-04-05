@@ -5,8 +5,7 @@
 
 namespace Napoleon
 {
-    BitBoard MoveDatabase::WhitePawnAttacks[64]; // square
-    BitBoard MoveDatabase::BlackPawnAttacks[64];// square
+    BitBoard MoveDatabase::PawnAttacks[2][64]; // color, square
     BitBoard MoveDatabase::KingAttacks[64]; // square
     BitBoard MoveDatabase::KnightAttacks[64]; // square
 
@@ -39,8 +38,8 @@ namespace Napoleon
     {
         for (int sq = 0; sq < 64; sq++)
         {
-            WhitePawnAttacks[sq] = CompassRose::OneStepNorthEast(Constants::Masks::SquareMask[sq]) | CompassRose::OneStepNorthWest(Constants::Masks::SquareMask[sq]);
-            BlackPawnAttacks[sq] = CompassRose::OneStepSouthEast(Constants::Masks::SquareMask[sq]) | CompassRose::OneStepSouthWest(Constants::Masks::SquareMask[sq]);
+            PawnAttacks[PieceColor::White][sq] = CompassRose::OneStepNorthEast(Constants::Masks::SquareMask[sq]) | CompassRose::OneStepNorthWest(Constants::Masks::SquareMask[sq]);
+            PawnAttacks[PieceColor::Black][sq] = CompassRose::OneStepSouthEast(Constants::Masks::SquareMask[sq]) | CompassRose::OneStepSouthWest(Constants::Masks::SquareMask[sq]);
         }
     }
 
@@ -210,27 +209,23 @@ namespace Napoleon
         }
     }
 
+    // thanks stockfish for this
     void MoveDatabase::initObstructedTable()
     {
-        const BitBoard m1   = C64(-1);
-        const BitBoard a2a7 = C64(0x0001010101010100);
-        const BitBoard b2g7 = C64(0x0040201008040200);
-        const BitBoard h1b7 = C64(0x0002040810204080);
-        BitBoard btwn, line, rank, file;
+        using namespace Utils::Square;
 
-        for (int sq1 = 0; sq1<64; sq1++)
+        for (int s1 = 0; s1 < 64; s1++)
         {
-            for (int sq2 = 0; sq2<64; sq2++)
+            for (int s2 = 0; s2 < 64; s2++)
             {
-                btwn  = (m1 << sq1) ^ (m1 << sq2);
-                file  =   (sq2 & 7) - (sq1   & 7);
-                rank  =  ((sq2 | 7) -  sq1) >> 3 ;
-                line  =      (   (file  & 0xff) - 1) & a2a7;
-                line += 2 * ((   (rank  & 0xff) - 1) >> 58);
-                line += (((rank - file) & 0xff) - 1) & b2g7;
-                line += (((rank + file) & 0xff) - 1) & h1b7; // h1b7 if same antidiag
-                line *= btwn & -btwn; // mul acts like shift by smaller square
-                ObstructedTable[sq1][sq2] =  line & btwn;   // return the bits on that line inbetween
+                ObstructedTable[s1][s2] = 0;
+                if ((PseudoRookAttacks[s1] | PseudoBishopAttacks[s1]) & Constants::Masks::SquareMask[s2])
+                {
+                    int delta = (s2 - s1) / std::max(  abs(GetFileIndex(s1) - GetFileIndex(s2)), abs(GetRankIndex(s1) - GetRankIndex(s2))  );
+
+                    for (int s = s1 + delta; s != s2; s += delta)
+                        ObstructedTable[s1][s2] |= Constants::Masks::SquareMask[s];
+                }
             }
         }
     }

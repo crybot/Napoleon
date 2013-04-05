@@ -1,6 +1,7 @@
 #ifndef MOVE_H
 #define MOVE_H
 #include "defines.h"
+#include "piece.h"
 
 namespace Napoleon
 {
@@ -35,5 +36,15 @@ namespace Napoleon
         :FromSquare(fromSquare), ToSquare(toSquare), PieceMoved(pieceMoved), PieceCaptured(pieceCaptured), PiecePromoted(piecePromoted) { }
 
     INLINE Move::Move() {}
+
+    INLINE bool Move::IsCapture() const
+    {
+        return (PieceCaptured != PieceType::None);
+    }
+
+    INLINE bool Move::IsEnPassant() const
+    {
+        return (PieceMoved == PieceType::Pawn && PiecePromoted == PieceType::Pawn);
+    }
 }
 #endif // MOVE_H

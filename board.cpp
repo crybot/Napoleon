@@ -29,7 +29,7 @@ namespace Napoleon
 
     void Board::AddPiece(Piece piece, Square sq)
     {
-        pieceSet[sq] = piece;
+        PieceSet[sq] = piece;
     }
 
     void Board::initializePieceSet()
@@ -90,7 +90,7 @@ namespace Napoleon
     {
         for (int i=0; i<64; i++)
         {
-            pieceSet[i] = Piece(PieceColor::None, PieceType::None);
+            PieceSet[i] = Piece(PieceColor::None, PieceType::None);
         }
     }
 
@@ -114,8 +114,8 @@ namespace Napoleon
 
     void Board::initializeBitBoards()
     {
-        kingSquare[PieceColor::White] = 4;
-        kingSquare[PieceColor::Black] = 60;
+        KingSquare[PieceColor::White] = 4;
+        KingSquare[PieceColor::Black] = 60;
 
         bitBoardSet[PieceColor::White][PieceType::Pawn] = Constants::InitialPositions::WhitePawns;
         bitBoardSet[PieceColor::White][PieceType::Knight] = Constants::InitialPositions::WhiteKnights;
@@ -162,13 +162,13 @@ namespace Napoleon
 
             for (int c = 0; c <= 7; c++)
             {
-                piece = pieceSet[Utils::Square::GetSquareIndex(c, r)];
+                piece = PieceSet[Utils::Square::GetSquareIndex(c, r)];
                 std::cout << '[';
                 if (piece.Type != PieceType::None)
                 {
                     std::cout << (piece.Color == PieceColor::White ? Console::Green : Console::Red);
 
-                    std::cout << Utils::Piece::GetInitial(pieceSet[Utils::Square::GetSquareIndex(c, r)].Type);
+                    std::cout << Utils::Piece::GetInitial(PieceSet[Utils::Square::GetSquareIndex(c, r)].Type);
                 }
                 else
                 {
@@ -184,13 +184,7 @@ namespace Napoleon
         std::cout << "\n    A  B  C  D  E  F  G  H" << std::endl;
 
         std::cout << "Enpassant Square: " << Utils::Square::ToAlgebraic(EnPassantSquare) << std::endl;
-        std::stack<int> temp = enpSquares;
-        std::cout << "Enpassant Stack: ";
-        for (unsigned i=0; i<temp.size(); i++)
-        {
-            std::cout << Utils::Square::ToAlgebraic(temp.top()) << " ";
-            temp.pop();
-        }
+        std::cout << "Side To Move: " << (SideToMove == PieceColor::White ? "White" : "Black") << std::endl;
     }
 
     void Board::LoadGame(const FenString& fenString)
@@ -219,7 +213,7 @@ namespace Napoleon
     {
         for (int i=0; i<64; i++)
         {
-            pieceSet[i] = fenString.PiecePlacement[i];
+            PieceSet[i] = fenString.PiecePlacement[i];
         }
     }
 
@@ -231,15 +225,240 @@ namespace Napoleon
 
     void Board::initializeBitBoards(const FenString& fenString)
     {
+        for (int i=PieceType::Pawn; i<PieceType::None; i++)
+        {
+            for (int l = PieceColor::White; l<PieceColor::None; l++)
+            {
+                bitBoardSet[l][i] = 0;
+            }
+        }
+
         for (int i = 0; i < 64; i++)
         {
             if (fenString.PiecePlacement[i].Type == PieceType::King)
-                kingSquare[fenString.PiecePlacement[i].Color] = i;
+                KingSquare[fenString.PiecePlacement[i].Color] = i;
             if (fenString.PiecePlacement[i].Color != PieceColor::None)
                 bitBoardSet[fenString.PiecePlacement[i].Color][fenString.PiecePlacement[i].Type] |= Constants::Masks::SquareMask[i];
         }
 
         updateGenericBitBoards();
     }
+
+    Move Board::ParseMove(std::string str)
+    {
+        Byte from = Utils::Square::Parse(str.substr(0, 2));
+        Byte to = Utils::Square::Parse(str.substr(2));
+
+        if (to == EnPassantSquare)
+            return Move(from, to, PieceType::Pawn, PieceType::Pawn, PieceType::Pawn);
+
+        return Move(from, to, PieceSet[from].Type, PieceSet[to].Type, PieceType::None);
+    }
+
+    void Board::MakeMove(const Move& move)
+    {
+        //ARRAY
+        PieceSet[move.ToSquare] = PieceSet[move.FromSquare]; // muove il pezzo
+        PieceSet[move.FromSquare] = Piece(PieceColor::None, PieceType::None); // svuota la casella di partenza
+
+        //BITBOARDS
+        BitBoard From = Constants::Masks::SquareMask[move.FromSquare];
+        BitBoard To = Constants::Masks::SquareMask[move.ToSquare];
+        BitBoard FromTo = From | To;
+
+        Byte enemy = Utils::Piece::GetOpposite(SideToMove);
+
+        bitBoardSet[SideToMove][move.PieceMoved] ^= FromTo;
+        if (SideToMove == PieceColor::White)
+            WhitePieces ^= FromTo;
+        else
+            BlackPieces ^= FromTo;
+
+        if (move.PieceMoved == PieceType::King)
+            KingSquare[SideToMove] = move.ToSquare;
+
+
+        if (move.IsEnPassant())
+        {
+            if (SideToMove == PieceColor::White)
+            {
+                BitBoard piece = Constants::Masks::SquareMask[EnPassantSquare - 8];
+                bitBoardSet[enemy][move.PieceCaptured] ^= piece;
+                BlackPieces ^= piece;
+                OccupiedSquares ^= FromTo ^ piece;
+                EmptySquares ^= FromTo ^ piece;
+                PieceSet[EnPassantSquare - 8] = Piece(PieceColor::None, PieceType::None);
+            }
+            else
+            {
+                BitBoard piece = Constants::Masks::SquareMask[EnPassantSquare + 8];
+                bitBoardSet[enemy][move.PieceCaptured] ^= piece;
+                WhitePieces ^= piece;
+                OccupiedSquares ^= FromTo ^ piece;
+                EmptySquares ^= FromTo ^ piece;
+                PieceSet[EnPassantSquare + 8] = Piece(PieceColor::None, PieceType::None);
+            }
+        }
+
+        else if (move.IsCapture())
+        {
+            bitBoardSet[enemy][move.PieceCaptured] ^= To;
+
+            //aggiorna i pezzi dell'avversario
+            if (SideToMove == PieceColor::White)
+                BlackPieces ^= To;
+            else
+                WhitePieces ^= To;
+
+            OccupiedSquares ^= From;
+            EmptySquares ^= From;
+        }
+        else
+        {
+            OccupiedSquares ^= FromTo;
+            EmptySquares ^= FromTo;
+        }
+
+        enpSquares.push(EnPassantSquare);
+        EnPassantSquare = Constants::Squares::Invalid;
+
+        if (move.PieceMoved == PieceType::Pawn)
+        {
+            if (SideToMove == PieceColor::White)
+            {
+                if (Utils::Square::GetRankIndex(move.ToSquare) - Utils::Square::GetRankIndex(move.FromSquare) == 2)
+                {
+                    EnPassantSquare = move.ToSquare - 8;
+                }
+            }
+            else
+            {
+                if (Utils::Square::GetRankIndex(move.FromSquare) - Utils::Square::GetRankIndex(move.ToSquare) == 2)
+                {
+                    EnPassantSquare = move.ToSquare + 8;
+                }
+            }
+        }
+
+        SideToMove = enemy;
+    }
+
+    void Board::UndoMove(const Move& move)
+    {
+        //ARRAY
+        PieceSet[move.FromSquare] = PieceSet[move.ToSquare]; // muove il pezzo
+
+        //BITBOARDS
+        BitBoard From = Constants::Masks::SquareMask[move.FromSquare];
+        BitBoard To = Constants::Masks::SquareMask[move.ToSquare];
+        BitBoard FromTo = From | To;
+
+        Byte enemy = SideToMove;
+        SideToMove = Utils::Piece::GetOpposite(SideToMove);
+
+        // aggiorna la bitboard
+        bitBoardSet[SideToMove][move.PieceMoved] ^= FromTo;
+        if (SideToMove == PieceColor::White)
+            WhitePieces ^= FromTo;
+        else
+            BlackPieces ^= FromTo;
+
+        if (move.PieceMoved == PieceType::King)
+            KingSquare[SideToMove] = move.FromSquare;
+
+        EnPassantSquare = enpSquares.top();
+        enpSquares.pop();
+
+        if (move.IsEnPassant())
+        {
+            PieceSet[move.ToSquare] = Piece(PieceColor::None, PieceType::None); // svuota la casella di partenza perche` non c'erano pezzi prima
+
+            if (SideToMove == PieceColor::White)
+            {
+                BitBoard enpSquare = Constants::Masks::SquareMask[EnPassantSquare];
+                BitBoard piece = Constants::Masks::SquareMask[EnPassantSquare - 8];
+                bitBoardSet[enemy][move.PieceCaptured] ^= piece;
+                BlackPieces ^= piece;
+                OccupiedSquares ^= FromTo ^ piece;
+                EmptySquares ^= FromTo ^ piece;
+                PieceSet[EnPassantSquare - 8] = Piece(PieceColor::Black, PieceType::Pawn);
+            }
+            else
+            {
+                BitBoard enpSquare = Constants::Masks::SquareMask[EnPassantSquare];
+                BitBoard piece = Constants::Masks::SquareMask[EnPassantSquare + 8];
+                bitBoardSet[enemy][move.PieceCaptured] ^= piece;
+                WhitePieces ^= piece;
+                OccupiedSquares ^= FromTo ^ piece;
+                EmptySquares ^= FromTo ^ piece;
+                PieceSet[EnPassantSquare + 8] = Piece(PieceColor::White, PieceType::Pawn);
+            }
+        }
+
+        else if (move.IsCapture())
+        {
+            PieceSet[move.ToSquare] = Piece(enemy, move.PieceCaptured); // re-inserisce il pezzo catturato nella sua casella
+
+            bitBoardSet[enemy][move.PieceCaptured] ^= To;
+
+            //aggiorna i pezzi dell'avversario
+            if (SideToMove == PieceColor::White)
+                BlackPieces ^= To;
+            else
+                WhitePieces ^= To;
+
+            OccupiedSquares ^= From;
+            EmptySquares ^= From;
+        }
+        else
+        {
+            PieceSet[move.ToSquare] = Piece(PieceColor::None, PieceType::None); // svuota la casella di partenza perche` non c'erano pezzi prima
+            OccupiedSquares ^= FromTo;
+            EmptySquares ^= FromTo;
+        }
+    }
+
+    bool Board::IsAttacked(BitBoard target, Byte side)
+    {
+        BitBoard slidingAttackers;
+        BitBoard pawnAttacks;
+        BitBoard allPieces = OccupiedSquares;
+        Byte enemyColor = Utils::Piece::GetOpposite(side);
+        int to;
+
+        while (target != 0)
+        {
+            to = Utils::BitBoard::BitScanForwardReset(target);
+            pawnAttacks = MoveDatabase::PawnAttacks[side][to];
+
+            if ((GetPieceSet(enemyColor, PieceType::Pawn) & pawnAttacks) != 0) return true;
+            if ((GetPieceSet(enemyColor, PieceType::Knight) & MoveDatabase::KnightAttacks[to]) != 0) return true;
+            if ((GetPieceSet(enemyColor, PieceType::King) & MoveDatabase::KingAttacks[to]) != 0) return true;
+
+            // file / rank attacks
+            slidingAttackers = GetPieceSet(enemyColor, PieceType::Queen) | GetPieceSet(enemyColor, PieceType::Rook);
+
+            if (slidingAttackers != 0)
+            {
+                if ((MoveDatabase::GetRankAttacks(allPieces, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetFileAttacks(allPieces, to) & slidingAttackers) != 0) return true;
+            }
+
+            // diagonals
+            slidingAttackers = GetPieceSet(enemyColor, PieceType::Queen) | GetPieceSet(enemyColor, PieceType::Bishop);
+
+            if (slidingAttackers != 0)
+            {
+                if ((MoveDatabase::GetH1A8DiagonalAttacks(allPieces, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetA1H8DiagonalAttacks(allPieces, to) & slidingAttackers) != 0) return true;
+            }
+        }
+        return false;
+    }
+
+
+
+
+
 
 }

@@ -9,8 +9,7 @@ namespace Napoleon
     class MoveDatabase
     {
     public:
-        static BitBoard WhitePawnAttacks[64]; // square
-        static BitBoard BlackPawnAttacks[64];// square
+        static BitBoard PawnAttacks[2][64]; // color, square
         static BitBoard KingAttacks[64]; // square
         static BitBoard KnightAttacks[64]; // square
 
@@ -72,8 +71,8 @@ namespace Napoleon
 
     INLINE bool MoveDatabase::AreSquareAligned(int s1, int s2, int s3)
     {
-        return ((ObstructedTable[s1][s2] | ObstructedTable[s1][s3] | ObstructedTable[s2][s3])
-                          & (Constants::Masks::SquareMask[s1] | Constants::Masks::SquareMask[s2] | Constants::Masks::SquareMask[s3])) != 0;
+        return (ObstructedTable[s1][s2] | ObstructedTable[s1][s3] | ObstructedTable[s2][s3])
+                          & (Constants::Masks::SquareMask[s1] | Constants::Masks::SquareMask[s2] | Constants::Masks::SquareMask[s3]);
     }
 
 }
