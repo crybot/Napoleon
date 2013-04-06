@@ -22,8 +22,12 @@ namespace Napoleon
         std::string sideToMove = fields[1];
         std::string castling = fields[2];
         std::string enPassant = fields[3];
-        std::string halfMove = fields[4];
-        std::string fullMove = fields[5];
+
+        if (fields.size() == 6)
+        {
+            std::string halfMove = fields[4];
+            std::string fullMove = fields[5];
+        }
 
         parsePiecePlacement(piecePlacement);
         parseSideToMove(sideToMove);
@@ -85,7 +89,7 @@ namespace Napoleon
                     PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::King);
                     break;
                 default:
-                    empty += (int)(boost::lexical_cast<int>(ranks[i][l]) - 1);
+                    empty += (boost::lexical_cast<int>(ranks[i][l]) - 1);
                     break;
                 }
             }

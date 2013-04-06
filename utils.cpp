@@ -105,11 +105,6 @@ namespace Napoleon
                     throw std::exception(); // TODO
                 }
             }
-
-            Byte GetOpposite(Byte color)
-            {
-                return PieceColor::Black - color;
-            }
         }
     }
 }

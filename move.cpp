@@ -20,11 +20,9 @@ namespace Napoleon
         return (FromSquare == ToSquare);
     }
 
-
-
     bool Move::IsCastle() const
     {
-        return (PieceMoved == PieceType::King && PiecePromoted == PieceType::Rook);
+        return (PieceCaptured == PieceType::King && PiecePromoted == PieceType::Rook);
     }
 
     bool Move::IsCastleOO() const
@@ -39,10 +37,8 @@ namespace Napoleon
 
     bool Move::IsPromotion() const
     {
-        return (PieceMoved == PieceType::Pawn && PiecePromoted != PieceType::None && PiecePromoted != PieceType::Pawn);
+        return (PieceCaptured != PieceType::King && PiecePromoted != PieceType::None && PiecePromoted != PieceType::Pawn);
     }
-
-
 
     std::string Move::ToAlgebraic() const
     {

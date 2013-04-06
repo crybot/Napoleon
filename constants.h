@@ -220,11 +220,11 @@ namespace Napoleon
             const BitBoard BlackCastleMaskOO = 0x6000000000000000;
             const BitBoard BlackCastleMaskOOO = 0x0E00000000000000;
 
-            const Move WhiteCastlingOO(4, 6, PieceType::King, PieceType::None, PieceType::Rook);
-            const Move WhiteCastlingOOO(4, 2, PieceType::King, PieceType::None, PieceType::Rook);
+            const Move WhiteCastlingOO(Squares::IntE1, Squares::IntG1, PieceType::King, PieceType::Rook);
+            const Move WhiteCastlingOOO(Squares::IntE1, Squares::IntC1, PieceType::King, PieceType::Rook);
 
-            const Move BlackCastlingOO(60, 62, PieceType::King, PieceType::None, PieceType::Rook);
-            const Move BlackCastlingOOO(60, 58, PieceType::King, PieceType::None, PieceType::Rook);
+            const Move BlackCastlingOO(Squares::IntE8, Squares::IntG8, PieceType::King, PieceType::Rook);
+            const Move BlackCastlingOOO(Squares::IntE1, Squares::IntC1, PieceType::King, PieceType::Rook);
         }
 
         const BitBoard Empty = 0x0000000000000000;
@@ -245,6 +245,7 @@ namespace Napoleon
         const BitBoard NotGHFile = NotGFile | NotHFile;
 
         const int MaxMoves = 192;
+        const int MaxPly = 100;
 
         const BitBoard DeBrujinValue = 0x07EDD5E59A4E28C2;
         const int DeBrujinTable[] =

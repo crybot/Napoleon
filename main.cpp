@@ -85,7 +85,7 @@ unsigned long long Perft(int depth, Board& board)
     int pos = 0;
     Move moves[Constants::MaxMoves + 2];
 
-    int nodes = 0;
+    unsigned long long nodes = 0;
 
     if (depth == 0)
         return 1;
@@ -101,7 +101,6 @@ unsigned long long Perft(int depth, Board& board)
         nodes += Perft(depth - 1, board);
         board.UndoMove(moves[i]);
     }
-
     return nodes;
 
 }
@@ -112,7 +111,6 @@ void Divide(int depth, Board& board)
     unsigned long long total = 0;
     int temp = 0;
     int NumMoves = 0;
-    int cap = 0;
 
     Move moves[Constants::MaxMoves + 2];
     MoveGenerator::GetLegalMoves(moves, pos, board);
@@ -121,8 +119,6 @@ void Divide(int depth, Board& board)
 
     for (int i = 0; i < pos; i++)
     {
-        if (moves[i].IsCapture())
-            cap++;
         board.MakeMove(moves[i]);
         temp = Perft(depth - 1, board);
         total += temp;
@@ -134,46 +130,36 @@ void Divide(int depth, Board& board)
 
     std::cout << "Total Nodes: " << total << std::endl;
     std::cout << "Moves: " << NumMoves << std::endl;
-    std::cout << "Captures: " << cap << std::endl;
-
 }
+
+//bool IsEnPassant(Byte a, Byte b, Byte c)
+//{
+//    return (a == PieceType::Pawn && b == PieceType::Pawn && c == PieceType::Pawn);
+//}
 
 int main()
 {
     using namespace Constants;
     using namespace Constants::Squares;
-    Board initialBoard;
-    //    srand(time(NULL));
 
-    //    Move moves[100];
-    //    int pos;
 
-    //    board.Display();
+    //    int IntMove = 0;
+
+    //    IntMove |= (Constants::Squares::IntH1 & 0x3f); // from
+    //    IntMove |= (Constants::Squares::IntA2 & 0x3f) << 6; // to
+    //    IntMove |= (PieceType::Knight & 0x7) << 12; // piece moved
+    //    IntMove |= (PieceType::Pawn & 0x7) << 15; // piece captured
+    //    IntMove |= (PieceType::Pawn & 0x7) << 18; // piece promoted
+
+    //    Byte pm = (IntMove >> 12) & 0x7;
+    //    Byte pc = (IntMove >> 15) & 0x7;
+    //    Byte prm = (IntMove >> 18) & 0x7;
+
+    //    if (IsEnPassant(pm, pc, prm))
+    //        cout << "En passant!";
+
     //    cin.get();
 
-    //    board.MakeMove(Move(IntE2, IntE4, PieceType::Pawn, PieceType::None, PieceType::None));
-    //    board.Display();
-    //    cin.get();
-
-    //    board.MakeMove(Move(IntA7, IntA6, PieceType::Pawn, PieceType::None, PieceType::None));
-    //    board.Display();
-    //    cin.get();
-
-    //    board.MakeMove(Move(IntE4, IntE5, PieceType::Pawn, PieceType::None, PieceType::None));
-    //    board.Display();
-    //    cin.get();
-
-    //    board.MakeMove(Move(IntD7, IntD5, PieceType::Pawn, PieceType::None, PieceType::None));
-    //    board.Display();
-    //    cin.get();
-
-    //    board.MakeMove(Move(IntE5, IntD6, PieceType::Pawn, PieceType::Pawn, PieceType::Pawn));
-    //    board.Display();
-    //    cin.get();
-
-    //    board.UndoMove(Move(IntE5, IntD6, PieceType::Pawn, PieceType::Pawn, PieceType::Pawn));
-    //    board.Display();
-    //    cin.get();
 
     StopWatch watch;
     Board board;
@@ -205,7 +191,7 @@ int main()
             }
         }
 
-        if (fields[0] == "divide")
+        else if (fields[0] == "divide")
         {
             if (fields.size() > 1)
             {
@@ -221,24 +207,24 @@ int main()
         }
 
 
-        if (fields[0] == "set")
+        else if (fields[0] == "set")
         {
-            if (fields.size() == 7)
+            if (fields.size() >= 5)
             {
                 board.LoadGame(FenString(cmd.substr(fields[0].size()+1)));
             }
         }
 
-        if (cmd == "display")
+        else if (cmd == "display")
         {
             board.Display();
         }
 
-        if (cmd == "debug")
+        else if (cmd == "debug")
         {
-            cout << "Pezzi bianchi: "; Utils::BitBoard::Display(board.WhitePieces);
+            cout << "Pezzi bianchi: "; Utils::BitBoard::Display(board.Pieces[PieceColor::White]);
             cin.get();
-            cout << "Pezzi Neri: "; Utils::BitBoard::Display(board.BlackPieces);
+            cout << "Pezzi Neri: "; Utils::BitBoard::Display(board.Pieces[PieceColor::Black]);
             cin.get();
             cout << "Caselle occupate: "; Utils::BitBoard::Display(board.OccupiedSquares);
             cin.get();
@@ -246,19 +232,19 @@ int main()
             cin.get();
         }
 
-        if (cmd == "new")
+        else if (cmd == "new")
         {
             board = Board();
             board.Equip();
         }
 
-        if (cmd == "pinned")
+        else if (cmd == "pinned")
         {
             cout << "Pinned Pieces: " << endl;
             Utils::BitBoard::Display(board.GetPinnedPieces());
         }
 
-        if (fields[0] == "move")
+        else if (fields[0] == "move")
         {
             if (fields.size() == 2)
             {
@@ -266,7 +252,7 @@ int main()
             }
         }
 
-        if (fields[0] == "undo")
+        else if (fields[0] == "undo")
         {
             if (fields.size() == 2)
             {
@@ -274,6 +260,10 @@ int main()
             }
         }
 
+        else
+        {
+            cout << "incorrect command: " << cmd << endl;
+        }
         cout << endl;
     }
 

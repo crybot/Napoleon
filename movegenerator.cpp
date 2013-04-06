@@ -17,13 +17,13 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = (Byte)Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  Move(fromIndex, toIndex, PieceType::Queen, board.PieceSet[toIndex].Type, PieceType::None);
+                moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::None);
             }
         }
     }
 
     //thanks stockfish for this
-    void MoveGenerator::GetEvadeMoves(Board& board, Move moveList[], int& pos)
+    void MoveGenerator::GetEvadeMoves(Board& board, BitBoard checkers, Move moveList[], int& pos)
     {
         BitBoard b;
         Byte to;
@@ -31,7 +31,6 @@ namespace Napoleon
         int checkersCnt = 0;
         int ksq = board.KingSquare[board.SideToMove];
         BitBoard sliderAttacks = 0;
-        BitBoard checkers = board.Attackers(ksq, board.SideToMove);
 
         // Find squares attacked by slider checkers, we will remove them from the king
         // evasions so to skip known illegal moves avoiding useless legality check later.
@@ -49,7 +48,7 @@ namespace Napoleon
                 // If queen and king are far or not on a diagonal line we can safely
                 // remove all the squares attacked in the other direction becuase are
                 // not reachable by the king anyway.
-                if ( (MoveDatabase::ObstructedTable[ksq][checksq]) || (MoveDatabase::PseudoBishopAttacks[checksq] & Constants::Masks::SquareMask[ksq])==0)
+                if ( MoveDatabase::ObstructedTable[ksq][checksq] || (MoveDatabase::PseudoBishopAttacks[checksq] & Constants::Masks::SquareMask[ksq])==0)
                     sliderAttacks |=  MoveDatabase::PseudoBishopAttacks[checksq]
                             | MoveDatabase::PseudoRookAttacks[checksq];
 
@@ -73,7 +72,7 @@ namespace Napoleon
         while (b)
         {
             to = (Byte)Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
-            moveList[pos++] = Move(from, to, PieceType::King, board.PieceSet[to].Type, PieceType::None);
+            moveList[pos++] = Move(from, to, board.PieceSet[to].Type, PieceType::None);
         }
 
         // Generate evasions for other pieces only if not under a double check
@@ -87,7 +86,6 @@ namespace Napoleon
         GetBishopMoves(board.GetPieceSet(board.SideToMove, PieceType::Bishop), board, moveList, pos, target);
         GetRookMoves(board.GetPieceSet(board.SideToMove, PieceType::Rook), board, moveList, pos, target);
         GetQueenMoves(board.GetPieceSet(board.SideToMove, PieceType::Queen), board, moveList, pos, target);
-        GetCastleMoves(board, moveList, pos);
     }
 
 }

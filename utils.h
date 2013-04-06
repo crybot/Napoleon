@@ -92,6 +92,11 @@ namespace Napoleon
         {
             return file + 8 * rank;
         }
+
+        INLINE Byte Piece::GetOpposite(Byte color)
+        {
+            return 1 ^ color;
+        }
     }
 }
 #endif // UTILS_H
