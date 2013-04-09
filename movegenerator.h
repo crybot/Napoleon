@@ -72,9 +72,9 @@ namespace Napoleon
                         (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove == PieceColor::Black))
                 {
                     moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Queen);
-                    moveList[pos++] =  Move(fromIndex, toIndex,  board.PieceSet[toIndex].Type, PieceType::Rook);
-                    moveList[pos++] =  Move(fromIndex, toIndex,  board.PieceSet[toIndex].Type, PieceType::Bishop);
-                    moveList[pos++] =  Move(fromIndex, toIndex,  board.PieceSet[toIndex].Type, PieceType::Knight);
+                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Rook);
+                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Bishop);
+                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Knight);
                 }
                 else
                 {
@@ -164,30 +164,42 @@ namespace Napoleon
     {
         if (board.SideToMove == PieceColor::White)
         {
-            if (board.WhiteCanCastleOO)
+            if (board.CastlingStatus & Constants::Castle::WhiteCastleOO)
             {
                 if ((Constants::Castle::WhiteCastleMaskOO & board.OccupiedSquares) == 0)
-                    moveList[pos++] =  Constants::Castle::WhiteCastlingOO;
+                {
+                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOO, board.SideToMove))
+                        moveList[pos++] =  Constants::Castle::WhiteCastlingOO;
+                }
 
             }
-            if (board.WhiteCanCastleOOO)
+            if (board.CastlingStatus & Constants::Castle::WhiteCastleOOO)
             {
                 if ((Constants::Castle::WhiteCastleMaskOOO & board.OccupiedSquares) == 0)
-                    moveList[pos++] =  Constants::Castle::WhiteCastlingOOO;
+                {
+                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOOO ^ Constants::Squares::B1, board.SideToMove))
+                        moveList[pos++] =  Constants::Castle::WhiteCastlingOOO;
+                }
             }
         }
 
         else if (board.SideToMove == PieceColor::Black)
         {
-            if (board.BlackCanCastleOO)
+            if (board.CastlingStatus & Constants::Castle::BlackCastleOO)
             {
                 if ((Constants::Castle::BlackCastleMaskOO & board.OccupiedSquares) == 0)
-                    moveList[pos++] =  Constants::Castle::BlackCastlingOO;
+                {
+                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOO, board.SideToMove))
+                        moveList[pos++] =  Constants::Castle::BlackCastlingOO;
+                }
             }
-            if (board.BlackCanCastleOOO)
+            if (board.CastlingStatus & Constants::Castle::BlackCastleOOO)
             {
                 if ((Constants::Castle::BlackCastleMaskOOO & board.OccupiedSquares) == 0)
-                    moveList[pos++] =  Constants::Castle::BlackCastlingOOO;
+                {
+                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOOO^ Constants::Squares::B8, board.SideToMove))
+                        moveList[pos++] =  Constants::Castle::BlackCastlingOOO;
+                }
             }
         }
     }

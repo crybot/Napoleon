@@ -8,6 +8,7 @@ namespace Napoleon
 {
     namespace Constants
     {
+
         namespace Magics
         {
             const BitBoard FileMagic[] =
@@ -214,6 +215,11 @@ namespace Napoleon
 
         namespace Castle
         {
+            const Byte WhiteCastleOO = 0x1;
+            const Byte WhiteCastleOOO = 0x2;
+            const Byte BlackCastleOO = 0x4;
+            const Byte BlackCastleOOO = 0x8;
+            const Byte FullCastlingRights = 0xF;
             const BitBoard WhiteCastleMaskOO = 0x0000000000000060;
             const BitBoard WhiteCastleMaskOOO = 0x000000000000000E;
 
@@ -224,7 +230,12 @@ namespace Napoleon
             const Move WhiteCastlingOOO(Squares::IntE1, Squares::IntC1, PieceType::King, PieceType::Rook);
 
             const Move BlackCastlingOO(Squares::IntE8, Squares::IntG8, PieceType::King, PieceType::Rook);
-            const Move BlackCastlingOOO(Squares::IntE1, Squares::IntC1, PieceType::King, PieceType::Rook);
+            const Move BlackCastlingOOO(Squares::IntE8, Squares::IntC8, PieceType::King, PieceType::Rook);
+        }
+
+        namespace Piece
+        {
+            const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
         }
 
         const BitBoard Empty = 0x0000000000000000;

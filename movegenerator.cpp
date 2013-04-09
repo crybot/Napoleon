@@ -6,17 +6,17 @@ namespace Napoleon
     void MoveGenerator::GetQueenMoves(BitBoard queens, Board &board, Move moveList[], int &pos, BitBoard target)
     {
         BitBoard targets;
-        Byte fromIndex;
-        Byte toIndex;
+        int fromIndex;
+        int toIndex;
 
         while (queens != 0)
         {
-            fromIndex = (Byte)Utils::BitBoard::BitScanForwardReset(queens); // search for LS1B and then reset it
+            fromIndex = Utils::BitBoard::BitScanForwardReset(queens); // search for LS1B and then reset it
             targets = Queen::GetAllTargets(Constants::Masks::SquareMask[fromIndex], board) & target;
 
             while (targets != 0)
             {
-                toIndex = (Byte)Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
+                toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
                 moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::None);
             }
         }
@@ -26,7 +26,7 @@ namespace Napoleon
     void MoveGenerator::GetEvadeMoves(Board& board, BitBoard checkers, Move moveList[], int& pos)
     {
         BitBoard b;
-        Byte to;
+        int to;
         int from, checksq;
         int checkersCnt = 0;
         int ksq = board.KingSquare[board.SideToMove];
@@ -71,7 +71,7 @@ namespace Napoleon
 
         while (b)
         {
-            to = (Byte)Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
+            to = Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
             moveList[pos++] = Move(from, to, board.PieceSet[to].Type, PieceType::None);
         }
 

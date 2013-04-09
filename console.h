@@ -6,6 +6,7 @@ namespace Console
 {
     const std::string Green = "\e[32m";
     const std::string Red = "\e[31m";
+    const std::string Yellow = "\e[33m";
     const std::string Reset = "\e[m";
 }
 

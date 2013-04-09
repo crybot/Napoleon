@@ -10,7 +10,7 @@ namespace Napoleon
     public:
         Byte FromSquare;
         Byte ToSquare;
-        Byte PieceCaptured;
+        Byte PieceCaptured; // overloaded to manage castle (KING)
         Byte PiecePromoted;// overloaded to manage castle (ROOK) // overloaded to manage en-passant (PAWN)
 
         Move(int, int, Byte, Byte);
@@ -36,12 +36,22 @@ namespace Napoleon
 
     INLINE bool Move::IsCapture() const
     {
-        return (PieceCaptured != PieceType::None);
+        return (PieceCaptured != PieceType::None && PieceCaptured != PieceType::King);
     }
 
     INLINE bool Move::IsEnPassant() const
     {
         return (PiecePromoted == PieceType::Pawn);
+    }
+
+    INLINE bool Move::IsCastle() const
+    {
+        return (PieceCaptured == PieceType::King && PiecePromoted == PieceType::Rook);
+    }
+
+    INLINE bool Move::IsPromotion() const
+    {
+        return (PieceCaptured != PieceType::King && PiecePromoted != PieceType::None && PiecePromoted != PieceType::Pawn);
     }
 }
 #endif // MOVE_H

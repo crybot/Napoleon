@@ -4,7 +4,6 @@
 #include "move.h"
 #include "utils.h"
 #include "movedatabase.h"
-#include <iostream>
 
 namespace Napoleon
 {
@@ -12,14 +11,11 @@ namespace Napoleon
     class Board
     {
     public:
-        bool WhiteCanCastleOO;
-        bool WhiteCanCastleOOO;
-        bool BlackCanCastleOO;
-        bool BlackCanCastleOOO;
         int EnPassantSquare;
+        Byte CastlingStatus;
         Byte SideToMove;
 
-        Piece PieceSet[64];
+        Piece PieceSet[64]; // square
         int KingSquare[2]; // color
 
         BitBoard Pieces[2]; // color
@@ -49,6 +45,7 @@ namespace Napoleon
     private:
         int ply;
         int enpSquares[Constants::MaxPly];
+        Byte castlingStatus[Constants::MaxPly];
         BitBoard bitBoardSet[2][6] = { { Constants::Empty } }; // color, type
 
         void clearPieceSet();
@@ -63,6 +60,8 @@ namespace Napoleon
         void initializeCastlingStatus(const FenString&);
         void initializeEnPassantSquare(const FenString&);
         void initializePieceSet(const FenString&);
+        void makeCastle(int, int);
+        void undoCastle(int, int);
 
     };
 
@@ -109,21 +108,15 @@ namespace Napoleon
     {
         if (PieceSet[move.FromSquare].Type == PieceType::King)
         {
-            return !KingAttackers(move.ToSquare, SideToMove);
+            return !IsAttacked(Constants::Masks::SquareMask[move.ToSquare], SideToMove);
         }
 
         if (move.IsEnPassant())
         {
-            if (pinned & Constants::Masks::SquareMask[move.FromSquare])
-            {
-                MakeMove(move);
-                bool islegal = !IsAttacked(bitBoardSet[Utils::Piece::GetOpposite(SideToMove)][PieceType::King], Utils::Piece::GetOpposite(SideToMove));
-                UndoMove(move);
-                return islegal;
-            }
-
-            else
-                return true;
+            MakeMove(move);
+            bool islegal = !IsAttacked(bitBoardSet[Utils::Piece::GetOpposite(SideToMove)][PieceType::King], Utils::Piece::GetOpposite(SideToMove));
+            UndoMove(move);
+            return islegal;
         }
 
         return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[move.FromSquare]) == 0)
@@ -143,7 +136,6 @@ namespace Napoleon
                 | (bishopAttacks  & (bitBoardSet[opp][PieceType::Bishop] | bitBoardSet[opp][PieceType::Queen]))
                 | (rookAttacks   & (bitBoardSet[opp][PieceType::Rook] | bitBoardSet[opp][PieceType::Queen]));
     }
-
 }
 
 #endif // BOARD_H

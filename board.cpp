@@ -92,16 +92,13 @@ namespace Napoleon
     {
         for (int i=0; i<64; i++)
         {
-            PieceSet[i] = Piece(PieceColor::None, PieceType::None);
+            PieceSet[i] = Constants::Piece::Null;
         }
     }
 
     void Board::initializeCastlingStatus()
     {
-        WhiteCanCastleOO = true;
-        WhiteCanCastleOOO = true;
-        BlackCanCastleOO = true;
-        BlackCanCastleOOO = true;
+        CastlingStatus = Constants::Castle::FullCastlingRights;
     }
 
     void Board::initializeSideToMove()
@@ -187,6 +184,11 @@ namespace Napoleon
 
         std::cout << "Enpassant Square: " << Utils::Square::ToAlgebraic(EnPassantSquare) << std::endl;
         std::cout << "Side To Move: " << (SideToMove == PieceColor::White ? "White" : "Black") << std::endl;
+        std::cout << "Castling Rights: ";
+        std::cout << (CastlingStatus & Constants::Castle::WhiteCastleOO ? "K" : "");
+        std::cout << (CastlingStatus & Constants::Castle::WhiteCastleOOO ? "Q" : "");
+        std::cout << (CastlingStatus & Constants::Castle::BlackCastleOO ? "k" : "");
+        std::cout << (CastlingStatus & Constants::Castle::BlackCastleOOO ? "q" : "") << std::endl;
     }
 
     void Board::LoadGame(const FenString& fenString)
@@ -200,10 +202,19 @@ namespace Napoleon
 
     void Board::initializeCastlingStatus(const FenString& fenString)
     {
-        WhiteCanCastleOO = fenString.CanWhiteShortCastle;
-        WhiteCanCastleOOO = fenString.CanWhiteLongCastle;
-        BlackCanCastleOO = fenString.CanBlackShortCastle;
-        BlackCanCastleOOO = fenString.CanBlackLongCastle;
+        CastlingStatus = 0;
+
+        if (fenString.CanWhiteShortCastle)
+            CastlingStatus |= Constants::Castle::WhiteCastleOO;
+
+        if (fenString.CanWhiteLongCastle)
+            CastlingStatus |= Constants::Castle::WhiteCastleOOO;
+
+        if (fenString.CanBlackShortCastle)
+            CastlingStatus |= Constants::Castle::BlackCastleOO;
+
+        if (fenString.CanBlackLongCastle)
+            CastlingStatus |= Constants::Castle::BlackCastleOOO;
     }
 
     void Board::initializeSideToMove(const FenString& fenString)
@@ -259,10 +270,14 @@ namespace Napoleon
 
     void Board::MakeMove(Move move)
     {
+        castlingStatus[ply] = CastlingStatus;  // salva i diritti di arrocco correnti
+        enpSquares[ply] = EnPassantSquare; // salva l'attuale casella enpassant
+
+
         Byte pieceMoved = PieceSet[move.FromSquare].Type;
         //ARRAY
         PieceSet[move.ToSquare] = PieceSet[move.FromSquare]; // muove il pezzo
-        PieceSet[move.FromSquare] = Piece(PieceColor::None, PieceType::None); // svuota la casella di partenza
+        PieceSet[move.FromSquare] = Constants::Piece::Null; // svuota la casella di partenza
 
         //BITBOARDS
         BitBoard From = Constants::Masks::SquareMask[move.FromSquare];
@@ -282,59 +297,41 @@ namespace Napoleon
         {
             KingSquare[SideToMove] = move.ToSquare;
 
-            //            if(move.IsCastle())
-            //            {
-            //                if (move.IsCastleOO())
-            //                {
-            //                    if (SideToMove == PieceColor::White)
-            //                    {
-            //                        BitBoard rook = Constants::Squares::H1 | Constants::Squares::F1;
-            //                        WhitePieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo ^ rook;
-            //                        PieceSet[Constants::Squares::IntH1] = Piece(PieceColor::None, PieceType::None);
-            //                        PieceSet[Constants::Squares::IntF1] = Piece(SideToMove, PieceType::Rook);
-            //                        WhiteCanCastleOO = false;
-            //                    }
-            //                    else
-            //                    {
-            //                        BitBoard rook = Constants::Squares::H8 | Constants::Squares::F8;
-            //                        BlackPieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo ^ rook;
-            //                        PieceSet[Constants::Squares::IntH8] = Piece(PieceColor::None, PieceType::None);
-            //                        PieceSet[Constants::Squares::IntF8] = Piece(SideToMove, PieceType::Rook);
-            //                        BlackCanCastleOO = false;
-            //                    }
-            //                }
-            //                else
-            //                {
-            //                    if (SideToMove == PieceColor::White)
-            //                    {
-            //                        BitBoard rook = Constants::Squares::A1 | Constants::Squares::C1;
-            //                        WhitePieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo | rook;
-            //                        PieceSet[Constants::Squares::IntA1] = Piece(PieceColor::None, PieceType::None);
-            //                        PieceSet[Constants::Squares::IntC1] = Piece(SideToMove, PieceType::Rook);
-            //                        WhiteCanCastleOOO = false;
-            //                    }
-            //                    else
-            //                    {
-            //                        BitBoard rook = Constants::Squares::A8 | Constants::Squares::C8;
-            //                        BlackPieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo | rook;
-            //                        PieceSet[Constants::Squares::IntA8] = Piece(PieceColor::None, PieceType::None);
-            //                        PieceSet[Constants::Squares::IntC8] = Piece(SideToMove, PieceType::Rook);
-            //                        BlackCanCastleOOO = false;
-            //                    }
-            //                }
-            //            }
+            if (move.IsCastle())
+            {
+                makeCastle(move.FromSquare, move.ToSquare);
+            }
+
+            if (SideToMove == PieceColor::White)
+                CastlingStatus &= ~(Constants::Castle::WhiteCastleOO | Constants::Castle::WhiteCastleOOO); // azzera i diritti di arrocco per il bianco
+            else
+                CastlingStatus &= ~(Constants::Castle::BlackCastleOO | Constants::Castle::BlackCastleOOO); // azzera i diritti di arrocco per il nero
+        }
+        else if (pieceMoved == PieceType::Rook) // se e` stata mossa una torre cambia i diritti di arrocco
+        {
+            if (CastlingStatus) // se i giocatori possono ancora muovere
+            {
+                if (SideToMove == PieceColor::White)
+                {
+                    if (move.FromSquare == Constants::Squares::IntA1)
+                        CastlingStatus &= ~Constants::Castle::WhiteCastleOOO;
+                    else if (move.FromSquare == Constants::Squares::IntH1)
+                        CastlingStatus &= ~Constants::Castle::WhiteCastleOO;
+                }
+                else
+                {
+                    if (move.FromSquare == Constants::Squares::IntA8)
+                        CastlingStatus &= ~Constants::Castle::BlackCastleOOO;
+                    else if (move.FromSquare == Constants::Squares::IntH8)
+                        CastlingStatus &= ~Constants::Castle::BlackCastleOO;
+                }
+            }
+        }
+        else if (move.IsPromotion())
+        {
+            PieceSet[move.ToSquare] = Piece(SideToMove, move.PiecePromoted);
+            bitBoardSet[SideToMove][PieceType::Pawn] ^= To;
+            bitBoardSet[SideToMove][move.PiecePromoted] ^= To;
         }
 
         if (move.IsCapture())
@@ -345,12 +342,12 @@ namespace Napoleon
                 if (SideToMove == PieceColor::White)
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare - 8];
-                    PieceSet[EnPassantSquare - 8] = Piece(PieceColor::None, PieceType::None);
+                    PieceSet[EnPassantSquare - 8] = Constants::Piece::Null;
                 }
                 else
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare + 8];
-                    PieceSet[EnPassantSquare + 8] = Piece(PieceColor::None, PieceType::None);
+                    PieceSet[EnPassantSquare + 8] = Constants::Piece::Null;
                 }
 
                 Pieces[enemy] ^= piece;
@@ -368,6 +365,24 @@ namespace Napoleon
                 OccupiedSquares ^= From;
                 EmptySquares ^= From;
             }
+
+            if (move.PieceCaptured == PieceType::Rook)
+            {
+                if (enemy == PieceColor::White)
+                {
+                    if (move.ToSquare == Constants::Squares::IntH1)
+                        CastlingStatus &= ~Constants::Castle::WhiteCastleOO;
+                    else if (move.ToSquare == Constants::Squares::IntA1)
+                        CastlingStatus &= ~Constants::Castle::WhiteCastleOOO;
+                }
+                else
+                {
+                    if (move.ToSquare == Constants::Squares::IntH8)
+                        CastlingStatus &= ~Constants::Castle::BlackCastleOO;
+                    else if (move.ToSquare == Constants::Squares::IntA8)
+                        CastlingStatus &= ~Constants::Castle::BlackCastleOOO;
+                }
+            }
         }
         else
         {
@@ -376,7 +391,6 @@ namespace Napoleon
         }
 
         // azzera la casella enpassant
-        enpSquares[ply] = EnPassantSquare;
         EnPassantSquare = Constants::Squares::Invalid;
 
         // se il pedone si muove di due caselle si aggiorna la casella enpassant
@@ -399,9 +413,16 @@ namespace Napoleon
 
     void Board::UndoMove(Move move)
     {
-        Byte pieceMoved = PieceSet[move.ToSquare].Type;
         // decrementa profondita`
         ply--;
+
+        Byte pieceMoved;
+
+        // se la mossa e` stata una promozione il pezzo mosso e` un pedone
+        if (move.IsPromotion())
+            pieceMoved = PieceType::Pawn;
+        else
+            pieceMoved = PieceSet[move.ToSquare].Type;
 
         // reimposta il turno
         Byte enemy = SideToMove;
@@ -426,59 +447,21 @@ namespace Napoleon
         {
             KingSquare[SideToMove] = move.FromSquare;
 
-            //            if(move.IsCastle())
-            //            {
-            //                if (move.IsCastleOO())
-            //                {
-            //                    if (SideToMove == PieceColor::White)
-            //                    {
-            //                        BitBoard rook = Constants::Squares::H1 | Constants::Squares::F1;
-            //                        WhitePieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo ^ rook;
-            //                        PieceSet[Constants::Squares::IntH1] = Piece(SideToMove, PieceType::Rook);
-            //                        PieceSet[Constants::Squares::IntF1] = Piece(PieceColor::None, PieceType::None);
-            //                        WhiteCanCastleOO = true;
-            //                    }
-            //                    else
-            //                    {
-            //                        BitBoard rook = Constants::Squares::H8 | Constants::Squares::F8;
-            //                        BlackPieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo ^ rook;
-            //                        PieceSet[Constants::Squares::IntH8] = Piece(SideToMove, PieceType::Rook);
-            //                        PieceSet[Constants::Squares::IntF8] = Piece(PieceColor::None, PieceType::None);
-            //                        BlackCanCastleOO = true;
-            //                    }
-            //                }
-            //                else
-            //                {
-            //                    if (SideToMove == PieceColor::White)
-            //                    {
-            //                        BitBoard rook = Constants::Squares::A1 | Constants::Squares::C1;
-            //                        WhitePieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo | rook;
-            //                        PieceSet[Constants::Squares::IntA1] = Piece(SideToMove, PieceType::Rook);
-            //                        PieceSet[Constants::Squares::IntC1] = Piece(PieceColor::None, PieceType::None);
-            //                        WhiteCanCastleOOO = true;
-            //                    }
-            //                    else
-            //                    {
-            //                        BitBoard rook = Constants::Squares::A8 | Constants::Squares::C8;
-            //                        BlackPieces ^= rook;
-            //                        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
-            //                        OccupiedSquares ^= FromTo | rook;
-            //                        EmptySquares ^= FromTo | rook;
-            //                        PieceSet[Constants::Squares::IntA8] = Piece(SideToMove, PieceType::Rook);
-            //                        PieceSet[Constants::Squares::IntC8] = Piece(PieceColor::None, PieceType::None);
-            //                        BlackCanCastleOOO = true;
-            //                    }
-            //                }
-            //            }
+            if (move.IsCastle())
+            {
+                undoCastle(move.FromSquare, move.ToSquare);
+            }
+
+            CastlingStatus = castlingStatus[ply]; // resetta i diritti di arrocco dello stato precedente
+        }
+        else if (pieceMoved == PieceType::Rook)
+        {
+            CastlingStatus = castlingStatus[ply];
+        }
+        else if (move.IsPromotion())
+        {
+            PieceSet[move.FromSquare] = Piece(SideToMove, PieceType::Pawn);
+            bitBoardSet[SideToMove][move.PiecePromoted] ^= To;
         }
 
         // reimposta la casella enpassant
@@ -488,7 +471,7 @@ namespace Napoleon
         {
             if (move.IsEnPassant())
             {
-                PieceSet[move.ToSquare] = Piece(PieceColor::None, PieceType::None); // svuota la casella di partenza perche` non c'erano pezzi prima
+                PieceSet[move.ToSquare] = Constants::Piece::Null; // svuota la casella di partenza perche` non c'erano pezzi prima
                 BitBoard piece;
 
                 if (SideToMove == PieceColor::White)
@@ -519,21 +502,110 @@ namespace Napoleon
                 OccupiedSquares ^= From;
                 EmptySquares ^= From;
             }
+
+            if (move.PieceCaptured == PieceType::Rook)
+            {
+                CastlingStatus = castlingStatus[ply];
+            }
         }
         else
         {
-             // svuota la casella di partenza perche` non c'erano pezzi prima
-            PieceSet[move.ToSquare] = Piece(PieceColor::None, PieceType::None);
+            // svuota la casella di partenza perche` non c'erano pezzi prima
+            PieceSet[move.ToSquare] = Constants::Piece::Null;
             OccupiedSquares ^= FromTo;
             EmptySquares ^= FromTo;
         }
+    }
+
+    void Board::makeCastle(int from, int to)
+    {
+        BitBoard rook;
+        int fromR;
+        int toR;
+
+        if (from < to) // Castle O-O
+        {
+            if (SideToMove == PieceColor::White)
+            {
+                fromR = Constants::Squares::IntH1;
+                toR = Constants::Squares::IntF1;
+            }
+            else
+            {
+                fromR = Constants::Squares::IntH8;
+                toR = Constants::Squares::IntF8;
+            }
+        }
+        else // Castle O-O-O
+        {
+            if (SideToMove == PieceColor::White)
+            {
+                fromR = Constants::Squares::IntA1;
+                toR = Constants::Squares::IntD1;
+            }
+            else
+            {
+                fromR = Constants::Squares::IntA8;
+                toR = Constants::Squares::IntD8;
+            }
+        }
+
+        rook = Constants::Masks::SquareMask[fromR] | Constants::Masks::SquareMask[toR];
+        Pieces[SideToMove] ^= rook;
+        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
+        OccupiedSquares ^= rook;
+        EmptySquares ^= rook;
+        PieceSet[fromR] = Constants::Piece::Null; // sposta la torre
+        PieceSet[toR] = Piece(SideToMove, PieceType::Rook); // sposta la torre
+    }
+
+    void Board::undoCastle(int from, int to)
+    {
+        BitBoard rook;
+        int fromR;
+        int toR;
+
+        if (from < to) // Castle O-O
+        {
+            if (SideToMove == PieceColor::White)
+            {
+                fromR = Constants::Squares::IntH1;
+                toR = Constants::Squares::IntF1;
+            }
+            else
+            {
+                fromR = Constants::Squares::IntH8;
+                toR = Constants::Squares::IntF8;
+            }
+        }
+        else // Castle O-O-O
+        {
+            if (SideToMove == PieceColor::White)
+            {
+                fromR = Constants::Squares::IntA1;
+                toR = Constants::Squares::IntD1;
+            }
+            else
+            {
+                fromR = Constants::Squares::IntA8;
+                toR = Constants::Squares::IntD8;
+            }
+        }
+
+        rook = Constants::Masks::SquareMask[fromR] | Constants::Masks::SquareMask[toR];
+        Pieces[SideToMove] ^= rook;
+        bitBoardSet[SideToMove][PieceType::Rook] ^= rook;
+        OccupiedSquares ^= rook;
+        EmptySquares ^= rook;
+        PieceSet[fromR] = Piece(SideToMove, PieceType::Rook); // sposta la torre
+        PieceSet[toR] = Constants::Piece::Null; // sposta la torre
+        CastlingStatus = castlingStatus[ply]; // ripristina i diritti di arrocco dello stato precedente
     }
 
     bool Board::IsAttacked(BitBoard target, Byte side)
     {
         BitBoard slidingAttackers;
         BitBoard pawnAttacks;
-        BitBoard allPieces = OccupiedSquares;
         Byte enemyColor = Utils::Piece::GetOpposite(side);
         int to;
 
@@ -551,8 +623,8 @@ namespace Napoleon
 
             if (slidingAttackers != 0)
             {
-                if ((MoveDatabase::GetRankAttacks(allPieces, to) & slidingAttackers) != 0) return true;
-                if ((MoveDatabase::GetFileAttacks(allPieces, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetRankAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetFileAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
             }
 
             // diagonals
@@ -560,10 +632,15 @@ namespace Napoleon
 
             if (slidingAttackers != 0)
             {
-                if ((MoveDatabase::GetH1A8DiagonalAttacks(allPieces, to) & slidingAttackers) != 0) return true;
-                if ((MoveDatabase::GetA1H8DiagonalAttacks(allPieces, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
             }
         }
         return false;
     }
+
+
+
+
+
 }
