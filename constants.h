@@ -36,7 +36,7 @@ namespace Napoleon
 
         namespace Squares
         {
-            enum enumSquare {
+            enum Square {
                 IntA1, IntB1, IntC1, IntD1, IntE1, IntF1, IntG1, IntH1,
                 IntA2, IntB2, IntC2, IntD2, IntE2, IntF2, IntG2, IntH2,
                 IntA3, IntB3, IntC3, IntD3, IntE3, IntF3, IntG3, IntH3,
@@ -238,6 +238,7 @@ namespace Napoleon
             const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
         }
 
+        const Move NullMove(Squares::Invalid, Squares::Invalid, PieceType::None, PieceType::None);
         const BitBoard Empty = 0x0000000000000000;
         const BitBoard Universe = 0xFFFFFFFFFFFFFFFF;
 

@@ -39,7 +39,7 @@ namespace Napoleon
     {
         for (int i=0; i<64; i++)
         {
-            PiecePlacement[i] = Piece(PieceColor::None, PieceType::None);
+            PiecePlacement[i] = Constants::Piece::Null;
         }
 
         std::vector<std::string> ranks;

@@ -72,9 +72,8 @@ namespace Napoleon
     INLINE bool MoveDatabase::AreSquareAligned(int s1, int s2, int s3)
     {
         return (ObstructedTable[s1][s2] | ObstructedTable[s1][s3] | ObstructedTable[s2][s3])
-                          & (Constants::Masks::SquareMask[s1] | Constants::Masks::SquareMask[s2] | Constants::Masks::SquareMask[s3]);
+                & (Constants::Masks::SquareMask[s1] | Constants::Masks::SquareMask[s2] | Constants::Masks::SquareMask[s3]);
     }
-
 }
 
 #endif // MOVEDATABASE_H

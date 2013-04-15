@@ -19,6 +19,9 @@
 #include <cstdio>
 #include <ctime>
 #include "benchmark.h"
+#include "search.h"
+#include "evaluation.h"
+#include "console.h"
 
 using namespace Napoleon;
 using namespace std;
@@ -49,6 +52,53 @@ void Divide(int depth, Board& board, Benchmark bench)
     std::cout << "Moves: " << NumMoves << std::endl;
 }
 
+void SearchMove(int depth, Board& board)
+{
+    int max = -32767;
+    int pos = 0;
+    int move = 0;
+    int score;
+    Move moves[Constants::MaxMoves + 2];
+
+    MoveGenerator::GetLegalMoves(moves, pos, board);
+
+    if (pos == 0)
+    {
+        cout << Console::Red << "#CheckMate for Black#";
+        cout << Console::Reset << endl;
+    }
+    else
+    {
+
+        for (int i=0; i<pos; i++)
+        {
+
+            board.MakeMove(moves[i]);
+            score = -Search::negaMax(depth-1, -32767, 32767, board);
+            board.UndoMove(moves[i]);
+            if( score > max )
+            {
+                max = score;
+                move = i;
+            }
+        }
+
+        board.MakeMove(moves[move]);
+        board.Display();
+        cout << "I.A. Move: " << moves[move].ToAlgebraic() << endl;
+
+        pos = 0;
+        MoveGenerator::GetLegalMoves(moves, pos, board);
+        if (pos == 0)
+        {
+            cout << Console::Red << "#CheckMate for White#";
+            cout << Console::Reset << endl;
+        }
+
+
+    }
+}
+
 int main()
 {
     using namespace Constants;
@@ -58,6 +108,10 @@ int main()
     Board board;
     Benchmark bench;
     board.Equip();
+    board.Display();
+
+    cout << "Key: " << board.zobrist << endl;
+    cin.get();
 
     while(1)
     {
@@ -90,6 +144,18 @@ int main()
             }
         }
 
+        else if (fields[0] == "search")
+        {
+            if (fields.size() > 1)
+            {
+                int depth = boost::lexical_cast<int>(fields[1]);
+                watch.Start();
+                SearchMove(depth, board);
+                cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
+
+            }
+        }
+
         else if (fields[0] == "setboard")
         {
             if (fields.size() >= 5)
@@ -113,15 +179,30 @@ int main()
         {
             if (fields.size() == 2)
             {
-                board.MakeMove(board.ParseMove(fields[1]));
-            }
-        }
+                MoveList legalMoves;
+                MoveGenerator::GetLegalMoves(legalMoves.List(), legalMoves.size, board);
+                Move move = board.ParseMove(fields[1], legalMoves);
+                if (legalMoves.size > 0)
+                {
+                    if (move != Constants::NullMove)
+                    {
 
-        else if (fields[0] == "undo")
-        {
-            if (fields.size() == 2)
-            {
-                board.UndoMove(board.ParseMove(fields[1]));
+                        board.MakeMove(move);
+                        board.Display();
+                        if (legalMoves.size < 25)
+                            SearchMove(6, board);
+                        else
+                            SearchMove(5, board);
+                    }
+                    else
+                    {
+                        cout << "Invalid Move" << endl;
+                    }
+                }
+                else
+                {
+                    cout << Console::Red << "#Mate for White#";
+                }
             }
         }
 
@@ -129,10 +210,33 @@ int main()
         {
             bench.Start();
         }
+
+        else if (fields[0] == "play")
+        {
+            int pos;
+            do
+            {
+                Move legalMoves[Constants::MaxMoves + 2];
+                pos = 0;
+                MoveGenerator::GetLegalMoves(legalMoves, pos, board);
+                if (pos > 0)
+                {
+                    if (pos < 25)
+                        SearchMove(5, board);
+                    else
+                        SearchMove(6, board);
+                }
+
+            }while( pos > 0);
+
+            cout << Console::Red << "#Mate for " << (board.SideToMove == PieceColor::White ? "White #" : "Black #");
+
+        }
         else
         {
             cout << "incorrect command: " << cmd << endl;
         }
+
         cout << endl;
     }
 

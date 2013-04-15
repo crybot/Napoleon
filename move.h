@@ -53,5 +53,17 @@ namespace Napoleon
     {
         return (PieceCaptured != PieceType::King && PiecePromoted != PieceType::None && PiecePromoted != PieceType::Pawn);
     }
+
+    INLINE bool Move::operator==(const Move& other) const
+    {
+        return (FromSquare == other.FromSquare && ToSquare == other.ToSquare && PieceCaptured == other.PieceCaptured && PiecePromoted == other.PiecePromoted);
+    }
+
+    INLINE bool Move::operator!=(const Move& other) const
+    {
+        return !(FromSquare == other.FromSquare && ToSquare == other.ToSquare && PieceCaptured == other.PieceCaptured && PiecePromoted == other.PiecePromoted);
+    }
+
+
 }
 #endif // MOVE_H

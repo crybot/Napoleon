@@ -81,7 +81,7 @@ namespace Napoleon
 
         // Blocking evasions or captures of the checking piece
         BitBoard target = MoveDatabase::ObstructedTable[checksq][ksq] | checkers;
-        GetPawnMoves(board.GetPieceSet(board.SideToMove, PieceType::Pawn), board, moveList, pos, target);
+        GetPawnMoves<true>(board.GetPieceSet(board.SideToMove, PieceType::Pawn), board, moveList, pos, target);
         GetKnightMoves(board.GetPieceSet(board.SideToMove, PieceType::Knight), board, moveList, pos, target);
         GetBishopMoves(board.GetPieceSet(board.SideToMove, PieceType::Bishop), board, moveList, pos, target);
         GetRookMoves(board.GetPieceSet(board.SideToMove, PieceType::Rook), board, moveList, pos, target);

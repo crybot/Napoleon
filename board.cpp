@@ -2,8 +2,10 @@
 #include "utils.h"
 #include "console.h"
 #include "movedatabase.h"
+#include "movegenerator.h"
 #include "piece.h"
 #include "fenstring.h"
+#include "transpositiontable.h"
 #include <iostream>
 
 namespace Napoleon
@@ -11,11 +13,13 @@ namespace Napoleon
     Board::Board()
     {
         MoveDatabase::InitAttacks();
+        Zobrist::Init();
 
         Pieces[PieceColor::White] = Constants::Empty;
         Pieces[PieceColor::Black] = Constants::Empty;
         OccupiedSquares = Constants::Empty;
         EmptySquares = Constants::Empty;
+        zobrist = 0;
 
         ply = 0;
     }
@@ -32,6 +36,12 @@ namespace Napoleon
     void Board::AddPiece(Piece piece, Square sq)
     {
         PieceSet[sq] = piece;
+
+        if (piece.Type != PieceType::None)
+        {
+            NumOfPieces[piece.Color][piece.Type]++;
+            zobrist ^= Zobrist::Piece[piece.Color][piece.Type][sq];
+        }
     }
 
     void Board::initializePieceSet()
@@ -99,6 +109,7 @@ namespace Napoleon
     void Board::initializeCastlingStatus()
     {
         CastlingStatus = Constants::Castle::FullCastlingRights;
+        zobrist ^= Zobrist::Castling[CastlingStatus];
     }
 
     void Board::initializeSideToMove()
@@ -215,25 +226,30 @@ namespace Napoleon
 
         if (fenString.CanBlackLongCastle)
             CastlingStatus |= Constants::Castle::BlackCastleOOO;
+
+        zobrist ^= Zobrist::Castling[CastlingStatus];
     }
 
     void Board::initializeSideToMove(const FenString& fenString)
     {
         SideToMove = fenString.SideToMove;
+        if (SideToMove == PieceColor::Black)
+            zobrist ^= Zobrist::Color;
     }
 
     void Board::initializePieceSet(const FenString& fenString)
     {
         for (int i=0; i<64; i++)
         {
-            PieceSet[i] = fenString.PiecePlacement[i];
+            AddPiece(fenString.PiecePlacement[i], i);
         }
     }
 
     void Board::initializeEnPassantSquare(const FenString& fenString)
     {
         EnPassantSquare = fenString.EnPassantSquare;
-        //        enpSquares[ply++] = EnPassantSquare;
+        if (EnPassantSquare != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
     }
 
     void Board::initializeBitBoards(const FenString& fenString)
@@ -243,6 +259,7 @@ namespace Napoleon
             for (int l = PieceColor::White; l<PieceColor::None; l++)
             {
                 bitBoardSet[l][i] = 0;
+                NumOfPieces[l][i] = 0;
             }
         }
 
@@ -257,15 +274,31 @@ namespace Napoleon
         updateGenericBitBoards();
     }
 
-    Move Board::ParseMove(std::string str)
+    Move Board::ParseMove(std::string str, MoveList legalMoves)
     {
         Byte from = Utils::Square::Parse(str.substr(0, 2));
         Byte to = Utils::Square::Parse(str.substr(2));
 
+        Move move;
         if (to == EnPassantSquare)
-            return Move(from, to, PieceType::Pawn, PieceType::Pawn);
+            move =  Move(from, to, PieceType::Pawn, PieceType::Pawn);
 
-        return Move(from, to, PieceSet[to].Type, PieceType::None);
+        else if (str == "O-O")
+            move = SideToMove == PieceColor::White ? Constants::Castle::WhiteCastlingOO : Constants::Castle::BlackCastlingOO;
+
+        else if (str == "O-O-O")
+            move = SideToMove == PieceColor::White ? Constants::Castle::WhiteCastlingOOO : Constants::Castle::BlackCastlingOOO;
+
+        else
+            move = Move(from, to, PieceSet[to].Type, PieceType::None);
+
+        for (int i=0; i<legalMoves.size; i++)
+        {
+            if (move == legalMoves[i])
+                return move;
+        }
+
+        return Constants::NullMove;
     }
 
     void Board::MakeMove(Move move)
@@ -332,6 +365,8 @@ namespace Napoleon
             PieceSet[move.ToSquare] = Piece(SideToMove, move.PiecePromoted);
             bitBoardSet[SideToMove][PieceType::Pawn] ^= To;
             bitBoardSet[SideToMove][move.PiecePromoted] ^= To;
+            NumOfPieces[SideToMove][PieceType::Pawn]--;
+            NumOfPieces[SideToMove][move.PiecePromoted]++;
         }
 
         if (move.IsCapture())
@@ -383,6 +418,8 @@ namespace Napoleon
                         CastlingStatus &= ~Constants::Castle::BlackCastleOOO;
                 }
             }
+
+            NumOfPieces[enemy][move.PieceCaptured]--;
         }
         else
         {
@@ -460,6 +497,8 @@ namespace Napoleon
         }
         else if (move.IsPromotion())
         {
+            NumOfPieces[SideToMove][PieceType::Pawn]++;
+            NumOfPieces[SideToMove][move.PiecePromoted]--;
             PieceSet[move.FromSquare] = Piece(SideToMove, PieceType::Pawn);
             bitBoardSet[SideToMove][move.PiecePromoted] ^= To;
         }
@@ -507,6 +546,8 @@ namespace Napoleon
             {
                 CastlingStatus = castlingStatus[ply];
             }
+
+            NumOfPieces[enemy][move.PieceCaptured]++;
         }
         else
         {
@@ -638,6 +679,7 @@ namespace Napoleon
         }
         return false;
     }
+
 
 
 

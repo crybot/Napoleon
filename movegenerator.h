@@ -16,11 +16,24 @@
 
 namespace Napoleon
 {
+    class MoveList
+    {
+    public:
+        MoveList() : size(0) { }
+        Move& operator[](int i) { return moves[i]; }
+        Move* List() { return moves; }
+
+        int size;
+
+    private:
+        Move moves[Constants::MaxMoves + 2];
+    };
 
     namespace MoveGenerator
     {
         void GetLegalMoves(Move allMoves[],int& pos, Board& board);
-        void GetAllMoves(Move allMoves[], int& pos, Board& board, BitBoard target = Constants::Universe);
+        void GetAllMoves(Move allMoves[], int& pos, Board& board);
+        template<bool>
         void GetPawnMoves(BitBoard pawns, Board& board, Move moveList[], int& pos, BitBoard target);
         void GetKingMoves(BitBoard king, Board& board, Move moveList[], int& pos, BitBoard target);
         void GetKnightMoves(BitBoard knights, Board& board, Move moveList[], int& pos, BitBoard target);
@@ -29,19 +42,48 @@ namespace Napoleon
         void GetQueenMoves(BitBoard queens, Board& board, Move moveList[], int& pos, BitBoard target);
         void GetCastleMoves(Board& board, Move moveList[], int& pos);
         void GetEvadeMoves(Board& board, BitBoard attackers, Move moveList[], int& pos);
+        void GetCaptures(Move allMoves[], int& pos, Board& board);
+        void GetNonCaptures(Move allMoves[], int& pos, Board& board);
     }
 
-    INLINE void MoveGenerator::GetAllMoves(Move allMoves[], int& pos, Board& board, BitBoard target)
+    INLINE void MoveGenerator::GetAllMoves(Move allMoves[], int& pos, Board& board)
     {
-        GetPawnMoves(board.GetPieceSet(board.SideToMove, PieceType::Pawn), board, allMoves, pos, target);
-        GetKnightMoves(board.GetPieceSet(board.SideToMove, PieceType::Knight), board, allMoves, pos, target);
-        GetKingMoves(board.GetPieceSet(board.SideToMove, PieceType::King), board, allMoves, pos, target);
-        GetBishopMoves(board.GetPieceSet(board.SideToMove, PieceType::Bishop), board, allMoves, pos, target);
-        GetRookMoves(board.GetPieceSet(board.SideToMove, PieceType::Rook), board, allMoves, pos, target);
-        GetQueenMoves(board.GetPieceSet(board.SideToMove, PieceType::Queen), board, allMoves, pos, target);
+        //        GetPawnMoves<true>(board.GetPieceSet(board.SideToMove, PieceType::Pawn), board, allMoves, pos, target);
+        //        GetKnightMoves(board.GetPieceSet(board.SideToMove, PieceType::Knight), board, allMoves, pos, target);
+        //        GetBishopMoves(board.GetPieceSet(board.SideToMove, PieceType::Bishop), board, allMoves, pos, target);
+        //        GetQueenMoves(board.GetPieceSet(board.SideToMove, PieceType::Queen), board, allMoves, pos, target);
+        //        GetKingMoves(board.GetPieceSet(board.SideToMove, PieceType::King), board, allMoves, pos, target);
+        //        GetRookMoves(board.GetPieceSet(board.SideToMove, PieceType::Rook), board, allMoves, pos, target);
+        //        GetCastleMoves(board, allMoves, pos);
+
+        GetCaptures(allMoves, pos, board);
+        GetNonCaptures(allMoves, pos, board);
+    }
+
+    INLINE void MoveGenerator::GetCaptures(Move allMoves[], int& pos, Board& board)
+    {
+        BitBoard enemy = board.GetEnemyPieces();
+        GetPawnMoves<true>(board.GetPieceSet(board.SideToMove, PieceType::Pawn), board, allMoves, pos, enemy);
+        GetKnightMoves(board.GetPieceSet(board.SideToMove, PieceType::Knight), board, allMoves, pos, enemy);
+        GetBishopMoves(board.GetPieceSet(board.SideToMove, PieceType::Bishop), board, allMoves, pos, enemy);
+        GetQueenMoves(board.GetPieceSet(board.SideToMove, PieceType::Queen), board, allMoves, pos, enemy);
+        GetKingMoves(board.GetPieceSet(board.SideToMove, PieceType::King), board, allMoves, pos, enemy);
+        GetRookMoves(board.GetPieceSet(board.SideToMove, PieceType::Rook), board, allMoves, pos, enemy);
+    }
+
+    INLINE void MoveGenerator::GetNonCaptures(Move allMoves[], int&pos, Board& board)
+    {
+        BitBoard enemy = ~board.GetEnemyPieces();
+        GetPawnMoves<false>(board.GetPieceSet(board.SideToMove, PieceType::Pawn), board, allMoves, pos, enemy);
+        GetKnightMoves(board.GetPieceSet(board.SideToMove, PieceType::Knight), board, allMoves, pos, enemy);
+        GetBishopMoves(board.GetPieceSet(board.SideToMove, PieceType::Bishop), board, allMoves, pos, enemy);
+        GetQueenMoves(board.GetPieceSet(board.SideToMove, PieceType::Queen), board, allMoves, pos, enemy);
+        GetKingMoves(board.GetPieceSet(board.SideToMove, PieceType::King), board, allMoves, pos, enemy);
+        GetRookMoves(board.GetPieceSet(board.SideToMove, PieceType::Rook), board, allMoves, pos, enemy);
         GetCastleMoves(board, allMoves, pos);
     }
 
+    template<bool ep>
     INLINE void MoveGenerator::GetPawnMoves(BitBoard pawns, Board& board, Move moveList[], int& pos, BitBoard target)
     {
         BitBoard targets;
@@ -54,13 +96,16 @@ namespace Napoleon
             fromIndex = Utils::BitBoard::BitScanForwardReset(pawns); // search for LS1B and then reset it
             targets = Pawn::GetAllTargets(Constants::Masks::SquareMask[fromIndex], board) & target;
 
-            // en passant
-            if (board.EnPassantSquare != Constants::Squares::Invalid)
+            if (ep)
             {
-                epTargets = MoveDatabase::PawnAttacks[board.SideToMove][fromIndex];
+                // en passant
+                if (board.EnPassantSquare != Constants::Squares::Invalid)
+                {
+                    epTargets = MoveDatabase::PawnAttacks[board.SideToMove][fromIndex];
 
-                if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare]) != 0)
-                    moveList[pos++] =  Move(fromIndex, board.EnPassantSquare, PieceType::Pawn, PieceType::Pawn);
+                    if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare]) != 0)
+                        moveList[pos++] =  Move(fromIndex, board.EnPassantSquare, PieceType::Pawn, PieceType::Pawn);
+                }
             }
 
             while (targets != 0)

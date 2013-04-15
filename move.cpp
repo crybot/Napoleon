@@ -5,16 +5,6 @@
 namespace Napoleon
 {
 
-    bool Move::operator==(const Move& other) const
-    {
-        return (FromSquare == other.FromSquare && ToSquare == other.ToSquare);
-    }
-
-    bool Move::operator!=(const Move& other) const
-    {
-        return !(FromSquare == other.FromSquare && ToSquare == other.ToSquare);
-    }
-
     bool Move::IsNull() const
     {
         return (FromSquare == ToSquare);
@@ -29,8 +19,6 @@ namespace Napoleon
     {
         return (FromSquare == 60 && ToSquare == 58) || (FromSquare == 4 && ToSquare == 2);
     }
-
-
 
     std::string Move::ToAlgebraic() const
     {
