@@ -30,7 +30,7 @@ namespace Napoleon
         using namespace Utils::BitBoard;
 
         int material =
-                +   200000*(board.NumOfPieces[PieceColor::White][PieceType::King] - board.NumOfPieces[PieceColor::Black][PieceType::King])
+                +   2000*(board.NumOfPieces[PieceColor::White][PieceType::King] - board.NumOfPieces[PieceColor::Black][PieceType::King])
                 +   900*(board.NumOfPieces[PieceColor::White][PieceType::Queen] - board.NumOfPieces[PieceColor::Black][PieceType::Queen])
                 +   500*(board.NumOfPieces[PieceColor::White][PieceType::Rook] - board.NumOfPieces[PieceColor::Black][PieceType::Rook])
                 +   330*(board.NumOfPieces[PieceColor::White][PieceType::Bishop] - board.NumOfPieces[PieceColor::Black][PieceType::Bishop])

@@ -4,6 +4,7 @@
 #include "move.h"
 #include "utils.h"
 #include "movedatabase.h"
+#include "transpositiontable.h"
 #include <cassert>
 #include <iostream>
 
@@ -14,6 +15,7 @@ namespace Napoleon
     class Board
     {
     public:
+        int nps = 0;
         int EnPassantSquare;
         Byte CastlingStatus;
         Byte SideToMove;
@@ -29,6 +31,8 @@ namespace Napoleon
         BitBoard EmptySquares;
 
         ZobristKey zobrist;
+        TranspositionTable Table;
+
 
         Board();
 
@@ -48,11 +52,10 @@ namespace Napoleon
         bool IsMoveLegal(Move&, BitBoard);
         bool IsAttacked(BitBoard, Byte);
 
-        int Evaluate();
-
         Move ParseMove(std::string, MoveList);
 
     private:
+
         int ply;
         int enpSquares[Constants::MaxPly];
         Byte castlingStatus[Constants::MaxPly];
@@ -72,8 +75,6 @@ namespace Napoleon
         void initializePieceSet(const FenString&);
         void makeCastle(int, int);
         void undoCastle(int, int);
-        template <Byte piece>
-        int evaluateMobility(BitBoard);
 
     };
 
@@ -147,106 +148,6 @@ namespace Napoleon
                 | (MoveDatabase::KnightAttacks[square] & bitBoardSet[opp][PieceType::Knight])
                 | (bishopAttacks  & (bitBoardSet[opp][PieceType::Bishop] | bitBoardSet[opp][PieceType::Queen]))
                 | (rookAttacks   & (bitBoardSet[opp][PieceType::Rook] | bitBoardSet[opp][PieceType::Queen]));
-    }
-
-    INLINE int Board::Evaluate()
-    {
-        using namespace Utils::BitBoard;
-        float material = 2000*(NumOfPieces[PieceColor::White][PieceType::King] - NumOfPieces[PieceColor::Black][PieceType::King])
-                +   900*(NumOfPieces[PieceColor::White][PieceType::Queen] - NumOfPieces[PieceColor::Black][PieceType::Queen])
-                +   500*(NumOfPieces[PieceColor::White][PieceType::Rook] - NumOfPieces[PieceColor::Black][PieceType::Rook])
-                +   330*(NumOfPieces[PieceColor::White][PieceType::Bishop] - NumOfPieces[PieceColor::Black][PieceType::Bishop])
-                +   320*(NumOfPieces[PieceColor::White][PieceType::Knight] - NumOfPieces[PieceColor::Black][PieceType::Knight])
-                +   100*(NumOfPieces[PieceColor::White][PieceType::Pawn] - NumOfPieces[PieceColor::Black][PieceType::Pawn]);
-
-
-        int wM = 0;
-        int bM = 0;
-
-        //        while(whiteBishops)
-        //        {
-        //            square = BitScanForwardReset(whiteBishops);
-
-        //            w |= MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square);
-        //        }
-
-        //        while(whiteQueens)
-        //        {
-        //            square = BitScanForwardReset(whiteQueens);
-
-        //            w |= MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetFileAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetRankAttacks(OccupiedSquares, square);
-        //        }
-
-        //        while(blackQueens)
-        //        {
-        //            square = BitScanForwardReset(blackQueens);
-
-        //            b |= MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetFileAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetRankAttacks(OccupiedSquares, square);
-        //        }
-
-        //        while(blackBishops)
-        //        {
-        //            square = BitScanForwardReset(blackBishops);
-
-        //            b |= MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
-        //                    | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square);
-        //        }
-
-        wM += evaluateMobility<PieceType::Bishop>(bitBoardSet[PieceColor::White][PieceType::Bishop]);
-        bM += evaluateMobility<PieceType::Bishop>(bitBoardSet[PieceColor::Black][PieceType::Bishop]);
-
-        wM += evaluateMobility<PieceType::Queen>(bitBoardSet[PieceColor::White][PieceType::Queen]);
-        bM += evaluateMobility<PieceType::Queen>(bitBoardSet[PieceColor::Black][PieceType::Queen]);
-
-
-
-        return (material + (wM - bM)) * (1-(SideToMove*2));
-    }
-
-    template <Byte piece>
-    INLINE int Board::evaluateMobility(BitBoard pieces)
-    {
-        using namespace Utils::BitBoard;
-        int square;
-        BitBoard b = 0;
-
-        switch(piece)
-        {
-        case PieceType::Bishop:
-            while (pieces)
-            {
-                square = BitScanForwardReset(pieces);
-
-                b |= MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
-                        | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square);
-            }
-
-            return PopCount(b);
-
-        case PieceType::Queen:
-            while(pieces)
-            {
-                square = BitScanForwardReset(pieces);
-
-                b |= MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
-                        | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square)
-                        | MoveDatabase::GetFileAttacks(OccupiedSquares, square)
-                        | MoveDatabase::GetRankAttacks(OccupiedSquares, square);
-            }
-            return PopCount(b);
-
-        default:
-            break;
-        }
-
-        return 0;
     }
 }
 

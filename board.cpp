@@ -6,12 +6,14 @@
 #include "piece.h"
 #include "fenstring.h"
 #include "transpositiontable.h"
+#include "zobrist.h"
 #include <iostream>
 
 namespace Napoleon
 {
     Board::Board()
     {
+        Table = TranspositionTable(2097152 + 7);
         MoveDatabase::InitAttacks();
         Zobrist::Init();
 
@@ -22,6 +24,8 @@ namespace Napoleon
         zobrist = 0;
 
         ply = 0;
+
+        srand(3);
     }
 
     void Board::Equip()
@@ -303,6 +307,9 @@ namespace Napoleon
 
     void Board::MakeMove(Move move)
     {
+
+        zobrist ^= Zobrist::Color; // aggiorna il colore della posizione
+
         castlingStatus[ply] = CastlingStatus;  // salva i diritti di arrocco correnti
         enpSquares[ply] = EnPassantSquare; // salva l'attuale casella enpassant
 
@@ -321,6 +328,8 @@ namespace Napoleon
 
         // aggiorna la bitboard
         bitBoardSet[SideToMove][pieceMoved] ^= FromTo;
+        zobrist ^= Zobrist::Piece[SideToMove][pieceMoved][move.FromSquare]; // aggiorna zobrist key (rimuove il pezzo mosso)
+        zobrist ^= Zobrist::Piece[SideToMove][pieceMoved][move.ToSquare]; // aggiorna zobrist key (sposta il pezzo mosso)
 
         // aggiorna i pezzi del giocatore
         Pieces[SideToMove] ^= FromTo;
@@ -367,6 +376,8 @@ namespace Napoleon
             bitBoardSet[SideToMove][move.PiecePromoted] ^= To;
             NumOfPieces[SideToMove][PieceType::Pawn]--;
             NumOfPieces[SideToMove][move.PiecePromoted]++;
+            zobrist ^= Zobrist::Piece[SideToMove][PieceType::Pawn][move.ToSquare];
+            zobrist ^= Zobrist::Piece[SideToMove][move.PiecePromoted][move.ToSquare];
         }
 
         if (move.IsCapture())
@@ -378,11 +389,13 @@ namespace Napoleon
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare - 8];
                     PieceSet[EnPassantSquare - 8] = Constants::Piece::Null;
+                    zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][EnPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
                 else
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare + 8];
                     PieceSet[EnPassantSquare + 8] = Constants::Piece::Null;
+                    zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][EnPassantSquare + 8]; // rimuove il pedone bianco catturato en passant
                 }
 
                 Pieces[enemy] ^= piece;
@@ -393,12 +406,10 @@ namespace Napoleon
             else
             {
                 bitBoardSet[enemy][move.PieceCaptured] ^= To;
-
-                //aggiorna i pezzi dell'avversario
-                Pieces[enemy] ^= To;
-
+                Pieces[enemy] ^= To; //aggiorna i pezzi dell'avversario
                 OccupiedSquares ^= From;
                 EmptySquares ^= From;
+                zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][move.ToSquare]; // rimuove il pezzo catturato
             }
 
             if (move.PieceCaptured == PieceType::Rook)
@@ -441,6 +452,9 @@ namespace Napoleon
             }
         }
 
+        if (castlingStatus[ply] != CastlingStatus)
+            zobrist ^= Zobrist::Castling[CastlingStatus]; // cambia i diritti di arrocco
+
         // cambia turno
         SideToMove = enemy;
 
@@ -450,8 +464,15 @@ namespace Napoleon
 
     void Board::UndoMove(Move move)
     {
+
         // decrementa profondita`
         ply--;
+
+        zobrist ^= Zobrist::Color; // aggiorna il colore della posizione
+
+        if (castlingStatus[ply] != CastlingStatus)
+            zobrist ^= Zobrist::Castling[CastlingStatus]; // cambia i diritti di arrocco
+
 
         Byte pieceMoved;
 
@@ -475,6 +496,9 @@ namespace Napoleon
 
         // aggiorna la bitboard
         bitBoardSet[SideToMove][pieceMoved] ^= FromTo;
+        zobrist ^= Zobrist::Piece[SideToMove][pieceMoved][move.FromSquare]; // aggiorna zobrist key (rimuove il pezzo mosso)
+        zobrist ^= Zobrist::Piece[SideToMove][pieceMoved][move.ToSquare]; // aggiorna zobrist key (sposta il pezzo mosso)
+
 
         // aggiorna i pezzi del giocatore
         Pieces[SideToMove] ^= FromTo;
@@ -501,6 +525,8 @@ namespace Napoleon
             NumOfPieces[SideToMove][move.PiecePromoted]--;
             PieceSet[move.FromSquare] = Piece(SideToMove, PieceType::Pawn);
             bitBoardSet[SideToMove][move.PiecePromoted] ^= To;
+            zobrist ^= Zobrist::Piece[SideToMove][PieceType::Pawn][move.ToSquare];
+            zobrist ^= Zobrist::Piece[SideToMove][move.PiecePromoted][move.ToSquare];
         }
 
         // reimposta la casella enpassant
@@ -517,11 +543,13 @@ namespace Napoleon
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare - 8];
                     PieceSet[EnPassantSquare - 8] = Piece(PieceColor::Black, PieceType::Pawn);
+                    zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][EnPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
                 else
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare + 8];
                     PieceSet[EnPassantSquare + 8] = Piece(PieceColor::White, PieceType::Pawn);
+                    zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][EnPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
 
                 Pieces[enemy] ^= piece;
@@ -535,11 +563,11 @@ namespace Napoleon
                 PieceSet[move.ToSquare] = Piece(enemy, move.PieceCaptured);
                 bitBoardSet[enemy][move.PieceCaptured] ^= To;
 
-                //aggiorna i pezzi dell'avversario
-                Pieces[enemy] ^= To;
-
+                Pieces[enemy] ^= To; //aggiorna i pezzi dell'avversario
                 OccupiedSquares ^= From;
                 EmptySquares ^= From;
+
+                zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][move.ToSquare]; // rimuove il pezzo catturato
             }
 
             if (move.PieceCaptured == PieceType::Rook)
@@ -598,6 +626,9 @@ namespace Napoleon
         EmptySquares ^= rook;
         PieceSet[fromR] = Constants::Piece::Null; // sposta la torre
         PieceSet[toR] = Piece(SideToMove, PieceType::Rook); // sposta la torre
+
+        zobrist ^= Zobrist::Piece[SideToMove][PieceType::Rook][fromR];
+        zobrist ^= Zobrist::Piece[SideToMove][PieceType::Rook][toR];
     }
 
     void Board::undoCastle(int from, int to)
@@ -641,6 +672,9 @@ namespace Napoleon
         PieceSet[fromR] = Piece(SideToMove, PieceType::Rook); // sposta la torre
         PieceSet[toR] = Constants::Piece::Null; // sposta la torre
         CastlingStatus = castlingStatus[ply]; // ripristina i diritti di arrocco dello stato precedente
+
+        zobrist ^= Zobrist::Piece[SideToMove][PieceType::Rook][fromR];
+        zobrist ^= Zobrist::Piece[SideToMove][PieceType::Rook][toR];
     }
 
     bool Board::IsAttacked(BitBoard target, Byte side)

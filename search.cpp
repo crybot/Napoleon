@@ -6,14 +6,22 @@
 
 namespace Napoleon
 {
-    int Search::negaMax(int depth, int alpha, int beta, Board &board)
+    int Search::search(int depth, int alpha, int beta, Board &board)
     {
-        if( depth == 0 )
-            return quiesce(alpha, beta, board);
-
-        bool bSearchPv = true;
-        int pos = 0;
+        int bound = Alpha;
         int score;
+
+        if((score = board.Table.Probe(board.zobrist, depth, alpha, beta)) != TranspositionTable::Unknown)
+            return score;
+
+        if( depth == 0 )
+        {
+            score = quiesce(alpha, beta, board);
+            board.Table.Save(HashEntry(board.zobrist, depth, score, 0, Exact));
+            return score;
+        }
+
+        int pos = 0;
         Move moves[Constants::MaxMoves + 2];
 
         BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
@@ -23,36 +31,36 @@ namespace Napoleon
         else
             MoveGenerator::GetAllMoves(moves, pos, board);
 
+        BitBoard pinned = board.GetPinnedPieces();
+
         for (int i=0; i<pos; i++)
         {
-            BitBoard pinned = board.GetPinnedPieces();
             if (board.IsMoveLegal(moves[i], pinned))
             {
-
                 board.MakeMove(moves[i]);
-                if ( bSearchPv )
-                {
-                    score = -negaMax( depth - 1, -beta, -alpha, board);
-                }
-                else
-                {
-                    score = -negaMax( depth - 1, -alpha-1, -alpha, board);
-                    if ( score > alpha ) // in fail-soft ... && score < beta ) is common
-                        score = -negaMax( depth - 1, -beta, -alpha, board); // re-search
-                }
+                score = -search(depth - 1, -beta, -alpha, board);
                 board.UndoMove(moves[i]);
+
                 if( score >= beta )
-                    return beta;   // fail-hard beta-cutoff
+                {
+                    board.Table.Save(HashEntry(board.zobrist, depth, beta, 0, Beta));
+                    return beta;   //  fail hard beta-cutoff
+                }
                 if( score > alpha )
                 {
+                    bound = Exact;
                     alpha = score; // alpha acts like max in MiniMax
-                    bSearchPv = false;  // *1)
                 }
             }
         }
-        return alpha; // fail-hard
+
+        board.Table.Save(HashEntry(board.zobrist, depth, alpha, 0, bound));
+        return alpha;
     }
 
+
+
+    // just copied to see improvements on play (it will be reimplemented soon)
     int Search::quiesce(int alpha, int beta, Board& board)
     {
         int stand_pat = Evaluation::Evaluate(board);
@@ -63,7 +71,7 @@ namespace Napoleon
 
         int pos = 0;
         int score;
-        Move moves[Constants::MaxMoves + 2];
+        Move moves[Constants::MaxMoves];
 
         BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
 
@@ -72,10 +80,10 @@ namespace Napoleon
         else
             MoveGenerator::GetCaptures(moves, pos, board);
 
-
+        BitBoard pinned = board.GetPinnedPieces();
         for(int i=0; i<pos; i++)
         {
-            BitBoard pinned = board.GetPinnedPieces();
+
             if (board.IsMoveLegal(moves[i], pinned))
             {
                 board.MakeMove(moves[i]);

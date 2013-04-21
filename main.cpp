@@ -74,7 +74,7 @@ void SearchMove(int depth, Board& board)
         {
 
             board.MakeMove(moves[i]);
-            score = -Search::negaMax(depth-1, -32767, 32767, board);
+            score = -Search::search(depth-1, -32767, 32767, board);
             board.UndoMove(moves[i]);
             if( score > max )
             {
@@ -101,6 +101,7 @@ void SearchMove(int depth, Board& board)
 
 int main()
 {
+
     using namespace Constants;
     using namespace Constants::Squares;
 
@@ -108,10 +109,6 @@ int main()
     Board board;
     Benchmark bench;
     board.Equip();
-    board.Display();
-
-    cout << "Key: " << board.zobrist << endl;
-    cin.get();
 
     while(1)
     {
@@ -152,7 +149,8 @@ int main()
                 watch.Start();
                 SearchMove(depth, board);
                 cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
-
+                cout << "Nodes per second: " << (board.nps ) << endl;
+                board.nps = 0;
             }
         }
 

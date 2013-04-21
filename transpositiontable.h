@@ -1,24 +1,22 @@
 #ifndef TRANSPOSITIONTABLE_H
 #define TRANSPOSITIONTABLE_H
 #include "defines.h"
+#include "hashentry.h"
 
 namespace Napoleon
 {
-    namespace Zobrist
-    {
-        extern BitBoard Piece[2][6][64];
-        extern BitBoard Castling[16];
-        extern BitBoard Enpassant[8];
-        extern BitBoard Color;
-
-        void Init();
-        BitBoard random();
-    }
-
     class TranspositionTable
     {
     public:
-        TranspositionTable();
+        static const int Unknown = -32767;
+
+        unsigned long Size;
+        HashEntry* Table;
+
+        TranspositionTable(unsigned long size = 1024);
+
+        void Save(HashEntry);
+        int Probe(ZobristKey, int, int, int);
     };
 
 }

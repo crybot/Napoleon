@@ -2,45 +2,39 @@
 #include <ctime>
 namespace Napoleon
 {
-    BitBoard Zobrist::Piece[2][6][64];
-    BitBoard Zobrist::Castling[16];
-    BitBoard Zobrist::Enpassant[8];
-    BitBoard Zobrist::Color;
-
-
-    TranspositionTable::TranspositionTable()
+    TranspositionTable::TranspositionTable(unsigned long size)
     {
-
+        Size = size;
+        Table = new HashEntry[size];
     }
 
-    BitBoard Zobrist::random()
+    void TranspositionTable::Save(HashEntry entry)
     {
-        return rand() ^ ((BitBoard)rand() << 15) ^ ((BitBoard)rand() << 30) ^ ((BitBoard)rand() << 45) ^ ((BitBoard)rand() << 60);
+        HashEntry* hash = &Table[entry.Hash % Size];
+
+        hash->Hash = entry.Hash;
+        hash->Score = entry.Score;
+        hash->Depth = entry.Depth;
+        hash->Bound = entry.Bound;
     }
 
-    void Zobrist::Init()
+    int TranspositionTable::Probe(ZobristKey key, int depth, int alpha, int beta)
     {
-        for (int i=0; i< 2; i++)
+        HashEntry* hash = &Table[key % Size];
+
+        if (hash->Hash == key)
         {
-            for (int j=0; j<6; j++)
+            if (hash->Depth >= depth)
             {
-                for (int k=0; k<64; k++)
-                {
-                    Piece[i][j][k] = random();
-                }
+                if (hash->Bound == Exact)
+                    return hash->Score;
+                if (hash->Bound == Alpha && hash->Score <= alpha)
+                    return alpha;
+                if (hash->Bound == Beta && hash->Score >= beta)
+                    return beta;
             }
         }
 
-        Color = random();
-
-        for (int i=0; i<16; i++)
-        {
-            Castling[i] = random();
-        }
-
-        for (int i=0; i<8; i++)
-        {
-            Enpassant[i] = random();
-        }
+        return TranspositionTable::Unknown;
     }
 }
