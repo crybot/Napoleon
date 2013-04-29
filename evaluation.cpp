@@ -66,10 +66,6 @@ namespace Napoleon
         -30,-40,-40,-50,-50,-40,-40,-30
     };
 
-
-
-
-
     template<Byte piece>
     int Evaluation::evaluateMobility(Board& board, BitBoard pieces)
     {

@@ -17,6 +17,7 @@ namespace Napoleon
         bool CanBlackShortCastle;
         bool CanBlackLongCastle;
         int EnPassantSquare;
+        int HalfMove;
 
         FenString(std::string);
 
@@ -27,6 +28,7 @@ namespace Napoleon
         void parseSideToMove(std::string);
         void parseCastling(std::string);
         void parseEnPassant(std::string);
+        void parseHalfMove(std::string);
     };
 
 }

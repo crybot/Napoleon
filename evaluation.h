@@ -16,9 +16,9 @@ namespace Napoleon
     {
     public:
         static int Evaluate(Board&);
+        static int EvaluatePiece(Byte, Byte, int);
 
     private:
-        static int evaluatePiece(Byte, Byte, int);
         template<Byte>
         static int evaluateMobility(Board&, BitBoard);
 
@@ -49,23 +49,11 @@ namespace Napoleon
 
                 if(board.PieceSet[i].Color == PieceColor::White)
                 {
-                    if (board.PieceSet[i].Type == PieceType::Queen)
-                    {
-                        if (PopCount(board.OccupiedSquares) > 28)
-                            wM += queenSquareValue[i];
-                    }
-                    else
-                        wM += evaluatePiece(piece.Type, piece.Color, i);
+                    wM += EvaluatePiece(piece.Type, piece.Color, i);
                 }
                 else
                 {
-                    if (board.PieceSet[i].Type == PieceType::Queen)
-                    {
-                        if (PopCount(board.OccupiedSquares) > 28)
-                            bM += queenSquareValue[Utils::Square::GetSquareIndex(i % 8, 7 - (i/8))];
-                    }
-                    else
-                        bM += evaluatePiece(piece.Type, piece.Color, i);
+                    bM += EvaluatePiece(piece.Type, piece.Color, i);
                 }
             }
         }
@@ -73,7 +61,7 @@ namespace Napoleon
         return (material + (wM - bM)) * (1-(board.SideToMove*2));
     }
 
-    INLINE int Evaluation::evaluatePiece(Byte piece, Byte color, int square)
+    INLINE int Evaluation::EvaluatePiece(Byte piece, Byte color, int square)
     {
         using namespace Utils::Square;
         switch(piece)

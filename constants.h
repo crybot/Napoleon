@@ -47,7 +47,7 @@ namespace Napoleon
                 IntA8, IntB8, IntC8, IntD8, IntE8, IntF8, IntG8, IntH8
             };
 
-            const int Invalid = -1;
+            const int Invalid = 65;
             const BitBoard A1 = 0x0000000000000001;
             const BitBoard B1 = 0x0000000000000002;
             const BitBoard C1 = 0x0000000000000004;
@@ -236,9 +236,10 @@ namespace Napoleon
         namespace Piece
         {
             const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
+            const int PieceValue[] = { 100, 320, 330, 500, 900, 2000 };
         }
 
-        const Move NullMove(Squares::Invalid, Squares::Invalid, PieceType::None, PieceType::None);
+        const Move NullMove(0, 0, PieceType::None, PieceType::None);
         const BitBoard Empty = 0x0000000000000000;
         const BitBoard Universe = 0xFFFFFFFFFFFFFFFF;
 
@@ -257,7 +258,7 @@ namespace Napoleon
         const BitBoard NotGHFile = NotGFile | NotHFile;
 
         const int MaxMoves = 192;
-        const int MaxPly = 100;
+        const int MaxPly = 10000;
 
         const BitBoard DeBrujinValue = 0x07EDD5E59A4E28C2;
         const int DeBrujinTable[] =

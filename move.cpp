@@ -35,19 +35,19 @@ namespace Napoleon
 
         else
         {
-//            algebraic += Utils::Piece::GetInitial(PieceMoved);
+            //            algebraic += Utils::Piece::GetInitial(PieceMoved);
             algebraic += Utils::Square::ToAlgebraic(FromSquare);
 
-            if (IsCapture())
-                algebraic += "x";
+            //            if (IsCapture())
+            //                algebraic += "x";
 
             algebraic += Utils::Square::ToAlgebraic(ToSquare);
 
             if (IsPromotion())
                 algebraic += Utils::Piece::GetInitial(PiecePromoted);
 
-            else if (IsEnPassant())
-                algebraic += "e.p.";
+            //            else if (IsEnPassant())
+            //                algebraic += "e.p.";
         }
 
         return algebraic;

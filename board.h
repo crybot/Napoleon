@@ -5,8 +5,10 @@
 #include "utils.h"
 #include "movedatabase.h"
 #include "transpositiontable.h"
+#include "zobrist.h"
 #include <cassert>
 #include <iostream>
+#include <string>
 
 namespace Napoleon
 {
@@ -15,13 +17,22 @@ namespace Napoleon
     class Board
     {
     public:
-        int nps = 0;
+        bool AllowNullMove;
+
+        bool IsCheck;
+        int HalfMoveClock;
         int EnPassantSquare;
+        int CurrentPly;
         Byte CastlingStatus;
         Byte SideToMove;
+        ulong Nps;
+
+        Move KillerMoves[12]; // depth
+        Move moves[Constants::MaxPly]; // debugging
+        ZobristKey hash[Constants::MaxPly]; // debugging
 
         int KingSquare[2]; // color
-        int NumOfPieces[2][6] = { {0} }; // color, type
+        int NumOfPieces[2][6] = { { 0 } }; // color, type
         Piece PieceSet[64]; // square
 
         BitBoard bitBoardSet[2][6] = { { Constants::Empty } }; // color, type
@@ -32,7 +43,6 @@ namespace Napoleon
 
         ZobristKey zobrist;
         TranspositionTable Table;
-
 
         Board();
 
@@ -49,17 +59,21 @@ namespace Napoleon
 
         void MakeMove(Move);
         void UndoMove(Move);
+        void MakeNullMove();
+        void UndoNullMove();
+
         bool IsMoveLegal(Move&, BitBoard);
         bool IsAttacked(BitBoard, Byte);
 
         Move ParseMove(std::string, MoveList);
 
+        std::string GetFen() const;
+
     private:
 
-        int ply;
         int enpSquares[Constants::MaxPly];
+        int halfMoveClock[Constants::MaxPly];
         Byte castlingStatus[Constants::MaxPly];
-
 
         void clearPieceSet();
         void updateGenericBitBoards();
@@ -67,15 +81,16 @@ namespace Napoleon
         void initializeCastlingStatus();
         void initializeSideToMove();
         void initializeEnPassantSquare();
+        void initializeHalfMoveClock();
         void initializeBitBoards();
         void initializeBitBoards(const FenString&);
         void initializeSideToMove(const FenString&);
         void initializeCastlingStatus(const FenString&);
         void initializeEnPassantSquare(const FenString&);
+        void initializeHalfMoveClock(const FenString&);
         void initializePieceSet(const FenString&);
         void makeCastle(int, int);
         void undoCastle(int, int);
-
     };
 
     INLINE BitBoard Board::GetPlayerPieces() const
@@ -148,6 +163,41 @@ namespace Napoleon
                 | (MoveDatabase::KnightAttacks[square] & bitBoardSet[opp][PieceType::Knight])
                 | (bishopAttacks  & (bitBoardSet[opp][PieceType::Bishop] | bitBoardSet[opp][PieceType::Queen]))
                 | (rookAttacks   & (bitBoardSet[opp][PieceType::Rook] | bitBoardSet[opp][PieceType::Queen]));
+    }
+
+    INLINE void Board::MakeNullMove()
+    {
+        assert(AllowNullMove);
+        enpSquares[CurrentPly] = EnPassantSquare;
+        SideToMove = Utils::Piece::GetOpposite(SideToMove);
+        EnPassantSquare = Constants::Squares::Invalid;
+
+        zobrist ^= Zobrist::Color;
+
+        if (EnPassantSquare != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
+
+        if (enpSquares[CurrentPly] != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
+
+        AllowNullMove = false;
+        CurrentPly++;
+    }
+
+    INLINE void Board::UndoNullMove()
+    {
+        assert(!AllowNullMove);
+
+        CurrentPly--;
+        SideToMove = Utils::Piece::GetOpposite(SideToMove);
+        EnPassantSquare = enpSquares[CurrentPly];
+
+        zobrist ^= Zobrist::Color;
+
+        if (enpSquares[CurrentPly] != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
+
+        AllowNullMove = true;
     }
 }
 

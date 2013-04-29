@@ -11,7 +11,8 @@ public:
     StopWatch();
     void Start();
     StopWatch& Stop();
-    int ElapsedMilliseconds();
+    double ElapsedMilliseconds();
+    double ElapsedSeconds();
 
 private:
     high_resolution_clock::time_point begin;

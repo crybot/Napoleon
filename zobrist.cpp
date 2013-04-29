@@ -7,7 +7,6 @@ namespace Napoleon
     ZobristKey Zobrist::Enpassant[8];
     ZobristKey Zobrist::Color;
 
-
     ZobristKey Zobrist::random()
     {
         return rand() ^ ((ZobristKey)rand() << 15) ^ ((ZobristKey)rand() << 30) ^ ((ZobristKey)rand() << 45) ^ ((ZobristKey)rand() << 60);

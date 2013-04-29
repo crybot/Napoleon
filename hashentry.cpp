@@ -7,7 +7,7 @@ namespace Napoleon
 
     }
 
-    HashEntry::HashEntry(ZobristKey hash, int depth, int score, int bestMove, Byte bound)
+    HashEntry::HashEntry(ZobristKey hash, Byte depth, int score, Move bestMove, Byte bound)
     {
         Hash = hash;
         Depth = depth;

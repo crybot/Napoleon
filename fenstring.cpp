@@ -22,17 +22,14 @@ namespace Napoleon
         std::string sideToMove = fields[1];
         std::string castling = fields[2];
         std::string enPassant = fields[3];
-
-        if (fields.size() == 6)
-        {
-            std::string halfMove = fields[4];
-            std::string fullMove = fields[5];
-        }
+        std::string halfMove = fields[4];
+        std::string fullMove = fields[5];
 
         parsePiecePlacement(piecePlacement);
         parseSideToMove(sideToMove);
         parseCastling(castling);
         parseEnPassant(enPassant);
+        parseHalfMove(halfMove);
     }
 
     void FenString::parsePiecePlacement(std::string field)
@@ -149,5 +146,10 @@ namespace Napoleon
         {
             EnPassantSquare = Utils::Square::Parse(field);
         }
+    }
+
+    void FenString::parseHalfMove(std::string field)
+    {
+        HalfMove = boost::lexical_cast<int>(field);
     }
 }

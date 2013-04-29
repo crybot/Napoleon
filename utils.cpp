@@ -73,6 +73,7 @@ namespace Napoleon
 
         namespace Piece
         {
+
             char GetInitial(Byte type)
             {
                 switch (type)
@@ -93,6 +94,51 @@ namespace Napoleon
                     throw std::exception(); // TODO
                 }
             }
+
+            char GetInitial(Napoleon::Piece piece)
+            {
+                if (piece.Color == PieceColor::White)
+                {
+                    switch (piece.Type)
+                    {
+                    case PieceType::Bishop:
+                        return 'B';
+                    case PieceType::King:
+                        return 'K';
+                    case PieceType::Knight:
+                        return 'N';
+                    case PieceType::Pawn:
+                        return 'P';
+                    case PieceType::Queen:
+                        return 'Q';
+                    case PieceType::Rook:
+                        return 'R';
+                    default:
+                        throw std::exception(); // TODO
+                    }
+                }
+                else
+                {
+                    switch (piece.Type)
+                    {
+                    case PieceType::Bishop:
+                        return 'b';
+                    case PieceType::King:
+                        return 'k';
+                    case PieceType::Knight:
+                        return 'n';
+                    case PieceType::Pawn:
+                        return 'p';
+                    case PieceType::Queen:
+                        return 'q';
+                    case PieceType::Rook:
+                        return 'r';
+                    default:
+                        throw std::exception(); // TODO
+                    }
+                }
+            }
+
         }
     }
 }

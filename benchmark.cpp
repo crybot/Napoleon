@@ -74,17 +74,25 @@ namespace Napoleon
     unsigned long long Benchmark::Perft(int depth, Board& board)
     {
         int pos = 0;
+        int count;
+        Move move;
         Move moves[Constants::MaxMoves + 2];
 
         unsigned long long nodes = 0;
 
-        if (depth == 0)
-            return 1;
+        if ((count = board.Table.Probe(board.zobrist, depth, -32767, &move, 32767)) != TranspositionTable::Unknown)
+            return count;
 
         MoveGenerator::GetLegalMoves(moves, pos, board);
 
         if (depth == 1)
+        {
+            board.Table.Save(board.zobrist, depth, pos, Constants::NullMove, Exact);
             return pos;
+        }
+
+        if (depth == 0)
+            return 1;
 
         for (int i = 0; i < pos; i++)
         {
@@ -92,6 +100,8 @@ namespace Napoleon
             nodes += Perft(depth - 1, board);
             board.UndoMove(moves[i]);
         }
+
+        board.Table.Save(board.zobrist, depth, nodes, Constants::NullMove, Exact);
         return nodes;
     }
 

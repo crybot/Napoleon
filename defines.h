@@ -10,14 +10,16 @@
 #   define INLINE inline
 #endif
 
+#define Infinity 32767
+
 namespace Napoleon
 {
     typedef unsigned long long BitBoard;
     typedef unsigned char Type;
     typedef unsigned char Color;
     typedef unsigned char Byte;
-    typedef int Square;
     typedef unsigned long long ZobristKey;
+    typedef int Square;
 }
 
 #endif // DEFINES_H

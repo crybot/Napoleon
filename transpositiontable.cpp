@@ -8,17 +8,21 @@ namespace Napoleon
         Table = new HashEntry[size];
     }
 
-    void TranspositionTable::Save(HashEntry entry)
+    void TranspositionTable::Save(ZobristKey key, Byte depth, int score, Move move, Byte bound)
     {
-        HashEntry* hash = &Table[entry.Hash % Size];
+        HashEntry* hash = &Table[key % Size];
 
-        hash->Hash = entry.Hash;
-        hash->Score = entry.Score;
-        hash->Depth = entry.Depth;
-        hash->Bound = entry.Bound;
+        if (depth >= hash->Depth) // it runs faster than depth > hash->Depth
+        {
+            hash->Hash = key;
+            hash->Score = score;
+            hash->Depth = depth;
+            hash->Bound = bound;
+            hash->BestMove = move;
+        }
     }
 
-    int TranspositionTable::Probe(ZobristKey key, int depth, int alpha, int beta)
+    int TranspositionTable::Probe(ZobristKey key, Byte depth, int alpha, Move* move, int beta)
     {
         HashEntry* hash = &Table[key % Size];
 
@@ -33,8 +37,9 @@ namespace Napoleon
                 if (hash->Bound == Beta && hash->Score >= beta)
                     return beta;
             }
-        }
 
+            *move = hash->BestMove; // get best move on this position
+        }
         return TranspositionTable::Unknown;
     }
 }

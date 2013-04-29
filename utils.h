@@ -34,6 +34,7 @@ namespace Napoleon
         namespace Piece
         {
             char GetInitial(Byte);
+            char GetInitial(Napoleon::Piece);
             Byte GetOpposite(Byte);
         }
 

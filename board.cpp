@@ -6,14 +6,13 @@
 #include "piece.h"
 #include "fenstring.h"
 #include "transpositiontable.h"
-#include "zobrist.h"
 #include <iostream>
 
 namespace Napoleon
 {
     Board::Board()
     {
-        Table = TranspositionTable(2097152 + 7);
+        Table = TranspositionTable(16777216);
         MoveDatabase::InitAttacks();
         Zobrist::Init();
 
@@ -21,15 +20,15 @@ namespace Napoleon
         Pieces[PieceColor::Black] = Constants::Empty;
         OccupiedSquares = Constants::Empty;
         EmptySquares = Constants::Empty;
-        zobrist = 0;
+        CurrentPly = 0;
+        Nps = 0;
+        AllowNullMove = true;
 
-        ply = 0;
-
-        srand(3);
     }
 
     void Board::Equip()
     {
+        zobrist = 0;
         initializePieceSet();
         initializeCastlingStatus();
         initializeSideToMove();
@@ -126,6 +125,11 @@ namespace Napoleon
         EnPassantSquare = Constants::Squares::Invalid;
     }
 
+    void Board::initializeHalfMoveClock()
+    {
+        HalfMoveClock = 0;
+    }
+
     void Board::initializeBitBoards()
     {
         KingSquare[PieceColor::White] = 4;
@@ -204,10 +208,12 @@ namespace Napoleon
         std::cout << (CastlingStatus & Constants::Castle::WhiteCastleOOO ? "Q" : "");
         std::cout << (CastlingStatus & Constants::Castle::BlackCastleOO ? "k" : "");
         std::cout << (CastlingStatus & Constants::Castle::BlackCastleOOO ? "q" : "") << std::endl;
+        std::cout << "HalfMove Clock: " << HalfMoveClock << std::endl;
     }
 
     void Board::LoadGame(const FenString& fenString)
     {
+        zobrist = 0;
         initializeCastlingStatus(fenString);
         initializeSideToMove(fenString);
         initializePieceSet(fenString);
@@ -254,6 +260,11 @@ namespace Napoleon
         EnPassantSquare = fenString.EnPassantSquare;
         if (EnPassantSquare != Constants::Squares::Invalid)
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
+    }
+
+    void Board::initializeHalfMoveClock(const FenString& fenString)
+    {
+        HalfMoveClock = fenString.HalfMove;
     }
 
     void Board::initializeBitBoards(const FenString& fenString)
@@ -307,12 +318,15 @@ namespace Napoleon
 
     void Board::MakeMove(Move move)
     {
+        bool incrementClock = true;
+
+        castlingStatus[CurrentPly] = CastlingStatus;  // salva i diritti di arrocco correnti
+        enpSquares[CurrentPly] = EnPassantSquare; // salva l'attuale casella enpassant
+        halfMoveClock[CurrentPly] = HalfMoveClock; // salva l'attuale contatore di semi-mosse
+        hash[CurrentPly] = zobrist;
+        moves[CurrentPly] = move;
 
         zobrist ^= Zobrist::Color; // aggiorna il colore della posizione
-
-        castlingStatus[ply] = CastlingStatus;  // salva i diritti di arrocco correnti
-        enpSquares[ply] = EnPassantSquare; // salva l'attuale casella enpassant
-
 
         Byte pieceMoved = PieceSet[move.FromSquare].Type;
         //ARRAY
@@ -431,6 +445,7 @@ namespace Napoleon
             }
 
             NumOfPieces[enemy][move.PieceCaptured]--;
+            incrementClock = false; // non incrementare il contatore di semi-mosse perche` e` stato catturato un pezzo
         }
         else
         {
@@ -438,41 +453,55 @@ namespace Napoleon
             EmptySquares ^= FromTo;
         }
 
+        if (EnPassantSquare != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
+
         // azzera la casella enpassant
         EnPassantSquare = Constants::Squares::Invalid;
 
         // se il pedone si muove di due caselle si aggiorna la casella enpassant
         if (pieceMoved == PieceType::Pawn)
         {
+            incrementClock = false; // non incrementare il contatore di semi-mosse perche` e` stato mosso un pedone
             int sq = move.ToSquare - move.FromSquare; // calcola la distanza
 
             if (sq == 16 || sq == -16) // doppio spostamento del pedone
             {
                 EnPassantSquare = move.ToSquare - sq/2;
+                zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
             }
         }
 
-        if (castlingStatus[ply] != CastlingStatus)
+        if (castlingStatus[CurrentPly] != CastlingStatus)
             zobrist ^= Zobrist::Castling[CastlingStatus]; // cambia i diritti di arrocco
+
+        if (incrementClock) HalfMoveClock++; // incrementa il contatore
+        else HalfMoveClock = 0; // resetta il contatore
 
         // cambia turno
         SideToMove = enemy;
 
         // aumenta profondita`
-        ply++;
+        CurrentPly++;
     }
 
     void Board::UndoMove(Move move)
     {
-
         // decrementa profondita`
-        ply--;
+        CurrentPly--;
 
         zobrist ^= Zobrist::Color; // aggiorna il colore della posizione
 
-        if (castlingStatus[ply] != CastlingStatus)
+        if (castlingStatus[CurrentPly] != CastlingStatus)
             zobrist ^= Zobrist::Castling[CastlingStatus]; // cambia i diritti di arrocco
 
+        if (EnPassantSquare != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
+
+        if (enpSquares[CurrentPly] != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
+
+        HalfMoveClock = halfMoveClock[CurrentPly];
 
         Byte pieceMoved;
 
@@ -499,7 +528,6 @@ namespace Napoleon
         zobrist ^= Zobrist::Piece[SideToMove][pieceMoved][move.FromSquare]; // aggiorna zobrist key (rimuove il pezzo mosso)
         zobrist ^= Zobrist::Piece[SideToMove][pieceMoved][move.ToSquare]; // aggiorna zobrist key (sposta il pezzo mosso)
 
-
         // aggiorna i pezzi del giocatore
         Pieces[SideToMove] ^= FromTo;
 
@@ -513,11 +541,11 @@ namespace Napoleon
                 undoCastle(move.FromSquare, move.ToSquare);
             }
 
-            CastlingStatus = castlingStatus[ply]; // resetta i diritti di arrocco dello stato precedente
+            CastlingStatus = castlingStatus[CurrentPly]; // resetta i diritti di arrocco dello stato precedente
         }
         else if (pieceMoved == PieceType::Rook)
         {
-            CastlingStatus = castlingStatus[ply];
+            CastlingStatus = castlingStatus[CurrentPly];
         }
         else if (move.IsPromotion())
         {
@@ -530,7 +558,7 @@ namespace Napoleon
         }
 
         // reimposta la casella enpassant
-        EnPassantSquare = enpSquares[ply];
+        EnPassantSquare = enpSquares[CurrentPly];
 
         if (move.IsCapture())
         {
@@ -549,7 +577,7 @@ namespace Napoleon
                 {
                     piece = Constants::Masks::SquareMask[EnPassantSquare + 8];
                     PieceSet[EnPassantSquare + 8] = Piece(PieceColor::White, PieceType::Pawn);
-                    zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][EnPassantSquare - 8]; // rimuove il pedone nero catturato en passant
+                    zobrist ^= Zobrist::Piece[enemy][move.PieceCaptured][EnPassantSquare + 8]; // rimuove il pedone nero catturato en passant
                 }
 
                 Pieces[enemy] ^= piece;
@@ -572,7 +600,7 @@ namespace Napoleon
 
             if (move.PieceCaptured == PieceType::Rook)
             {
-                CastlingStatus = castlingStatus[ply];
+                CastlingStatus = castlingStatus[CurrentPly];
             }
 
             NumOfPieces[enemy][move.PieceCaptured]++;
@@ -584,6 +612,8 @@ namespace Napoleon
             OccupiedSquares ^= FromTo;
             EmptySquares ^= FromTo;
         }
+
+        assert(zobrist == hash[CurrentPly]);
     }
 
     void Board::makeCastle(int from, int to)
@@ -671,7 +701,7 @@ namespace Napoleon
         EmptySquares ^= rook;
         PieceSet[fromR] = Piece(SideToMove, PieceType::Rook); // sposta la torre
         PieceSet[toR] = Constants::Piece::Null; // sposta la torre
-        CastlingStatus = castlingStatus[ply]; // ripristina i diritti di arrocco dello stato precedente
+        CastlingStatus = castlingStatus[CurrentPly]; // ripristina i diritti di arrocco dello stato precedente
 
         zobrist ^= Zobrist::Piece[SideToMove][PieceType::Rook][fromR];
         zobrist ^= Zobrist::Piece[SideToMove][PieceType::Rook][toR];
@@ -715,8 +745,76 @@ namespace Napoleon
     }
 
 
+    std::string Board::GetFen() const
+    {
+        using namespace Utils::Square;
+        using namespace Utils::Piece;
+        std::string fen = "";
 
+        // piece placement
+        for (int r=7; r>=0; r--)
+        {
+            int empty = 0;
+            for (int c=0; c<8; c++)
+            {
+                if (PieceSet[GetSquareIndex(c, r)].Type == PieceType::None)
+                    empty++;
 
+                else
+                {
+                    if (empty != 0)
+                    {
+                        fen += (char)empty + '0';
+                        empty = 0;
+                    }
 
+                    fen += GetInitial(PieceSet[GetSquareIndex(c, r)]);
+                }
+            }
+            if (empty != 0)
+                fen += (char)empty + '0';
+
+            if (r > 0)
+                fen += '/';
+        }
+
+        fen += " ";
+
+        // side to move
+
+        if (SideToMove == PieceColor::White)
+            fen += "w";
+        else
+            fen += "b";
+
+        fen += " ";
+
+        // castling rights
+
+        if (CastlingStatus)
+        {
+            fen += (CastlingStatus & Constants::Castle::WhiteCastleOO ? "K" : "");
+            fen += (CastlingStatus & Constants::Castle::WhiteCastleOOO ? "Q" : "");
+            fen += (CastlingStatus & Constants::Castle::BlackCastleOO ? "k" : "");
+            fen += (CastlingStatus & Constants::Castle::BlackCastleOOO ? "q" : "");
+        }
+        else
+            fen += '-';
+
+        fen += " ";
+
+        // en passant
+
+        if (EnPassantSquare != Constants::Squares::Invalid)
+            fen += ToAlgebraic(EnPassantSquare);
+        else
+            fen += '-';
+
+        fen += " ";
+
+        fen += "0 1";
+
+        return fen;
+    }
 
 }

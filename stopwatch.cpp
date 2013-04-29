@@ -14,7 +14,13 @@ StopWatch& StopWatch::Stop()
     return *this;
 }
 
-int StopWatch::ElapsedMilliseconds()
+double StopWatch::ElapsedMilliseconds()
 {
     return duration_cast<milliseconds>(end - begin).count();
+}
+
+double StopWatch::ElapsedSeconds()
+{
+    return duration_cast<milliseconds>(end - begin).count() / (double)1000;
+
 }

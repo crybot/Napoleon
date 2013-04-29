@@ -11,14 +11,13 @@ namespace Napoleon
     {
     public:
         ZobristKey Hash;
-        int Depth;
-        int Score;
-        int BestMove;
+        Byte Depth;
         Byte Bound;
-
+        Move BestMove;
+        int Score;
 
         HashEntry();
-        HashEntry(ZobristKey, int, int, int, Byte);
+        HashEntry(ZobristKey, Byte, int, Move, Byte);
     };
 }
 

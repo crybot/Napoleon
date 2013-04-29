@@ -33,7 +33,7 @@ void Divide(int depth, Board& board, Benchmark bench)
     int temp = 0;
     int NumMoves = 0;
 
-    Move moves[Constants::MaxMoves + 2];
+    Move moves[Constants::MaxMoves];
     MoveGenerator::GetLegalMoves(moves, pos, board);
 
     std::cout << "Move\tNodes" << std::endl;
@@ -54,49 +54,12 @@ void Divide(int depth, Board& board, Benchmark bench)
 
 void SearchMove(int depth, Board& board)
 {
-    int max = -32767;
-    int pos = 0;
-    int move = 0;
-    int score;
-    Move moves[Constants::MaxMoves + 2];
+    Move move = Search::searchRoot(depth, -32767, 32767, board);
 
-    MoveGenerator::GetLegalMoves(moves, pos, board);
+    board.MakeMove(move);
+    board.Display();
+    cout << "I.A. Move: " << move.ToAlgebraic() << endl;
 
-    if (pos == 0)
-    {
-        cout << Console::Red << "#CheckMate for Black#";
-        cout << Console::Reset << endl;
-    }
-    else
-    {
-
-        for (int i=0; i<pos; i++)
-        {
-
-            board.MakeMove(moves[i]);
-            score = -Search::search(depth-1, -32767, 32767, board);
-            board.UndoMove(moves[i]);
-            if( score > max )
-            {
-                max = score;
-                move = i;
-            }
-        }
-
-        board.MakeMove(moves[move]);
-        board.Display();
-        cout << "I.A. Move: " << moves[move].ToAlgebraic() << endl;
-
-        pos = 0;
-        MoveGenerator::GetLegalMoves(moves, pos, board);
-        if (pos == 0)
-        {
-            cout << Console::Red << "#CheckMate for White#";
-            cout << Console::Reset << endl;
-        }
-
-
-    }
 }
 
 int main()
@@ -109,6 +72,8 @@ int main()
     Board board;
     Benchmark bench;
     board.Equip();
+
+
 
     while(1)
     {
@@ -149,8 +114,9 @@ int main()
                 watch.Start();
                 SearchMove(depth, board);
                 cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
-                cout << "Nodes per second: " << (board.nps ) << endl;
-                board.nps = 0;
+                cout << "KNodes per second: " << board.Nps / watch.ElapsedMilliseconds() << endl;
+                board.Nps = 0;
+                cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
             }
         }
 
@@ -187,10 +153,7 @@ int main()
 
                         board.MakeMove(move);
                         board.Display();
-                        if (legalMoves.size < 25)
-                            SearchMove(6, board);
-                        else
-                            SearchMove(5, board);
+                        //                        Search::IterativeSearch(board);
                     }
                     else
                     {
@@ -199,9 +162,15 @@ int main()
                 }
                 else
                 {
-                    cout << Console::Red << "#Mate for White#";
+                    cout << Console::Red << "#Mate for " << (board.SideToMove == PieceColor::White ? "White#" : "Black#");
                 }
             }
+        }
+
+        else if (fields[0] == "undo")
+        {
+            board.UndoMove(board.moves[board.CurrentPly - 1]);
+            board.Display();
         }
 
         else if (fields[0] == "bench")
@@ -212,6 +181,7 @@ int main()
         else if (fields[0] == "play")
         {
             int pos;
+            watch.Start();
             do
             {
                 Move legalMoves[Constants::MaxMoves + 2];
@@ -219,23 +189,43 @@ int main()
                 MoveGenerator::GetLegalMoves(legalMoves, pos, board);
                 if (pos > 0)
                 {
-                    if (pos < 25)
-                        SearchMove(5, board);
-                    else
-                        SearchMove(6, board);
+                    Search::IterativeSearch(board);
                 }
 
             }while( pos > 0);
 
-            cout << Console::Red << "#Mate for " << (board.SideToMove == PieceColor::White ? "White #" : "Black #");
+            board.Display();
+            cout << Console::Red << "#Mate for " << (board.SideToMove == PieceColor::White ? "White#" : "Black#");
+            cout << endl << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
 
         }
+
+        else if (fields[0] == "iterate")
+        {
+            watch.Start();
+            Search::IterativeSearch(board);
+            cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
+            cout << "KNodes per second: " << board.Nps / watch.ElapsedMilliseconds() << endl;
+            board.Nps = 0;
+            cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
+        }
+
+        else if (fields[0] == "zobrist")
+        {
+            cout << "Zobrist: " << board.zobrist << endl;
+        }
+
+        else if (fields[0] == "fen")
+        {
+            cout << "FEN: " << board.GetFen() << endl;
+        }
+
         else
         {
             cout << "incorrect command: " << cmd << endl;
         }
 
-        cout << endl;
+        cout << Console::Reset << endl;
     }
 
     return 0;
