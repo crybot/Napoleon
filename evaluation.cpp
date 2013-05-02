@@ -5,7 +5,7 @@
 
 namespace Napoleon
 {
-    int pawnSquareValue[64] =
+    int Evaluation::pawnSquareValue[64] =
     {
         0,  0,  0,  0,  0,  0,  0,  0,
         5, 10, 15,-20,-20, 15, 10,  5,
@@ -17,7 +17,7 @@ namespace Napoleon
         0,  0,  0,  0,  0,  0,  0,  0
     };
 
-    int knightSquareValue[64]
+    int Evaluation::knightSquareValue[64] =
     {
         -50,-40,-30,-30,-30,-30,-40,-50,
         -40,-20,  0,  0,  0,  0,-20,-40,
@@ -29,7 +29,7 @@ namespace Napoleon
         -50,-40,-30,-30,-30,-30,-40,-50,
     };
 
-    int bishopSquareValue[64]
+    int Evaluation::bishopSquareValue[64] =
     {
 
         -20,-10,-10,-10,-10,-10,-10,-20,
@@ -42,7 +42,7 @@ namespace Napoleon
         -20,-10,-10,-10,-10,-10,-10,-20,
     };
 
-    int queenSquareValue[64]
+    int Evaluation::queenSquareValue[64] =
     {
         -10,-10,-10, 0, -10,-10,-10,-10,
         -10,-10,-10,-10,-10,-10,-10,-10,
@@ -54,7 +54,7 @@ namespace Napoleon
         -10,-10,-10,-10,-10,-10,-10,-10
     };
 
-    int kingSquareValue[64]
+    int Evaluation::kingSquareValue[64] = 
     {
          20, 30, 50,  0,  0, 10, 60, 20,
          20, 20,  0,  0,  0,  0, 20, 20,
