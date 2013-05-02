@@ -25,7 +25,7 @@ namespace Napoleon
         int CurrentPly;
         Byte CastlingStatus;
         Byte SideToMove;
-        ulong Nps;
+        unsigned long Nps;
 
         Move moves[Constants::MaxPly]; // debugging
         ZobristKey hash[Constants::MaxPly]; // debugging
