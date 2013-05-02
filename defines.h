@@ -11,6 +11,7 @@
 #   define INLINE __forceinline
 #else
 #   define INLINE inline
+#endif
 
 #define Infinity 32767
 
