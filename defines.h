@@ -4,11 +4,13 @@
 
 #define C64(constantU64) constantU64##ULL
 
-#if __GNUC_PREREQ (3,2)
+#ifdef __GNUC_PREREQ (3,2)
 #   define INLINE __inline __attribute__ ((__always_inline__))
+#elif defined(_MSC_VER)
+#   include<intrin.h>
+#   define INLINE __forceinline
 #else
 #   define INLINE inline
-#endif
 
 #define Infinity 32767
 
