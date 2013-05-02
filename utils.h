@@ -38,26 +38,37 @@ namespace Napoleon
             Byte GetOpposite(Byte);
         }
 
-        INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
-        {
+    	INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
+		{
 #ifdef __GNUG__
-            return  __builtin_ctzll(bitBoard); // conta il numero di 0 precedenti al primo bit piu` significativo
+			return  __builtin_ctzll(bitBoard); // conta il numero di 0 precedenti al primo bit piu` significativo
+
+#elif defined(_MSC_VER)
+			unsigned long index;
+			_BitScanForward64(&index, bitBoard);
+
+			return (int)index;
 #else
-            return Constants::DeBrujinTable[((bitBoard & -bitBoard) * Constants::DeBrujinValue) >> 58];
+			return Constants::DeBrujinTable[((bitBoard & -bitBoard) * Constants::DeBrujinValue) >> 58];
 #endif
-        }
+		}
 
-
-        INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
-        {
-            Napoleon::BitBoard bb = bitBoard;
-            bitBoard &= (bitBoard - 1);
+		INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
+		{
+			Napoleon::BitBoard bb = bitBoard;
+			bitBoard &= (bitBoard - 1);
 #ifdef __GNUG__
-            return  __builtin_ctzll(bb); // conta il numero di 0 precedenti al primo bit piu` significativo
+			return  __builtin_ctzll(bb); // conta il numero di 0 precedenti al primo bit piu` significativo
+
+#elif defined(_MSC_VER)
+			unsigned long index;
+			_BitScanForward64(&index, bb);
+
+			return (int)index;
 #else
-            return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
+			return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
 #endif
-        }
+		}
 
         INLINE int BitBoard::PopCount(Napoleon::BitBoard bitBoard)
         {
