@@ -258,7 +258,7 @@ namespace Napoleon
         const BitBoard NotGHFile = NotGFile | NotHFile;
 
         const int MaxMoves = 192;
-        const int MaxPly = 10000;
+        const int MaxPly = 1024;
 
         const BitBoard DeBrujinValue = 0x07EDD5E59A4E28C2;
         const int DeBrujinTable[] =

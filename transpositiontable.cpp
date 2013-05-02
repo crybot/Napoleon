@@ -1,4 +1,5 @@
 #include "transpositiontable.h"
+#include "constants.h"
 #include <ctime>
 namespace Napoleon
 {
@@ -41,5 +42,17 @@ namespace Napoleon
             *move = hash->BestMove; // get best move on this position
         }
         return TranspositionTable::Unknown;
+    }
+
+    Move TranspositionTable::GetPv(ZobristKey key)
+    {
+        HashEntry* hash = &Table[key % Size];
+
+        if (hash->Hash == key)
+        {
+            return hash->BestMove;
+        }
+
+        return Constants::NullMove;
     }
 }

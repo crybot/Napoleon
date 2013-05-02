@@ -73,8 +73,6 @@ int main()
     Benchmark bench;
     board.Equip();
 
-
-
     while(1)
     {
         cout << "Napoleon: ";
@@ -153,7 +151,7 @@ int main()
 
                         board.MakeMove(move);
                         board.Display();
-                        //                        Search::IterativeSearch(board);
+                        Search::IterativeSearch(board);
                     }
                     else
                     {

@@ -19,6 +19,7 @@ namespace Napoleon
 
         void Save(ZobristKey, Byte, int, Move, Byte);
         int Probe(ZobristKey, Byte, int, Move*, int);
+        Move GetPv(ZobristKey);
     };
 
     INLINE const HashEntry& TranspositionTable::operator[](int i) const

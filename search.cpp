@@ -7,7 +7,11 @@
 
 namespace Napoleon
 {
+    StopWatch Search::Timer;
+    int Search::ThinkTime;
     int Search::moveScores[Constants::MaxMoves];
+    int Search::history[2][64][64] = {{{1}}};
+    Move Search::killerMoves[Constants::MaxPly][2];
 
     int Search::search(int depth, int alpha, int beta, Board& board)
     {
@@ -62,34 +66,37 @@ namespace Napoleon
                 return beta;
         }
 
-        //        // internal iterative deepening
-        //        if (depth > 5 && best.IsNull())
-        //        {
-        //            search(depth - 1 - 3, -Infinity, Infinity, board);
+        // internal iterative deepening
+        if (depth >= 3 && best.IsNull())
+        {
+            int R = depth > 5 ? 4 : 2;
 
-        //            best = board.Table[board.zobrist % board.Table.Size].BestMove;
+            search(depth/R - 1, -Infinity, Infinity, board);
 
-        //            if (!best.IsNull())
-        //            {
-        //                assert(board.IsMoveLegal(best, pinned));
+            if((score = board.Table.Probe(board.zobrist, depth, alpha, &best, beta)) != TranspositionTable::Unknown)
+                return score;
 
-        //                legal++;
-        //                board.MakeMove(best);
-        //                score = -search(depth - 1, -beta, -alpha, board);
-        //                board.UndoMove(best);
+            if (!best.IsNull())
+            {
+                assert(board.IsMoveLegal(best, pinned));
 
-        //                if( score >= beta )
-        //                    return beta;
+                legal++;
+                board.MakeMove(best);
+                score = -search(depth - 1, -beta, -alpha, board);
+                board.UndoMove(best);
 
-        //                if( score > alpha )
-        //                {
-        //                    bound = Exact;
-        //                    alpha = score;
-        //                }
-        //            }
-        //        }
+                if( score >= beta )
+                    return beta;
 
-        MoveGenerator::GetPseudoLegalMoves<false>(moves, pos, attackers, board); // captures and non-captures
+                if( score > alpha )
+                {
+                    bound = Exact;
+                    alpha = score;
+                }
+            }
+        }
+
+        MoveGenerator::GetPseudoLegalMoves<false>(moves, pos, attackers, board); // get captures and non-captures
         setScores(moves, board, depth, pos); // move-list, board, actual depth, number of moves
 
         for(int i=0; i<pos; i++)
@@ -104,8 +111,16 @@ namespace Napoleon
 
                 if( score >= beta )
                 {
+                    //killer moves and history heuristic
                     if(!moves[i].IsCapture())
-                        board.KillerMoves[depth] = moves[i];
+                    {
+                        if (moves[i] != killerMoves[depth][0])
+                        {
+                            killerMoves[depth][1] = killerMoves[depth][0];
+                        }
+                        killerMoves[depth][0] = moves[i];
+                        history[board.SideToMove][moves[i].FromSquare][moves[i].ToSquare]++; // seems faster than += depth^2
+                    }
 
                     board.Table.Save(board.zobrist, depth, beta, best, Beta);
                     return beta;   //  fail hard beta-cutoff
@@ -124,8 +139,8 @@ namespace Napoleon
         {
             if (board.IsCheck)
             {
-                board.Table.Save(board.zobrist, depth, -16384, best, Exact);
-                return -16384;
+                board.Table.Save(board.zobrist, depth, -16384 - depth*depth, best, Exact);
+                return -16384 - depth*depth;
             }
             else
             {
@@ -168,7 +183,7 @@ namespace Napoleon
 
         BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
 
-        MoveGenerator::GetPseudoLegalMoves<true>(moves, pos, attackers, board); // only captures
+        MoveGenerator::GetPseudoLegalMoves<true>(moves, pos, attackers, board); // get only captures
 
         BitBoard pinned = board.GetPinnedPieces();
         for(int i=0; i<pos; i++)
@@ -197,38 +212,58 @@ namespace Napoleon
     /// 1) winning captures
     /// 2) equal captures
     /// 3) killer moves
-    /// 4) all other moves // TODO history heuristic order
+    /// 4) losing captures
+    /// 5) all other moves in history heuristic order
     void Search::setScores(Move moves[], Board& board, int depth, int high)
     {
         using namespace Constants::Piece;
 
+        int min = 0;
+        int max = 0;
+        int captureScore;
+        int historyScore;
+
         for (int i=0; i<high; i++)
         {
+            // MVV-LVA
             if (moves[i].IsCapture())
-                moveScores[i] = PieceValue[moves[i].PieceCaptured] - PieceValue[board.PieceSet[moves[i].FromSquare].Type]; // MVV-LVA
+            {
+                moveScores[i] = captureScore = PieceValue[moves[i].PieceCaptured] - PieceValue[board.PieceSet[moves[i].FromSquare].Type];
+                if (captureScore < min)
+                    min = captureScore;
+            }
+            else if (moves[i] == killerMoves[depth][0])
+                moveScores[i] = - 1 ;
+            else if (moves[i] == killerMoves[depth][1])
+                moveScores[i] = - 2 ;
+            else if ((historyScore = history[board.SideToMove][moves[i].FromSquare][moves[i].ToSquare]) > max)
+                max = historyScore;
+        }
 
-            else if (moves[i] == board.KillerMoves[depth])
-                moveScores[i] = -1;
-            else
-                moveScores[i] = -2;
+        for (int i=0; i<high; i++)
+        {
+            if (!moves[i].IsCapture() && moves[i] != killerMoves[depth][0] && moves[i] != killerMoves[depth][1])
+                moveScores[i] = history[board.SideToMove][moves[i].FromSquare][moves[i].ToSquare] - max + min - 3;
         }
     }
 
     void Search::pickMove(Move moves[], int low, int high)
     {
-        int min = low;
+        int max = low;
 
         for (int i=low+1; i<high; i++)
-        {
-            if (moveScores[i] > moveScores[min])
-                min = i;
-        }
+            if (moveScores[i] > moveScores[max])
+                max = i;
 
-        if (min != low)
+        if (max != low)
         {
             Move temp = moves[low];
-            moves[low] = moves[min];
-            moves[min] = temp;
+            moves[low] = moves[max];
+            moves[max] = temp;
+
+            int tempScore = moveScores[low];
+            moveScores[low] = moveScores[max];
+            moveScores[max] = tempScore;
         }
     }
 

@@ -27,7 +27,6 @@ namespace Napoleon
         Byte SideToMove;
         ulong Nps;
 
-        Move KillerMoves[12]; // depth
         Move moves[Constants::MaxPly]; // debugging
         ZobristKey hash[Constants::MaxPly]; // debugging
 
@@ -168,6 +167,7 @@ namespace Napoleon
     INLINE void Board::MakeNullMove()
     {
         assert(AllowNullMove);
+        hash[CurrentPly] = zobrist;
         enpSquares[CurrentPly] = EnPassantSquare;
         SideToMove = Utils::Piece::GetOpposite(SideToMove);
         EnPassantSquare = Constants::Squares::Invalid;
@@ -198,6 +198,8 @@ namespace Napoleon
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
 
         AllowNullMove = true;
+
+        assert(hash[CurrentPly] == zobrist);
     }
 }
 

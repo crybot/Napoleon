@@ -61,7 +61,7 @@ namespace Napoleon
 
     INLINE bool Move::operator!=(const Move& other) const
     {
-        return !(FromSquare == other.FromSquare && ToSquare == other.ToSquare && PieceCaptured == other.PieceCaptured && PiecePromoted == other.PiecePromoted);
+        return (FromSquare != other.FromSquare || ToSquare != other.ToSquare || PieceCaptured != other.PieceCaptured || PiecePromoted != other.PiecePromoted);
     }
 
 
