@@ -60,7 +60,7 @@ namespace Napoleon
         {
             int R = depth > 5 ? 3 : 2; // dynamic depth-based reduction
             board.MakeNullMove();
-            score = -search(depth - R - 1 , -beta, -beta+1, board);
+            score = -search(depth - R - 1 , -beta, -beta+1, board); // make a null-window search (we don't care by how much it fails high, if it does)
             board.UndoNullMove();
 
             if(score >= beta)

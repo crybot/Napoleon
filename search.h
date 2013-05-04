@@ -57,7 +57,7 @@ namespace Napoleon
         val = searchRoot(i++, -Constants::Infinity, Constants::Infinity, move, board);
         toMake = move;
 
-        while(i<100 && Timer.Stop().ElapsedMilliseconds() < ThinkTime)
+        while(i<=9)
         {
 
             //aspiration search
@@ -120,8 +120,7 @@ namespace Napoleon
 
         for (int i=0; i<pos; i++)
         {
-            if (Timer.Stop().ElapsedMilliseconds() >= ThinkTime)
-                return max;
+
 
             board.MakeMove(moves[i]);
             score = -Search::search(depth-1, alpha, beta, board);
