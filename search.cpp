@@ -11,6 +11,7 @@ namespace Napoleon
     int Search::ThinkTime;
     int Search::moveScores[Constants::MaxMoves];
     int Search::history[2][64][64] = {{{1}}};
+    int Search::lastScore;
     Move Search::killerMoves[Constants::MaxPly][2];
 
     int Search::search(int depth, int alpha, int beta, Board& board)
@@ -28,7 +29,7 @@ namespace Napoleon
             return score;
 
         if(depth == 0)
-            return quiesce(alpha, beta, board);
+            return quiescence(alpha, beta, board);
 
         BitBoard pinned = board.GetPinnedPieces();
 
@@ -66,12 +67,12 @@ namespace Napoleon
                 return beta;
         }
 
-        // internal iterative deepening
+        // internal iterative deepening (IID)
         if (depth >= 3 && best.IsNull())
         {
             int R = depth > 5 ? 4 : 2;
 
-            search(depth/R - 1, -Infinity, Infinity, board);
+            search(depth/R - 1, -Constants::Infinity, Constants::Infinity, board);
 
             if((score = board.Table.Probe(board.zobrist, depth, alpha, &best, beta)) != TranspositionTable::Unknown)
                 return score;
@@ -161,7 +162,7 @@ namespace Napoleon
     }
 
 
-    int Search::quiesce(int alpha, int beta, Board& board)
+    int Search::quiescence(int alpha, int beta, Board& board)
     {
         board.Nps++;
         int stand_pat = Evaluation::Evaluate(board);
@@ -196,7 +197,7 @@ namespace Napoleon
                     continue;
 
                 board.MakeMove(moves[i]);
-                score = -quiesce( -beta, -alpha, board);
+                score = -quiescence( -beta, -alpha, board);
                 board.UndoMove(moves[i]);
 
                 if( score >= beta )
@@ -214,6 +215,17 @@ namespace Napoleon
     /// 3) killer moves
     /// 4) losing captures
     /// 5) all other moves in history heuristic order
+    ///
+    /// Every history move has a positive score, so to order them such that they
+    /// are always after losing captures (which have a score <= 0) we found
+    /// the minimum score of the captures and the maximum score of the history moves.
+    /// Then we assing to each history move a score calculated with this formula:
+    /// Score = HistoryScore - HistoryMax + CapturesMin - 3
+    /// The - 3 factor handle the situation where there are no losing captures,
+    /// but history moves should still stay after killer moves
+    /// (which have score -1 and -2). Without that, the best history move
+    /// would score 0 and would be analyzed before killer moves.
+
     void Search::setScores(Move moves[], Board& board, int depth, int high)
     {
         using namespace Constants::Piece;
@@ -267,6 +279,7 @@ namespace Napoleon
         }
     }
 
+    // sort only captures (only used in quiescence search)
     void Search::orderCaptures(Move moves[], Board& board, int low, int high)
     {
         /// MVV-LVA

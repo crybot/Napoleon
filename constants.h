@@ -257,6 +257,7 @@ namespace Napoleon
         const BitBoard NotABFile = NotAFile | NotBFile;
         const BitBoard NotGHFile = NotGFile | NotHFile;
 
+        const int Infinity = 32767;
         const int MaxMoves = 192;
         const int MaxPly = 1024;
 

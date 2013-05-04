@@ -17,15 +17,15 @@ namespace Napoleon
                 southwest    south   southeast
         */
 
-        INLINE constexpr BitBoard OneStepSouth(BitBoard bitBoard) { return bitBoard >> 8; }
-        INLINE constexpr BitBoard OneStepNorth(BitBoard bitBoard) { return bitBoard << 8; }
-        INLINE constexpr BitBoard OneStepWest(BitBoard bitBoard) { return bitBoard >> 1 & Constants::NotHFile; }
-        INLINE constexpr BitBoard OneStepEast(BitBoard bitBoard) { return bitBoard << 1 & Constants::NotAFile; }
+        INLINE BitBoard OneStepSouth(BitBoard bitBoard) { return bitBoard >> 8; }
+        INLINE BitBoard OneStepNorth(BitBoard bitBoard) { return bitBoard << 8; }
+        INLINE BitBoard OneStepWest(BitBoard bitBoard) { return bitBoard >> 1 & Constants::NotHFile; }
+        INLINE BitBoard OneStepEast(BitBoard bitBoard) { return bitBoard << 1 & Constants::NotAFile; }
 
-        INLINE constexpr BitBoard OneStepNorthEast(BitBoard bitBoard) { return bitBoard << 9 & Constants::NotAFile; }
-        INLINE constexpr BitBoard OneStepNorthWest(BitBoard bitBoard) { return bitBoard << 7 & Constants::NotHFile; }
-        INLINE constexpr BitBoard OneStepSouthEast(BitBoard bitBoard) { return bitBoard >> 7 & Constants::NotAFile; }
-        INLINE constexpr BitBoard OneStepSouthWest(BitBoard bitBoard) { return bitBoard >> 9 & Constants::NotHFile; }
+        INLINE BitBoard OneStepNorthEast(BitBoard bitBoard) { return bitBoard << 9 & Constants::NotAFile; }
+        INLINE BitBoard OneStepNorthWest(BitBoard bitBoard) { return bitBoard << 7 & Constants::NotHFile; }
+        INLINE BitBoard OneStepSouthEast(BitBoard bitBoard) { return bitBoard >> 7 & Constants::NotAFile; }
+        INLINE BitBoard OneStepSouthWest(BitBoard bitBoard) { return bitBoard >> 9 & Constants::NotHFile; }
     }
 }
 

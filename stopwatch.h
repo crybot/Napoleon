@@ -3,7 +3,7 @@
 #include <chrono>
 
 using namespace std::chrono;
-typedef std::chrono::milliseconds milliseconds;
+typedef std::chrono::milliseconds MS;
 
 class StopWatch
 {

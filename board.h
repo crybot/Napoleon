@@ -25,16 +25,16 @@ namespace Napoleon
         int CurrentPly;
         Byte CastlingStatus;
         Byte SideToMove;
-        ulong Nps;
+        unsigned long Nps;
 
         Move moves[Constants::MaxPly]; // debugging
         ZobristKey hash[Constants::MaxPly]; // debugging
 
         int KingSquare[2]; // color
-        int NumOfPieces[2][6] = { { 0 } }; // color, type
+        int NumOfPieces[2][6]; // color, type
         Piece PieceSet[64]; // square
 
-        BitBoard bitBoardSet[2][6] = { { Constants::Empty } }; // color, type
+        BitBoard bitBoardSet[2][6]; // color, type
         BitBoard Pieces[2]; // color
 
         BitBoard OccupiedSquares;

@@ -16,11 +16,11 @@ StopWatch& StopWatch::Stop()
 
 double StopWatch::ElapsedMilliseconds()
 {
-    return duration_cast<milliseconds>(end - begin).count();
+    return duration_cast<MS>(end - begin).count();
 }
 
 double StopWatch::ElapsedSeconds()
 {
-    return duration_cast<milliseconds>(end - begin).count() / (double)1000;
+    return duration_cast<MS>(end - begin).count() / (double)1000;
 
 }

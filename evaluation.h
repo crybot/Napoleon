@@ -6,12 +6,6 @@
 #include "board.h"
 namespace Napoleon
 {
-    extern int pawnSquareValue[64];
-    extern int knightSquareValue[64];
-    extern int bishopSquareValue[64];
-    extern int queenSquareValue[64];
-    extern int kingSquareValue[64];
-
     class Evaluation
     {
     public:
@@ -21,6 +15,12 @@ namespace Napoleon
     private:
         template<Byte>
         static int evaluateMobility(Board&, BitBoard);
+
+        static int pawnSquareValue[64];
+        static int knightSquareValue[64];
+        static int bishopSquareValue[64];
+        static int queenSquareValue[64];
+        static int kingSquareValue[64];
 
     };
 
