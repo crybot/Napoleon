@@ -7,12 +7,13 @@
 #include "fenstring.h"
 #include "transpositiontable.h"
 #include <iostream>
+#include <cstring>
 
 namespace Napoleon
 {
     Board::Board()
     {
-        Table = TranspositionTable(16777216);
+        Table = TranspositionTable(67108864);
         MoveDatabase::InitAttacks();
         Zobrist::Init();
 
@@ -22,6 +23,8 @@ namespace Napoleon
         EmptySquares = Constants::Empty;
         CurrentPly = 0;
         Nps = 0;
+        FirstMoveCutoff = 0;
+        TotalCutoffs = 0;
         AllowNullMove = true;
 
     }
@@ -213,6 +216,7 @@ namespace Napoleon
 
     void Board::LoadGame(const FenString& fenString)
     {
+        memset(Table.Table, 0, sizeof(HashEntry) * Table.Size);
         zobrist = 0;
         initializeCastlingStatus(fenString);
         initializeSideToMove(fenString);

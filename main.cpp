@@ -56,7 +56,7 @@ void Divide(int depth, Board& board, Benchmark bench)
 void SearchMove(int depth, Board& board)
 {
     Move move;
-    Search::searchRoot(depth, -32767, 32767, move, board);
+    Search::searchRoot(depth, -Constants::Infinity, Constants::Infinity, move, board);
 
     board.MakeMove(move);
     board.Display();
@@ -176,6 +176,10 @@ int main()
         else if (fields[0] == "bench")
         {
             bench.Start();
+        }
+        else if (fields[0] == "bench2")
+        {
+            bench.CutoffTest();
         }
 
         else if (fields[0] == "play")

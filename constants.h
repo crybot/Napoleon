@@ -239,6 +239,13 @@ namespace Napoleon
             const int PieceValue[] = { 100, 320, 330, 500, 900, 2000 };
         }
 
+        namespace Node
+        {
+            const int Pv = 0;
+            const int Cut = 1;
+            const int All = 2;
+        }
+
         const Move NullMove(0, 0, PieceType::None, PieceType::None);
         const BitBoard Empty = 0x0000000000000000;
         const BitBoard Universe = 0xFFFFFFFFFFFFFFFF;
@@ -257,7 +264,7 @@ namespace Napoleon
         const BitBoard NotABFile = NotAFile | NotBFile;
         const BitBoard NotGHFile = NotGFile | NotHFile;
 
-        const int Infinity = 32767;
+        const int Infinity = 200000;
         const int MaxMoves = 192;
         const int MaxPly = 1024;
 

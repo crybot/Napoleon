@@ -9,6 +9,7 @@
 #include "movegenerator.h"
 #include "constants.h"
 #include "console.h"
+#include "search.h"
 
 namespace Napoleon
 {
@@ -70,6 +71,42 @@ namespace Napoleon
             std::cout << Console::Red << "Test Not Passed!" << std::endl;
         std::cout << Console::Reset;
     }
+
+    void Benchmark::CutoffTest()
+    {
+        std::ifstream ff("perft.epd");
+        std::vector<std::string> strings;
+        std::vector<std::string> fields;
+        std::string buff;
+        int err = 0;
+        unsigned long long result;
+        unsigned long long excpected;
+        int depth;
+
+        while (getline(ff, buff))
+        {
+            strings.push_back(buff);
+        }
+
+        for (unsigned i=0; i<50; i++)
+        {
+            boost::split(fields, strings[i], boost::is_any_of(";"));
+            board.LoadGame(FenString(fields[0]));
+
+            Search::IterativeSearch(board);
+            std::cout << i << std::endl;
+
+        }
+
+        std::cout << "Cutoff on first move: " << board.FirstMoveCutoff << std::endl;
+        std::cout << "Total Cutoffs: " << board.TotalCutoffs << std::endl;
+        std::cout <<  Console::Green << "First Move Cutoff percentage: " << ((float)board.FirstMoveCutoff / (float)board.TotalCutoffs) * 100 << "%" << std::endl;
+        std::cout <<  Console::Reset << std::endl;
+
+
+
+    }
+
 
     unsigned long long Benchmark::Perft(int depth, Board& board)
     {

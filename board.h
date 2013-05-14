@@ -26,6 +26,8 @@ namespace Napoleon
         Byte CastlingStatus;
         Byte SideToMove;
         unsigned long Nps;
+        unsigned long FirstMoveCutoff;
+        unsigned long TotalCutoffs;
 
         Move moves[Constants::MaxPly]; // debugging
         ZobristKey hash[Constants::MaxPly]; // debugging

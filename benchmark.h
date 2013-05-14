@@ -9,6 +9,7 @@ namespace Napoleon
     public:
         Benchmark();
         void Start();
+        void CutoffTest();
 
         unsigned long long Perft(int, Board&);
     private:
