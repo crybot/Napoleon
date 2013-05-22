@@ -22,15 +22,28 @@ namespace Napoleon
 
     std::string Move::ToAlgebraic() const
     {
-        std::string algebraic = "";
+        std::string algebraic;
+
+        if (IsNull())
+            return "0000";
 
         if (IsCastle())
         {
             if (IsCastleOO())
-                algebraic += "O-O";
+            {
+                if (FromSquare == Constants::Squares::IntE1)
+                    algebraic += "e1g1";
+                else
+                    algebraic += "e8g8";
+            }
 
             else if (IsCastleOOO())
-                algebraic += "O-O-O";
+            {
+                if (FromSquare == Constants::Squares::IntE1)
+                    algebraic += "e1c1";
+                else
+                    algebraic += "e8c8";
+            }
         }
 
         else

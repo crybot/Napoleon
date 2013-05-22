@@ -6,6 +6,7 @@
 #include "movedatabase.h"
 #include "transpositiontable.h"
 #include "zobrist.h"
+#include "uci.h"
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -29,10 +30,10 @@ namespace Napoleon
         unsigned long FirstMoveCutoff;
         unsigned long TotalCutoffs;
 
-        Move moves[Constants::MaxPly]; // debugging
         ZobristKey hash[Constants::MaxPly]; // debugging
 
         int KingSquare[2]; // color
+        int Material[2]; // color
         int NumOfPieces[2][6]; // color, type
         Piece PieceSet[64]; // square
 
@@ -66,7 +67,7 @@ namespace Napoleon
         bool IsMoveLegal(Move&, BitBoard);
         bool IsAttacked(BitBoard, Byte);
 
-        Move ParseMove(std::string, MoveList);
+        Move ParseMove(std::string);
 
         std::string GetFen() const;
 
@@ -168,7 +169,8 @@ namespace Napoleon
 
     INLINE void Board::MakeNullMove()
     {
-        assert(AllowNullMove);
+//        if(!AllowNullMove)
+//            Uci::SendCommand<Command::Generic>("AllowNullMove assert");
         hash[CurrentPly] = zobrist;
         enpSquares[CurrentPly] = EnPassantSquare;
         SideToMove = Utils::Piece::GetOpposite(SideToMove);
@@ -188,7 +190,9 @@ namespace Napoleon
 
     INLINE void Board::UndoNullMove()
     {
-        assert(!AllowNullMove);
+
+        if(AllowNullMove)
+            Uci::SendCommand<Command::Generic>("!AllowNullMove assert");
 
         CurrentPly--;
         SideToMove = Utils::Piece::GetOpposite(SideToMove);
@@ -201,7 +205,8 @@ namespace Napoleon
 
         AllowNullMove = true;
 
-        assert(hash[CurrentPly] == zobrist);
+//        if(hash[CurrentPly] != zobrist)
+//            Uci::SendCommand<Command::Generic>("hash[CurrentPly] == zobrist assert");
     }
 }
 

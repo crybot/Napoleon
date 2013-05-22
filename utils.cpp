@@ -73,23 +73,39 @@ namespace Napoleon
 
         namespace Piece
         {
+            Byte GetPiece(char initial)
+            {
+                switch(initial)
+                {
+                case 'b':
+                    return PieceType::Bishop;
+                case 'n':
+                    return PieceType::Knight;
+                case 'q':
+                    return PieceType::Queen;
+                case 'r':
+                    return PieceType::Rook;
+                default:
+                    throw std::exception(); // TODO
+                }
+            }
 
             char GetInitial(Byte type)
             {
                 switch (type)
                 {
                 case PieceType::Bishop:
-                    return 'B';
+                    return 'b';
                 case PieceType::King:
-                    return 'K';
+                    return 'k';
                 case PieceType::Knight:
-                    return 'N';
+                    return 'n';
                 case PieceType::Pawn:
-                    return 'P';
+                    return 'p';
                 case PieceType::Queen:
-                    return 'Q';
+                    return 'q';
                 case PieceType::Rook:
-                    return 'R';
+                    return 'r';
                 default:
                     throw std::exception(); // TODO
                 }

@@ -23,6 +23,7 @@
 #include "search.h"
 #include "evaluation.h"
 #include "console.h"
+#include "uci.h"
 
 using namespace Napoleon;
 using namespace std;
@@ -66,14 +67,22 @@ void SearchMove(int depth, Board& board)
 
 int main()
 {
+    //#define MAIN
 
+#ifndef MAIN
+
+    Uci::Start();
+
+#endif
+
+#ifdef MAIN
     using namespace Constants;
     using namespace Constants::Squares;
 
     StopWatch watch;
     Board board;
     Benchmark bench;
-    board.Equip();
+    //    board.Equip();
 
     while(1)
     {
@@ -116,7 +125,7 @@ int main()
                 cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
                 cout << "KNodes per second: " << board.Nps / watch.ElapsedMilliseconds() << endl;
                 board.Nps = 0;
-                cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
+                //                cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
             }
         }
 
@@ -144,34 +153,28 @@ int main()
             if (fields.size() == 2)
             {
                 MoveList legalMoves;
-                MoveGenerator::GetLegalMoves(legalMoves.List(), legalMoves.size, board);
-                Move move = board.ParseMove(fields[1], legalMoves);
-                if (legalMoves.size > 0)
+                Move move = board.ParseMove(fields[1]);
+                if (move != Constants::NullMove)
                 {
-                    if (move != Constants::NullMove)
-                    {
 
-                        board.MakeMove(move);
-                        board.Display();
-                        Search::IterativeSearch(board);
-                    }
-                    else
-                    {
-                        cout << "Invalid Move" << endl;
-                    }
+                    board.MakeMove(move);
+                    board.Display();
+                    Move move = Search::iterativeSearch(board);
+                    board.MakeMove(move);
+                    board.Display();
                 }
                 else
                 {
-                    cout << Console::Red << "#Mate for " << (board.SideToMove == PieceColor::White ? "White#" : "Black#");
+                    cout << "Invalid Move" << endl;
                 }
             }
         }
 
-        else if (fields[0] == "undo")
-        {
-            board.UndoMove(board.moves[board.CurrentPly - 1]);
-            board.Display();
-        }
+        //        else if (fields[0] == "undo")
+        //        {
+        //            board.UndoMove(board.moves[board.CurrentPly - 1]);
+        //            board.Display();
+        //        }
 
         else if (fields[0] == "bench")
         {
@@ -193,7 +196,7 @@ int main()
                 MoveGenerator::GetLegalMoves(legalMoves, pos, board);
                 if (pos > 0)
                 {
-                    Search::IterativeSearch(board);
+                    Search::iterativeSearch(board);
                 }
 
             }while( pos > 0);
@@ -207,11 +210,11 @@ int main()
         else if (fields[0] == "iterate")
         {
             watch.Start();
-            Search::IterativeSearch(board);
+            Search::StartThinking(board);
             cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
             cout << "KNodes per second: " << board.Nps / watch.ElapsedMilliseconds() << endl;
             board.Nps = 0;
-            cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
+            //            cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
         }
 
         else if (fields[0] == "zobrist")
@@ -231,6 +234,7 @@ int main()
 
         cout << Console::Reset << endl;
     }
+#endif
 
     return 0;
 }

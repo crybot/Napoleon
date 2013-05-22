@@ -12,11 +12,13 @@
 
 namespace Napoleon
 {
+    enum SearchTask { Think, Stop, Quit };
+
     class Board;
     class Move;
     namespace Search
     {
-
+        extern SearchTask Task;
         extern StopWatch Timer;
         extern int ThinkTime;
         extern int moveScores[Constants::MaxMoves];
@@ -24,10 +26,11 @@ namespace Napoleon
         extern int lastScore;
         extern Move killerMoves[Constants::MaxPly][2];
 
-        void IterativeSearch(Board&);
+        void StartThinking(Board&);
+        void StopThinking();
+        Move iterativeSearch(Board&);
         int searchRoot(int, int, int, Move&, Board&);
 
-        template<int>
         int search(int, int, int, Board&);
         int quiescence(int, int, Board&);
 
@@ -35,7 +38,6 @@ namespace Napoleon
         void pickMove(Move[], int, int);
         void orderCaptures(Move[], Board&, int, int);
     }
-
 }
 
 #endif // SEARCH_H
