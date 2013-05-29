@@ -45,7 +45,7 @@ void Divide(int depth, Board& board, Benchmark bench)
         board.MakeMove(moves[i]);
         temp = bench.Perft(depth - 1, board);
         total += temp;
-        std::cout << moves[i].ToAlgebraic() << "\t" << temp << std::endl;
+        std::cout << MoveEncode::ToAlgebraic(moves[i]) << "\t" << temp << std::endl;
         board.UndoMove(moves[i]);
         NumMoves++;
     }
@@ -61,13 +61,14 @@ void SearchMove(int depth, Board& board)
 
     board.MakeMove(move);
     board.Display();
-    cout << "I.A. Move: " << move.ToAlgebraic() << endl;
+    cout << "I.A. Move: " << MoveEncode::ToAlgebraic(move) << endl;
 
 }
 
+
 int main()
 {
-    //#define MAIN
+#define MAIN
 
 #ifndef MAIN
 
@@ -82,7 +83,48 @@ int main()
     StopWatch watch;
     Board board;
     Benchmark bench;
-    //    board.Equip();
+    board.Equip();
+
+    cout << sizeof(HashEntry) << endl;
+
+
+    //    board.Display();
+    //    cin.get();
+
+    //    Move move(Constants::Squares::IntE4, Constants::Squares::IntD5, Constants::CaptureMask);
+
+    //    assert(!move.IsEnPassant());
+
+    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::White][PieceType::Pawn]);
+    //    cin.get();
+    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::Black][PieceType::Pawn]);
+    //    cin.get();
+
+    //    board.MakeMove(move);
+    //    board.Display();
+    //    cin.get();
+
+    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::White][PieceType::Pawn]);
+    //    cin.get();
+    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::Black][PieceType::Pawn]);
+    //    cin.get();
+
+    //    board.UndoMove(move);
+    //    board.Display();
+    //    cin.get();
+
+    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::White][PieceType::Pawn]);
+    //    cin.get();
+    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::Black][PieceType::Pawn]);
+    //    cin.get();
+
+
+    //    cout << move.ToAlgebraic() << endl;
+
+    //    if (move.IsCapture())
+    //        cout << "Cattura" << endl;
+
+    //    cin.get();
 
     while(1)
     {
@@ -152,16 +194,15 @@ int main()
         {
             if (fields.size() == 2)
             {
-                MoveList legalMoves;
                 Move move = board.ParseMove(fields[1]);
                 if (move != Constants::NullMove)
                 {
 
                     board.MakeMove(move);
                     board.Display();
-                    Move move = Search::iterativeSearch(board);
-                    board.MakeMove(move);
-                    board.Display();
+                    //                    Move move = Search::iterativeSearch(board);
+                    //                    board.MakeMove(move);
+                    //                    board.Display();
                 }
                 else
                 {

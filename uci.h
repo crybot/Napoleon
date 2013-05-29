@@ -18,9 +18,9 @@ namespace Napoleon
     {
         void Start();
         bool ReadCommand();
-
         template<Command::Type>
-        void SendCommand(std::string);
+        void SendCommand(std::string);   
+        void Go(std::istringstream&);
 
         extern Board board;
     }

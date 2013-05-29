@@ -226,11 +226,11 @@ namespace Napoleon
             const BitBoard BlackCastleMaskOO = 0x6000000000000000;
             const BitBoard BlackCastleMaskOOO = 0x0E00000000000000;
 
-            const Move WhiteCastlingOO(Squares::IntE1, Squares::IntG1, PieceType::King, PieceType::Rook);
-            const Move WhiteCastlingOOO(Squares::IntE1, Squares::IntC1, PieceType::King, PieceType::Rook);
+            const Move WhiteCastlingOO = MoveEncode::CreateMove(Squares::IntE1, Squares::IntG1, 0x2);
+            const Move WhiteCastlingOOO = MoveEncode::CreateMove(Squares::IntE1, Squares::IntC1, 0x3);
 
-            const Move BlackCastlingOO(Squares::IntE8, Squares::IntG8, PieceType::King, PieceType::Rook);
-            const Move BlackCastlingOOO(Squares::IntE8, Squares::IntC8, PieceType::King, PieceType::Rook);
+            const Move BlackCastlingOO = MoveEncode::CreateMove(Squares::IntE8, Squares::IntG8, 0x2);
+            const Move BlackCastlingOOO = MoveEncode::CreateMove(Squares::IntE8, Squares::IntC8, 0x3);
         }
 
         namespace Piece
@@ -246,7 +246,16 @@ namespace Napoleon
             const int All = 2;
         }
 
-        const Move NullMove(0, 0, PieceType::None, PieceType::None);
+        const int QueenPromotion = 0xB;
+        const int RookPromotion = 0xA;
+        const int BishopPromotion = 0x9;
+        const int KnightPromotion = 0x8;
+
+        const int CaptureMask = 0x4;
+        const int EpMask = 0x5;
+
+
+        const Move NullMove = MoveEncode::CreateMove(0, 0, 0);
         const BitBoard Empty = 0x0000000000000000;
         const BitBoard Universe = 0xFFFFFFFFFFFFFFFF;
 

@@ -39,7 +39,7 @@ namespace Napoleon
             Byte GetOpposite(Byte);
         }
 
-    	INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
+        INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
 		{
 #ifdef __GNUG__
             return __builtin_ctzll(bitBoard); // conta il numero di 0 precedenti al primo bit piu` significativo
@@ -55,7 +55,7 @@ namespace Napoleon
 #endif
         }
 
-		INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
+        INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
 		{
 			Napoleon::BitBoard bb = bitBoard;
 			bitBoard &= (bitBoard - 1);
@@ -84,42 +84,42 @@ namespace Napoleon
 #endif
         }
 
-        INLINE int Square::GetA1H8DiagonalIndex(int file, int rank)
+        inline int Square::GetA1H8DiagonalIndex(int file, int rank)
         {
             return 7 + rank - file;
         }
 
-        INLINE int Square::GetA1H8DiagonalIndex(int squareIndex)
+        inline int Square::GetA1H8DiagonalIndex(int squareIndex)
         {
             return 7 + GetRankIndex(squareIndex) - GetFileIndex(squareIndex);
         }
 
-        INLINE int Square::GetH1A8AntiDiagonalIndex(int file, int rank)
+        inline int Square::GetH1A8AntiDiagonalIndex(int file, int rank)
         {
             return rank + file;
         }
 
-        INLINE int Square::GetH1A8AntiDiagonalIndex(int squareIndex)
+        inline int Square::GetH1A8AntiDiagonalIndex(int squareIndex)
         {
             return GetRankIndex(squareIndex) + GetFileIndex(squareIndex);
         }
 
-        INLINE int Square::GetFileIndex(int squareIndex)
+        inline int Square::GetFileIndex(int squareIndex)
         {
             return squareIndex & 7;
         }
 
-        INLINE int Square::GetRankIndex(int squareIndex)
+        inline int Square::GetRankIndex(int squareIndex)
         {
             return squareIndex >> 3;
         }
 
-        INLINE int Square::GetSquareIndex(int file, int rank)
+        inline int Square::GetSquareIndex(int file, int rank)
         {
             return file + 8 * rank;
         }
 
-        INLINE Byte Piece::GetOpposite(Byte color)
+        inline Byte Piece::GetOpposite(Byte color)
         {
             return 1 ^ color;
         }

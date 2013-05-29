@@ -119,7 +119,7 @@ namespace Napoleon
                     epTargets = MoveDatabase::PawnAttacks[board.SideToMove][fromIndex];
 
                     if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare]) != 0)
-                        moveList[pos++] =  Move(fromIndex, board.EnPassantSquare, PieceType::Pawn, PieceType::Pawn);
+                        moveList[pos++] =  MoveEncode::CreateMove(fromIndex, board.EnPassantSquare, Constants::EpMask);
                 }
             }
 
@@ -131,14 +131,14 @@ namespace Napoleon
                 if ((Utils::Square::GetRankIndex(toIndex) == 7 && board.SideToMove == PieceColor::White) ||
                         (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove == PieceColor::Black))
                 {
-                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Queen);
-                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Rook);
-                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Bishop);
-                    moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::Knight);
+                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::QueenPromotion);
+                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::RookPromotion);
+                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::BishopPromotion);
+                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::KnightPromotion);
                 }
                 else
                 {
-                    moveList[pos++] =  Move(fromIndex, toIndex,  board.PieceSet[toIndex].Type, PieceType::None); // no promotions
+                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0); // no promotions
                 }
             }
         }
@@ -158,7 +158,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  Move(fromIndex, toIndex,  board.PieceSet[toIndex].Type, PieceType::None);
+                moveList[pos++] = MoveEncode::CreateMove(fromIndex, toIndex, 0);
             }
         }
     }
@@ -177,7 +177,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::None);
+                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
             }
         }
     }
@@ -196,7 +196,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::None);
+                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
             }
         }
     }
@@ -215,7 +215,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  Move(fromIndex, toIndex, board.PieceSet[toIndex].Type, PieceType::None);
+                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
             }
         }
     }
@@ -319,7 +319,7 @@ namespace Napoleon
         while (b)
         {
             to = Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
-            moveList[pos++] = Move(from, to, board.PieceSet[to].Type, PieceType::None);
+            moveList[pos++] = MoveEncode::CreateMove(from, to, 0);
         }
 
         // Generate evasions for other pieces only if not under a double check

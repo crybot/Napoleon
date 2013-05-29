@@ -93,7 +93,7 @@ namespace Napoleon
             boost::split(fields, strings[i], boost::is_any_of(";"));
             board.LoadGame(FenString(fields[0]));
 
-            Search::iterativeSearch(board);
+            Search::StartThinking(board);
             std::cout << i << std::endl;
 
         }

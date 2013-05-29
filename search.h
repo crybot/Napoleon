@@ -12,22 +12,25 @@
 
 namespace Napoleon
 {
-    enum SearchTask { Think, Stop, Quit };
+    enum SearchTask { Think, Infinite, Stop, Quit };
 
     class Board;
-    class Move;
     namespace Search
     {
         extern SearchTask Task;
         extern StopWatch Timer;
         extern int ThinkTime;
+        extern int Time[2];
         extern int moveScores[Constants::MaxMoves];
         extern int history[2][64][64];
-        extern int lastScore;
+        extern int nodes;
         extern Move killerMoves[Constants::MaxPly][2];
+
+        std::string GetInfo(Board&, Move, int, int, int);
 
         void StartThinking(Board&);
         void StopThinking();
+        void InfiniteSearch(Board&);
         Move iterativeSearch(Board&);
         int searchRoot(int, int, int, Move&, Board&);
 

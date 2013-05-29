@@ -1,45 +1,45 @@
 #include "move.h"
 #include "utils.h"
 #include "piece.h"
+#include "constants.h"
 
 namespace Napoleon
 {
-
-    bool Move::IsNull() const
+    bool MoveEncode::IsNull(Move move)
     {
-        return (FromSquare == ToSquare);
+        return (FromSquare(move) == ToSquare(move));
     }
 
-    bool Move::IsCastleOO() const
+    bool MoveEncode::IsCastleOO(Move move)
     {
-        return (FromSquare == 60 && ToSquare == 62) || (FromSquare == 4 && ToSquare == 6);
+        return (FromSquare(move) == 60 && ToSquare(move) == 62) || (FromSquare(move) == 4 && ToSquare(move) == 6);
     }
 
-    bool Move::IsCastleOOO() const
+    bool MoveEncode::IsCastleOOO(Move move)
     {
-        return (FromSquare == 60 && ToSquare == 58) || (FromSquare == 4 && ToSquare == 2);
+        return (FromSquare(move) == 60 && ToSquare(move) == 58) || (FromSquare(move) == 4 && ToSquare(move) == 2);
     }
 
-    std::string Move::ToAlgebraic() const
+    std::string MoveEncode::ToAlgebraic(Move move)
     {
         std::string algebraic;
 
-        if (IsNull())
+        if (IsNull(move))
             return "0000";
 
-        if (IsCastle())
+        if (IsCastle(move))
         {
-            if (IsCastleOO())
+            if (IsCastleOO(move))
             {
-                if (FromSquare == Constants::Squares::IntE1)
+                if (FromSquare(move) == Constants::Squares::IntE1)
                     algebraic += "e1g1";
                 else
                     algebraic += "e8g8";
             }
 
-            else if (IsCastleOOO())
+            else if (IsCastleOOO(move))
             {
-                if (FromSquare == Constants::Squares::IntE1)
+                if (FromSquare(move) == Constants::Squares::IntE1)
                     algebraic += "e1c1";
                 else
                     algebraic += "e8c8";
@@ -49,15 +49,15 @@ namespace Napoleon
         else
         {
             //            algebraic += Utils::Piece::GetInitial(PieceMoved);
-            algebraic += Utils::Square::ToAlgebraic(FromSquare);
+            algebraic += Utils::Square::ToAlgebraic(FromSquare(move));
 
             //            if (IsCapture())
             //                algebraic += "x";
 
-            algebraic += Utils::Square::ToAlgebraic(ToSquare);
+            algebraic += Utils::Square::ToAlgebraic(ToSquare(move));
 
-            if (IsPromotion())
-                algebraic += Utils::Piece::GetInitial(PiecePromoted);
+            if (IsPromotion(move))
+                algebraic += Utils::Piece::GetInitial(PiecePromoted(move));
 
             //            else if (IsEnPassant())
             //                algebraic += "e.p.";

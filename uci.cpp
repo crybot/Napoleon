@@ -4,6 +4,8 @@
 #include "search.h"
 #include "fenstring.h"
 #include "board.h"
+#include "benchmark.h"
+#include <thread>
 
 namespace Napoleon
 {
@@ -12,7 +14,7 @@ namespace Napoleon
 
     void Uci::Start()
     {
-        string line;
+        SendCommand<Command::Generic>("--------Napoleon Engine--------");
         cout.setf(ios::unitbuf);// Make sure that the outputs are sent straight away to the GUI
 
         while(ReadCommand()) { };
@@ -20,6 +22,7 @@ namespace Napoleon
 
     bool Uci::ReadCommand()
     {
+        thread search;
         string line;
         string cmd;
         bool repeat = getline(cin, line);
@@ -73,16 +76,37 @@ namespace Napoleon
                 board.LoadGame(FenString(fen));
             }
 
-            while (stream >> token && !(move = board.ParseMove(token)).IsNull())
+            while (stream >> token && !MoveEncode::IsNull(move = board.ParseMove(token)))
             {
                 board.MakeMove(move);
             }
         }
         else if (cmd == "go")
         {
-            Search::StartThinking(board);
+            search = thread(Go, ref(stream));
+            search.detach();
         }
 
         return repeat;
+    }
+
+    void Uci::Go(istringstream& stream)
+    {
+        string token;
+
+        if (Search::Task != Stop)
+            return;
+
+        while(stream >> token)
+        {
+            if (token == "wtime") stream >> Search::Time[PieceColor::White];
+            if (token == "btime") stream >> Search::Time[PieceColor::Black];
+            if (token == "infinite") Search::Task = Infinite;
+        }
+
+        if (Search::Task == Infinite)
+            Search::InfiniteSearch(board);
+        else
+            Search::StartThinking(board);
     }
 }

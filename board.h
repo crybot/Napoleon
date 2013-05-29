@@ -64,7 +64,8 @@ namespace Napoleon
         void MakeNullMove();
         void UndoNullMove();
 
-        bool IsMoveLegal(Move&, BitBoard);
+        bool IsCapture(Move);
+        bool IsMoveLegal(Move, BitBoard);
         bool IsAttacked(BitBoard, Byte);
 
         Move ParseMove(std::string);
@@ -76,6 +77,7 @@ namespace Napoleon
         int enpSquares[Constants::MaxPly];
         int halfMoveClock[Constants::MaxPly];
         Byte castlingStatus[Constants::MaxPly];
+        Byte capturedPiece[Constants::MaxPly];
 
         void clearPieceSet();
         void updateGenericBitBoards();
@@ -134,14 +136,19 @@ namespace Napoleon
         return pinned;
     }
 
-    INLINE bool Board::IsMoveLegal(Move& move, BitBoard pinned)
+    INLINE bool Board::IsCapture(Move move)
     {
-        if (PieceSet[move.FromSquare].Type == PieceType::King)
+        return (PieceSet[MoveEncode::ToSquare(move)].Type != PieceType::None);
+    }
+
+    INLINE bool Board::IsMoveLegal(Move move, BitBoard pinned)
+    {
+        if (PieceSet[MoveEncode::FromSquare(move)].Type == PieceType::King)
         {
-            return !IsAttacked(Constants::Masks::SquareMask[move.ToSquare], SideToMove);
+            return !IsAttacked(Constants::Masks::SquareMask[MoveEncode::ToSquare(move)], SideToMove);
         }
 
-        if (move.IsEnPassant())
+        if (MoveEncode::IsEnPassant(move))
         {
             MakeMove(move);
             bool islegal = !IsAttacked(bitBoardSet[Utils::Piece::GetOpposite(SideToMove)][PieceType::King], Utils::Piece::GetOpposite(SideToMove));
@@ -149,8 +156,8 @@ namespace Napoleon
             return islegal;
         }
 
-        return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[move.FromSquare]) == 0)
-                || MoveDatabase::AreSquareAligned(move.FromSquare, move.ToSquare,  KingSquare[SideToMove]);
+        return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[MoveEncode::FromSquare(move)]) == 0)
+                || MoveDatabase::AreSquareAligned(MoveEncode::FromSquare(move), MoveEncode::ToSquare(move),  KingSquare[SideToMove]);
     }
 
     INLINE BitBoard Board::KingAttackers(int square, Byte color)
@@ -169,8 +176,8 @@ namespace Napoleon
 
     INLINE void Board::MakeNullMove()
     {
-//        if(!AllowNullMove)
-//            Uci::SendCommand<Command::Generic>("AllowNullMove assert");
+        //        if(!AllowNullMove)
+        //            Uci::SendCommand<Command::Generic>("AllowNullMove assert");
         hash[CurrentPly] = zobrist;
         enpSquares[CurrentPly] = EnPassantSquare;
         SideToMove = Utils::Piece::GetOpposite(SideToMove);
@@ -205,8 +212,8 @@ namespace Napoleon
 
         AllowNullMove = true;
 
-//        if(hash[CurrentPly] != zobrist)
-//            Uci::SendCommand<Command::Generic>("hash[CurrentPly] == zobrist assert");
+        //        if(hash[CurrentPly] != zobrist)
+        //            Uci::SendCommand<Command::Generic>("hash[CurrentPly] == zobrist assert");
     }
 }
 
