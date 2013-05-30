@@ -45,7 +45,7 @@ void Divide(int depth, Board& board, Benchmark bench)
         board.MakeMove(moves[i]);
         temp = bench.Perft(depth - 1, board);
         total += temp;
-        std::cout << MoveEncode::ToAlgebraic(moves[i]) << "\t" << temp << std::endl;
+        std::cout << moves[i].ToAlgebraic() << "\t" << temp << std::endl;
         board.UndoMove(moves[i]);
         NumMoves++;
     }
@@ -61,14 +61,14 @@ void SearchMove(int depth, Board& board)
 
     board.MakeMove(move);
     board.Display();
-    cout << "I.A. Move: " << MoveEncode::ToAlgebraic(move) << endl;
+    cout << "I.A. Move: " << move.ToAlgebraic() << endl;
 
 }
 
 
 int main()
 {
-#define MAIN
+    //#define MAIN
 
 #ifndef MAIN
 
@@ -85,8 +85,7 @@ int main()
     Benchmark bench;
     board.Equip();
 
-    cout << sizeof(HashEntry) << endl;
-
+    cout << "Size HashEntry: " << sizeof(HashEntry) << endl;
 
     //    board.Display();
     //    cin.get();

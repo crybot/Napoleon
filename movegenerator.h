@@ -119,7 +119,7 @@ namespace Napoleon
                     epTargets = MoveDatabase::PawnAttacks[board.SideToMove][fromIndex];
 
                     if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare]) != 0)
-                        moveList[pos++] =  MoveEncode::CreateMove(fromIndex, board.EnPassantSquare, Constants::EpMask);
+                        moveList[pos++] =  Move(fromIndex, board.EnPassantSquare, EnPassant);
                 }
             }
 
@@ -131,14 +131,14 @@ namespace Napoleon
                 if ((Utils::Square::GetRankIndex(toIndex) == 7 && board.SideToMove == PieceColor::White) ||
                         (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove == PieceColor::Black))
                 {
-                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::QueenPromotion);
-                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::RookPromotion);
-                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::BishopPromotion);
-                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, Constants::KnightPromotion);
+                    moveList[pos++] =  Move(fromIndex, toIndex, QueenPromotion);
+                    moveList[pos++] =  Move(fromIndex, toIndex, RookPromotion);
+                    moveList[pos++] =  Move(fromIndex, toIndex, BishopPromotion);
+                    moveList[pos++] =  Move(fromIndex, toIndex, KnightPromotion);
                 }
                 else
                 {
-                    moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0); // no promotions
+                    moveList[pos++] =  Move(fromIndex, toIndex); // no promotions
                 }
             }
         }
@@ -158,7 +158,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] = MoveEncode::CreateMove(fromIndex, toIndex, 0);
+                moveList[pos++] = Move(fromIndex, toIndex);
             }
         }
     }
@@ -177,7 +177,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
+                moveList[pos++] =  Move(fromIndex, toIndex);
             }
         }
     }
@@ -196,7 +196,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
+                moveList[pos++] =  Move(fromIndex, toIndex);
             }
         }
     }
@@ -215,7 +215,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
+                moveList[pos++] =  Move(fromIndex, toIndex);
             }
         }
     }
@@ -319,7 +319,7 @@ namespace Napoleon
         while (b)
         {
             to = Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
-            moveList[pos++] = MoveEncode::CreateMove(from, to, 0);
+            moveList[pos++] = Move(from, to);
         }
 
         // Generate evasions for other pieces only if not under a double check

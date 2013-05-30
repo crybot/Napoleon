@@ -21,6 +21,7 @@ namespace Napoleon
     typedef unsigned char Byte;
     typedef unsigned long long ZobristKey;
     typedef int Square;
+    typedef int MoveType;
 }
 
 #endif // DEFINES_H

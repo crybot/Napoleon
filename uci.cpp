@@ -76,7 +76,7 @@ namespace Napoleon
                 board.LoadGame(FenString(fen));
             }
 
-            while (stream >> token && !MoveEncode::IsNull(move = board.ParseMove(token)))
+            while (stream >> token && !(move = board.ParseMove(token)).IsNull())
             {
                 board.MakeMove(move);
             }

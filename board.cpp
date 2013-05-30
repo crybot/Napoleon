@@ -310,7 +310,7 @@ namespace Napoleon
 
         Move move;
         if (to == EnPassantSquare)
-            move =  MoveEncode::CreateMove(from, to, Constants::EpMask);
+            move =  Move(from, to, EnPassant);
 
         else if (str == "e1g1")
             move = Constants::Castle::WhiteCastlingOO;
@@ -326,12 +326,12 @@ namespace Napoleon
 
         else if (str.size() == 5)
         {
-            move = MoveEncode::CreateMove(from, to, Utils::Piece::GetPiece(str[4]) -1);
+            move = Move(from, to, Utils::Piece::GetPiece(str[4]) -1);
         }
 
         else
         {
-            move = MoveEncode::CreateMove(from, to, 0);
+            move = Move(from, to);
         }
 
         return move;
@@ -339,13 +339,12 @@ namespace Napoleon
 
     void Board::MakeMove(Move move)
     {
-        using namespace MoveEncode;
         bool incrementClock = true;
 
-        int from = FromSquare(move);
-        int to = ToSquare(move);
+        int from = move.FromSquare();
+        int to = move.ToSquare();
         Byte promoted;
-        Byte captured = IsEnPassant(move) ? PieceType::Pawn : PieceSet[to].Type;
+        Byte captured = move.IsEnPassant() ? PieceType::Pawn : PieceSet[to].Type;
 
         castlingStatus[CurrentPly] = CastlingStatus;  // salva i diritti di arrocco correnti
         enpSquares[CurrentPly] = EnPassantSquare; // salva l'attuale casella enpassant
@@ -381,7 +380,7 @@ namespace Napoleon
         {
             KingSquare[SideToMove] = to;
 
-            if (IsCastle(move))
+            if (move.IsCastle())
             {
                 makeCastle(from, to);
             }
@@ -411,9 +410,9 @@ namespace Napoleon
                 }
             }
         }
-        else if (IsPromotion(move))
+        else if (move.IsPromotion())
         {
-            promoted = PiecePromoted(move);
+            promoted = move.PiecePromoted();
             PieceSet[to] = Piece(SideToMove, promoted);
             bitBoardSet[SideToMove][PieceType::Pawn] ^= To;
             bitBoardSet[SideToMove][promoted] ^= To;
@@ -427,7 +426,7 @@ namespace Napoleon
 
         if (captured != PieceType::None)
         {
-            if (IsEnPassant(move))
+            if (move.IsEnPassant())
             {
                 BitBoard piece;
                 if (SideToMove == PieceColor::White)
@@ -519,9 +518,8 @@ namespace Napoleon
 
     void Board::UndoMove(Move move)
     {
-        using namespace MoveEncode;
-        int from = FromSquare(move);
-        int to = ToSquare(move);
+        int from = move.FromSquare();
+        int to = move.ToSquare();
         Byte promoted;
         Byte captured;
 
@@ -546,7 +544,7 @@ namespace Napoleon
         Byte pieceMoved;
 
         // se la mossa e` stata una promozione il pezzo mosso e` un pedone
-        if (IsPromotion(move))
+        if (move.IsPromotion())
             pieceMoved = PieceType::Pawn;
         else
             pieceMoved = PieceSet[to].Type;
@@ -576,7 +574,7 @@ namespace Napoleon
         {
             KingSquare[SideToMove] = from;
 
-            if (IsCastle(move))
+            if (move.IsCastle())
             {
                 undoCastle(from, to);
             }
@@ -587,9 +585,9 @@ namespace Napoleon
         {
             CastlingStatus = castlingStatus[CurrentPly];
         }
-        else if (IsPromotion(move))
+        else if (move.IsPromotion())
         {
-            promoted = PiecePromoted(move);
+            promoted = move.PiecePromoted();
             NumOfPieces[SideToMove][PieceType::Pawn]++;
             NumOfPieces[SideToMove][promoted]--;
             Material[SideToMove] += Constants::Piece::PieceValue[PieceType::Pawn];
@@ -605,7 +603,7 @@ namespace Napoleon
 
         if (captured != PieceType::None)
         {
-            if (IsEnPassant(move))
+            if (move.IsEnPassant())
             {
                 PieceSet[to] = Constants::Piece::Null; // svuota la casella di partenza perche` non c'erano pezzi prima
                 BitBoard piece;

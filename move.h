@@ -5,64 +5,93 @@
 
 namespace Napoleon
 {
-    typedef unsigned short Move;
+    const MoveType KingCastle = 0x2, QueenCastle = 0x3, EnPassant = 0x5, QueenPromotion = 0xB, RookPromotion = 0xA, BishopPromotion = 0x9, KnightPromotion = 0x8;
 
-    namespace MoveEncode
+    class Move
     {
-        Move CreateMove(int, int, int);
+    public:
+        Move();
+        Move(Square, Square);
+        Move(Square, Square, Square);
 
-        int FromSquare(Move);
-        int ToSquare(Move);
-        int PiecePromoted(Move);
+        Square FromSquare() const;
+        Square ToSquare() const;
+        Square PiecePromoted() const;
 
-        bool IsNull(Move);
-        bool IsCastle(Move);
-        bool IsCastleOO(Move);
-        bool IsCastleOOO(Move);
-        bool IsPromotion(Move);
-        bool IsEnPassant(Move);
-        std::string ToAlgebraic(Move);
+        int ButterflyIndex() const;
+        bool IsNull() const;
+        bool IsCastle() const;
+        bool IsCastleOO() const;
+        bool IsCastleOOO() const;
+        bool IsPromotion() const;
+        bool IsEnPassant() const;
+        bool operator== (const Move&) const;
+        bool operator!= (const Move&) const;
+        std::string ToAlgebraic() const;
 
+    private:
+        unsigned short move;
+
+    };
+
+    INLINE Move::Move() { }
+
+    inline Move::Move(Square from, Square to)
+    {
+        move = (from & 0x3f) | ((to & 0x3f) << 6);
     }
 
-    inline Move MoveEncode::CreateMove(int from, int to, int flags)
+    inline Move::Move(Square from, Square to, Square flag)
     {
-        return (from & 0x3f) | ((to & 0x3f) << 6) | ((flags & 0xf) << 12);
+        move = (from & 0x3f) | ((to & 0x3f) << 6) | ((flag & 0xf) << 12);
     }
 
-    inline int MoveEncode::FromSquare(Move move)
+    inline Square Move::FromSquare() const
     {
         return move & 0x3f;
     }
 
-    inline int MoveEncode::ToSquare(Move move)
+    inline Square Move::ToSquare() const
     {
         return (move >> 6) & 0x3f;
     }
 
-    inline int MoveEncode::PiecePromoted(Move move)
+    inline int Move::ButterflyIndex() const // used to index from-to based tables
     {
-        if (!IsPromotion(move))
+        return (move & 0xfff);
+    }
+
+    inline Square Move::PiecePromoted() const
+    {
+        if (!IsPromotion())
             return PieceType::None;
 
         return ((move >> 12) & 0x3) + 1;
     }
 
-    inline bool MoveEncode::IsEnPassant(Move move)
+    inline bool Move::IsEnPassant() const
     {
-        return ((move >> 12) == 0x5); // e.p. are encoded 0101
+        return ((move >> 12) == EnPassant); // e.p. are encoded 0101
     }
 
-    inline bool MoveEncode::IsCastle(Move move)
+    inline bool Move::IsCastle() const
     {
-        return (((move >> 12) == 0x2) || ((move >> 12) == 0x3));
+        return (((move >> 12) == KingCastle) || ((move >> 12) == QueenCastle));
     }
 
-    inline bool MoveEncode::IsPromotion(Move move)
+    inline bool Move::IsPromotion() const
     {
         return ((move >> 12) & 0x8);
     }
 
+    inline bool Move::operator ==(const Move& other) const
+    {
+        return (move == other.move);
+    }
 
+    inline bool Move::operator !=(const Move& other) const
+    {
+        return (move != other.move);
+    }
 }
 #endif // MOVE_H

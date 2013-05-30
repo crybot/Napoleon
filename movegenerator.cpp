@@ -17,7 +17,7 @@ namespace Napoleon
             while (targets != 0)
             {
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
-                moveList[pos++] =  MoveEncode::CreateMove(fromIndex, toIndex, 0);
+                moveList[pos++] =  Move(fromIndex, toIndex);
             }
         }
     }

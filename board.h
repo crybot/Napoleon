@@ -138,17 +138,17 @@ namespace Napoleon
 
     INLINE bool Board::IsCapture(Move move)
     {
-        return (PieceSet[MoveEncode::ToSquare(move)].Type != PieceType::None);
+        return (PieceSet[move.ToSquare()].Type != PieceType::None);
     }
 
     INLINE bool Board::IsMoveLegal(Move move, BitBoard pinned)
     {
-        if (PieceSet[MoveEncode::FromSquare(move)].Type == PieceType::King)
+        if (PieceSet[move.FromSquare()].Type == PieceType::King)
         {
-            return !IsAttacked(Constants::Masks::SquareMask[MoveEncode::ToSquare(move)], SideToMove);
+            return !IsAttacked(Constants::Masks::SquareMask[move.ToSquare()], SideToMove);
         }
 
-        if (MoveEncode::IsEnPassant(move))
+        if (move.IsEnPassant())
         {
             MakeMove(move);
             bool islegal = !IsAttacked(bitBoardSet[Utils::Piece::GetOpposite(SideToMove)][PieceType::King], Utils::Piece::GetOpposite(SideToMove));
@@ -156,8 +156,8 @@ namespace Napoleon
             return islegal;
         }
 
-        return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[MoveEncode::FromSquare(move)]) == 0)
-                || MoveDatabase::AreSquareAligned(MoveEncode::FromSquare(move), MoveEncode::ToSquare(move),  KingSquare[SideToMove]);
+        return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[move.FromSquare()]) == 0)
+                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  KingSquare[SideToMove]);
     }
 
     INLINE BitBoard Board::KingAttackers(int square, Byte color)

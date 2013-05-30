@@ -22,7 +22,7 @@ namespace Napoleon
         extern int ThinkTime;
         extern int Time[2];
         extern int moveScores[Constants::MaxMoves];
-        extern int history[2][64][64];
+        extern int history[2][4096];
         extern int nodes;
         extern Move killerMoves[Constants::MaxPly][2];
 

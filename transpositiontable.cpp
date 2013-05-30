@@ -75,7 +75,7 @@ namespace Napoleon
         {
             if (hash->Hash == key)
             {
-                if (!MoveEncode::IsNull(hash->BestMove))
+                if (!hash->BestMove.IsNull())
                     return hash->BestMove;
             }
         }
