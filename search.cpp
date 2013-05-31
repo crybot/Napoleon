@@ -11,6 +11,7 @@
 
 namespace Napoleon
 {
+    const int Search::AspirationValue = 40;
     SearchTask Search::Task = Stop;
     StopWatch Search::Timer;
     int Search::Time[2] = { 60000, 60000 };
@@ -43,62 +44,11 @@ namespace Napoleon
         Task = Stop;
     }
 
-    std::string Search::GetInfo(Board& board, Move toMake, int score, int depth, int lastTime)
-    {
-        std::ostringstream info;
-        std::string PV;
-        Move best;
-        Move pv[Constants::MaxMoves];
-
-        pv[0] = toMake;
-
-        board.MakeMove(toMake);
-
-        PV += toMake.ToAlgebraic() + " ";
-
-        int l;
-        for (l=1; l<depth; l++)
-        {
-            best = board.Table.GetPv(board.zobrist);
-
-            if (best.IsNull())
-            {
-                break;
-            }
-
-            pv[l] = best;
-
-            assert(!best.IsNull());
-
-            board.MakeMove(best);
-
-            PV += best.ToAlgebraic() + " ";
-        }
-
-        for (int k=l-1; k>=0; k--)
-        {
-            assert(k<depth);
-            assert(!pv[k].IsNull());
-
-            board.UndoMove(pv[k]);
-        }
-
-        double delta = Timer.Stop().ElapsedMilliseconds() - lastTime;
-        double nps = delta > 0 ? nodes / delta : nodes / 1;
-        nps*=1000;
-
-        info << "depth " << depth << " score cp " << score << " time " << Timer.Stop().ElapsedMilliseconds() << " nodes "
-             << nodes << " nps " << int(nps) << " pv " << PV;
-
-        return info.str();
-    }
-
     // iterative deepening
     Move Search::iterativeSearch(Board& board)
     {
         Move move;
         Move toMake = Constants::NullMove;
-        const int AspirationValue = 40;
         int lastTime = 0;
         int val;
         int temp;
@@ -107,7 +57,6 @@ namespace Napoleon
         memset(history, 0, sizeof(history));
 
         Timer.Start();
-
         nodes = 0;
 
         val = searchRoot(i, -Constants::Infinity, Constants::Infinity, move, board);
@@ -121,7 +70,6 @@ namespace Napoleon
                 break;
 
             nodes = 0;
-
             //            aspiration search
             temp = searchRoot(i, val - AspirationValue, val + AspirationValue, move, board);
 
@@ -129,12 +77,11 @@ namespace Napoleon
                 temp = searchRoot(i, -Constants::Infinity, Constants::Infinity, move, board);
             val = temp;
 
-            if (val != -Constants::Infinity)
+            if (val != -Constants::Unknown)
                 toMake = move;
 
             Uci::SendCommand<Command::Info>(GetInfo(board, toMake, val, i++, lastTime));
             lastTime = Timer.Stop().ElapsedMilliseconds();
-
         }
 
         StopThinking();
@@ -152,7 +99,6 @@ namespace Napoleon
 
     int Search::searchRoot(int depth, int alpha, int beta, Move& moveToMake, Board& board)
     {
-        int max = alpha;
         int pos = 0;
         int move = 0;
         int score;
@@ -162,10 +108,8 @@ namespace Napoleon
 
         for (int i=0; i<pos; i++)
         {
-            //            if (input_available())
-            //                Uci::ReadCommand();
             if ((Timer.Stop().ElapsedMilliseconds() >= ThinkTime || Timer.Stop().ElapsedMilliseconds()/ThinkTime >= 0.60 || Task == Stop) && Task != Infinite)
-                return -Constants::Infinity;
+                return -Constants::Unknown;
 
             board.MakeMove(moves[i]);
             score = -Search::search(depth-1, -beta, -alpha, board);
@@ -174,10 +118,11 @@ namespace Napoleon
             if (score > alpha)
             {
                 move = i;
-                moveToMake = moves[move];
-
                 if (score >= beta)
+                {
+                    moveToMake = moves[i];
                     return beta;
+                }
 
                 alpha = score;
             }
@@ -193,6 +138,7 @@ namespace Napoleon
     {
         nodes++;
 
+        bool futility = false;
         int bound = Alpha;
         int pos = 0;
         int score;
@@ -212,15 +158,16 @@ namespace Napoleon
         BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
 
         // razoring
-        if (depth < 4 && !attackers && board.Material[board.SideToMove] > 4000 && best.IsNull())
+        if (depth == 4 && !attackers && board.Material[board.SideToMove] > 4000 && best.IsNull())
         {
-            score = quiescence(alpha, beta, board);
+            score = Evaluation::Evaluate(board);
 
-            if (score < beta + (50*(depth-1)))
+            if (score  + (100*(depth-1)) < alpha)
                 return score;
         }
 
         // adaptive null move pruning
+
         if(board.AllowNullMove && depth >= 3 && !attackers && board.Material[board.SideToMove] > 4000)
         {
             int R = depth > 5 ? 3 : 2; // dynamic depth-based reduction
@@ -248,9 +195,6 @@ namespace Napoleon
         // make best move
         if(!best.IsNull())
         {
-            if(!board.IsMoveLegal(best, pinned))
-                Uci::SendCommand<Command::Generic>("hash[CurrentPly] == zobrist assert");
-
             legal++;
             board.MakeMove(best);
             score = -search(depth - 1, -beta, -alpha, board);
@@ -270,6 +214,12 @@ namespace Napoleon
             }
         }
 
+        // extended futility pruning
+        int margin[] = { 0, Constants::Piece::PieceValue[PieceType::Pawn],  Constants::Piece::PieceValue[PieceType::Rook] };
+
+        if (!attackers && std::abs(alpha) < Constants::Infinity/2 && depth <=2 && Evaluation::Evaluate(board) + margin[depth] <= alpha)
+            futility = true;
+
         MoveGenerator::GetPseudoLegalMoves<false>(moves, pos, attackers, board); // get captures and non-captures
         setScores(moves, board, depth, pos); // move-list, board, actual depth, number of moves
 
@@ -282,6 +232,16 @@ namespace Napoleon
             {
                 legal++;
                 board.MakeMove(moves[i]);
+
+                if (futility
+                        && !board.IsCapture(moves[i])
+                        && !moves[i].IsPromotion()
+                        && !board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove)
+                        )
+                {
+                    board.UndoMove(moves[i]);
+                    continue;
+                }
 
                 if (PVS)
                 {
@@ -306,7 +266,7 @@ namespace Napoleon
                             killerMoves[depth][1] = killerMoves[depth][0];
                         }
                         killerMoves[depth][0] = moves[i];
-                        history[board.SideToMove][moves[i].ButterflyIndex()] += depth*depth; // seems faster than += depth^2
+                        history[board.SideToMove][moves[i].ButterflyIndex()] += depth*depth;
                     }
 
                     board.Table.Save(board.zobrist, depth, beta, best, Beta);
@@ -332,7 +292,7 @@ namespace Napoleon
         if (legal == 0)
         {
             if (board.IsCheck)
-                alpha = -Constants::Infinity - depth*depth;
+                alpha = -Constants::Infinity - depth;
             else
                 alpha = 0;
         }
@@ -377,7 +337,7 @@ namespace Napoleon
             if (board.IsMoveLegal(moves[i], pinned))
             {
                 // delta futility pruning
-                if (Constants::Piece::PieceValue[board.PieceSet[moves[i].ToSquare()].Type] + stand_pat + 200 < alpha)
+                if (Constants::Piece::PieceValue[board.PieceSet[moves[i].ToSquare()].Type] + stand_pat + 200 < alpha && !moves[i].IsPromotion())
                     continue;
 
                 board.MakeMove(moves[i]);
@@ -505,5 +465,56 @@ namespace Napoleon
             moves[low] = moves[min];
             moves[min] = temp;
         }
+    }
+
+
+    std::string Search::GetInfo(Board& board, Move toMake, int score, int depth, int lastTime)
+    {
+        std::ostringstream info;
+        std::string PV;
+        Move best;
+        Move pv[Constants::MaxMoves];
+
+        pv[0] = toMake;
+
+        board.MakeMove(toMake);
+
+        PV += toMake.ToAlgebraic() + " ";
+
+        int l;
+        for (l=1; l<depth; l++)
+        {
+            best = board.Table.GetPv(board.zobrist);
+
+            if (best.IsNull())
+            {
+                break;
+            }
+
+            pv[l] = best;
+
+            assert(!best.IsNull());
+
+            board.MakeMove(best);
+
+            PV += best.ToAlgebraic() + " ";
+        }
+
+        for (int k=l-1; k>=0; k--)
+        {
+            assert(k<depth);
+            assert(!pv[k].IsNull());
+
+            board.UndoMove(pv[k]);
+        }
+
+        double delta = Timer.Stop().ElapsedMilliseconds() - lastTime;
+        double nps = delta > 0 ? nodes / delta : nodes / 1;
+        nps*=1000;
+
+        info << "depth " << depth << " score cp " << score << " time " << Timer.Stop().ElapsedMilliseconds() << " nodes "
+             << nodes << " nps " << int(nps) << " pv " << PV;
+
+        return info.str();
     }
 }

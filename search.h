@@ -14,9 +14,20 @@ namespace Napoleon
 {
     enum SearchTask { Think, Infinite, Stop, Quit };
 
+    class SearchInfo
+    {
+    public:
+        int Nodes;
+        int StartTime;
+        bool Futility;
+
+        SearchInfo() :Nodes(0), StartTime(0), Futility(false) { }
+    };
+
     class Board;
     namespace Search
     {
+        extern const int AspirationValue;
         extern SearchTask Task;
         extern StopWatch Timer;
         extern int ThinkTime;
