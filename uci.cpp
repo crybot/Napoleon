@@ -92,7 +92,7 @@ namespace Napoleon
 			Benchmark bench;
 			stream >> depth;
 
-			bench.Perft(depth);
+            bench.Perft(depth, board);
 		}
 
         return repeat;
@@ -101,6 +101,7 @@ namespace Napoleon
     void Uci::Go(istringstream& stream)
     {
         string token;
+        Search::MoveTime = false;
 
         if (Search::Task != Stop)
             return;
@@ -110,6 +111,11 @@ namespace Napoleon
             if (token == "wtime") stream >> Search::Time[PieceColor::White];
             if (token == "btime") stream >> Search::Time[PieceColor::Black];
             if (token == "infinite") Search::Task = Infinite;
+            else if (token == "movetime")
+            {
+                stream >> Search::ThinkTime;
+                Search::MoveTime = true;
+            }
         }
 
         if (Search::Task == Infinite)

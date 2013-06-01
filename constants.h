@@ -246,7 +246,6 @@ namespace Napoleon
             const int All = 2;
         }
 
-
         const int CaptureMask = 0x4;
         const int EpMask = 0x5;
 

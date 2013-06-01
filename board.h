@@ -67,6 +67,7 @@ namespace Napoleon
         bool IsCapture(Move);
         bool IsMoveLegal(Move, BitBoard);
         bool IsAttacked(BitBoard, Byte);
+        bool IsPromotingPawn();
 
         Move ParseMove(std::string);
 
@@ -214,6 +215,12 @@ namespace Napoleon
 
         //        if(hash[CurrentPly] != zobrist)
         //            Uci::SendCommand<Command::Generic>("hash[CurrentPly] == zobrist assert");
+    }
+
+    inline bool Board::IsPromotingPawn()
+    {
+        const BitBoard rank = (SideToMove == PieceColor::White ? Constants::Ranks::Seven : Constants::Ranks::Two);
+        return (bitBoardSet[SideToMove][PieceType::Pawn] & rank);
     }
 }
 

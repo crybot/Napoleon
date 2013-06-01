@@ -13,21 +13,13 @@
 namespace Napoleon
 {
     enum SearchTask { Think, Infinite, Stop, Quit };
-
-    class SearchInfo
-    {
-    public:
-        int Nodes;
-        int StartTime;
-        bool Futility;
-
-        SearchInfo() :Nodes(0), StartTime(0), Futility(false) { }
-    };
+    static const int rMargin[] = { 0, Constants::Piece::PieceValue[PieceType::Knight],  Constants::Piece::PieceValue[PieceType::Rook] };
 
     class Board;
     namespace Search
     {
         extern const int AspirationValue;
+        extern bool MoveTime;
         extern SearchTask Task;
         extern StopWatch Timer;
         extern int ThinkTime;
@@ -51,6 +43,18 @@ namespace Napoleon
         void setScores(Move[], Board&, int, int);
         void pickMove(Move[], int, int);
         void orderCaptures(Move[], Board&, int, int);
+
+        int futilityMargin(int);
+        int razorMargin(int);
+    }
+
+    inline int Search::futilityMargin(int depth)
+    {
+        return rMargin[depth];
+    }
+    inline int Search::razorMargin(int depth)
+    {
+        return (50 + 25*(depth-1));
     }
 }
 

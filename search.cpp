@@ -12,6 +12,7 @@
 namespace Napoleon
 {
     const int Search::AspirationValue = 40;
+    bool Search::MoveTime;
     SearchTask Search::Task = Stop;
     StopWatch Search::Timer;
     int Search::Time[2] = { 60000, 60000 };
@@ -21,12 +22,16 @@ namespace Napoleon
     int Search::nodes;
     Move Search::killerMoves[Constants::MaxPly][2];
 
-    // external interface to the client.
+    // direct interface to the client.
     // it sends the move to the uci gui
     void Search::StartThinking(Board& board)
     {
         int time = Time[board.SideToMove];
-        ThinkTime = time / (30 - (time/(60*1000)));
+
+        // if we have an exact movetime we use that value, else we use
+        // a fraction of the side to move remaining time
+        ThinkTime = MoveTime ? ThinkTime : time / (30 - (time/(60*1000)));
+
         Task = Think;
         Move move = iterativeSearch(board);
         Uci::SendCommand<Command::Move>(move.ToAlgebraic());
@@ -49,8 +54,7 @@ namespace Napoleon
     {
         Move move;
         Move toMake = Constants::NullMove;
-        int lastTime = 0;
-        int val;
+        int score;
         int temp;
         int i = 1;
 
@@ -59,10 +63,7 @@ namespace Napoleon
         Timer.Start();
         nodes = 0;
 
-        val = searchRoot(i, -Constants::Infinity, Constants::Infinity, move, board);
-
-        Uci::SendCommand<Command::Info>(GetInfo(board, move, val, i++, lastTime));
-        lastTime = Timer.Stop().ElapsedMilliseconds();
+        score = searchRoot(i++, -Constants::Infinity, Constants::Infinity, move, board);
 
         while((i<100 && Timer.Stop().ElapsedMilliseconds() < ThinkTime && Timer.Stop().ElapsedMilliseconds() / ThinkTime < 0.50) || Task == Infinite )
         {
@@ -71,17 +72,16 @@ namespace Napoleon
 
             nodes = 0;
             //            aspiration search
-            temp = searchRoot(i, val - AspirationValue, val + AspirationValue, move, board);
+            temp = searchRoot(i, score - AspirationValue, score + AspirationValue, move, board);
 
-            if (temp <= val - AspirationValue || temp >= val + AspirationValue)
+            if (temp <= score - AspirationValue || temp >= score + AspirationValue)
                 temp = searchRoot(i, -Constants::Infinity, Constants::Infinity, move, board);
-            val = temp;
+            score = temp;
 
-            if (val != -Constants::Unknown)
+            if (score != -Constants::Unknown)
                 toMake = move;
 
-            Uci::SendCommand<Command::Info>(GetInfo(board, toMake, val, i++, lastTime));
-            lastTime = Timer.Stop().ElapsedMilliseconds();
+            i++;
         }
 
         StopThinking();
@@ -102,13 +102,14 @@ namespace Napoleon
         int pos = 0;
         int move = 0;
         int score;
+        int startTime = Timer.Stop().ElapsedMilliseconds();
         Move moves[Constants::MaxMoves];
 
         MoveGenerator::GetLegalMoves(moves, pos, board);
 
         for (int i=0; i<pos; i++)
         {
-            if ((Timer.Stop().ElapsedMilliseconds() >= ThinkTime || Timer.Stop().ElapsedMilliseconds()/ThinkTime >= 0.60 || Task == Stop) && Task != Infinite)
+            if ((Timer.Stop().ElapsedMilliseconds() >= ThinkTime || Timer.Stop().ElapsedMilliseconds()/ThinkTime >= 0.50 || Task == Stop) && Task != Infinite)
                 return -Constants::Unknown;
 
             board.MakeMove(moves[i]);
@@ -121,16 +122,17 @@ namespace Napoleon
                 if (score >= beta)
                 {
                     moveToMake = moves[i];
+                    Uci::SendCommand<Command::Info>(GetInfo(board, moveToMake, beta, depth, startTime)); // sends info to the gui
                     return beta;
                 }
 
                 alpha = score;
             }
-
-            //            std::cout << moves[i].ToAlgebraic() <<  " " << score << std::endl;
         }
 
         moveToMake = moves[move];
+        Uci::SendCommand<Command::Info>(GetInfo(board, moveToMake, alpha, depth, startTime)); // sends info to the gui
+
         return alpha;
     }
 
@@ -157,17 +159,22 @@ namespace Napoleon
 
         BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
 
-        // razoring
-        if (depth == 4 && !attackers && board.Material[board.SideToMove] > 4000 && best.IsNull())
+        // deep enhanced razoring
+        if (depth < 4 && !attackers && board.Material[board.SideToMove] > 4000 && best.IsNull() && !board.IsPromotingPawn())
         {
             score = Evaluation::Evaluate(board);
 
-            if (score  + (100*(depth-1)) < alpha)
-                return score;
+            int margin = razorMargin(depth);
+
+            if (score  + margin <= alpha)
+            {
+                int s = quiescence(alpha-margin, beta-margin, board);
+                if (s <= alpha - margin)
+                    return s;
+            }
         }
 
         // adaptive null move pruning
-
         if(board.AllowNullMove && depth >= 3 && !attackers && board.Material[board.SideToMove] > 4000)
         {
             int R = depth > 5 ? 3 : 2; // dynamic depth-based reduction
@@ -192,7 +199,7 @@ namespace Napoleon
                 return score;
         }
 
-        // make best move
+        // make best move (hash move)
         if(!best.IsNull())
         {
             legal++;
@@ -214,16 +221,21 @@ namespace Napoleon
             }
         }
 
-        // extended futility pruning
-        int margin[] = { 0, Constants::Piece::PieceValue[PieceType::Pawn],  Constants::Piece::PieceValue[PieceType::Rook] };
-
-        if (!attackers && std::abs(alpha) < Constants::Infinity/2 && depth <=2 && Evaluation::Evaluate(board) + margin[depth] <= alpha)
+        // extended futility pruning condition
+        if (!attackers
+                && depth <=2
+                && std::abs(alpha) < Constants::Infinity-100
+                && Evaluation::Evaluate(board) + futilityMargin(depth) <= alpha)
+        {
             futility = true;
+        }
 
         MoveGenerator::GetPseudoLegalMoves<false>(moves, pos, attackers, board); // get captures and non-captures
-        setScores(moves, board, depth, pos); // move-list, board, actual depth, number of moves
+        setScores(moves, board, depth, pos); // set moves score used by 'pickMove' for picking the best untried move
 
+        // principal variation search
         bool PVS = true;
+        bool capture;
 
         for(int i=0; i<pos; i++)
         {
@@ -231,10 +243,13 @@ namespace Napoleon
             if(board.IsMoveLegal(moves[i], pinned))
             {
                 legal++;
+                capture = board.IsCapture(moves[i]);
                 board.MakeMove(moves[i]);
 
+                // extended futility pruning application
                 if (futility
-                        && !board.IsCapture(moves[i])
+                        && i > 0
+                        && !capture
                         && !moves[i].IsPromotion()
                         && !board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove)
                         )
@@ -292,9 +307,9 @@ namespace Napoleon
         if (legal == 0)
         {
             if (board.IsCheck)
-                alpha = -Constants::Infinity - depth;
+                alpha = -Constants::Infinity - depth; // return best score (for the minimazer) for the deepest mate
             else
-                alpha = 0;
+                alpha = 0; // return draw score (TODO contempt factor)
         }
 
         // check for fifty moves rule
@@ -305,7 +320,7 @@ namespace Napoleon
         return alpha;
     }
 
-
+    // quiescence is called at horizon nodes (depth = 0)
     int Search::quiescence(int alpha, int beta, Board& board)
     {
         nodes++;
@@ -315,8 +330,11 @@ namespace Napoleon
 
         int Delta = Constants::Piece::PieceValue[PieceType::Queen];
 
+        if (board.IsPromotingPawn())
+            Delta += Constants::Piece::PieceValue[PieceType::Queen] - Constants::Piece::PieceValue[PieceType::Pawn];
+
         // big delta futility pruning
-        if ( stand_pat < alpha - Delta )
+        if ( stand_pat < alpha - Delta)
             return alpha;
 
         if( alpha < stand_pat )
@@ -405,6 +423,7 @@ namespace Napoleon
         }
     }
 
+    // make a selection sort on the move array for picking the best untried move
     void Search::pickMove(Move moves[], int low, int high)
     {
         int max = low;
@@ -467,7 +486,7 @@ namespace Napoleon
         }
     }
 
-
+    // return search info
     std::string Search::GetInfo(Board& board, Move toMake, int score, int depth, int lastTime)
     {
         std::ostringstream info;
