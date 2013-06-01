@@ -10,7 +10,7 @@ namespace Napoleon
     public:
         static const int Unknown = -999999;
 
-        int BucketSize = 4;
+        int BucketSize;
         unsigned long Size;
         HashEntry** Table;
 
@@ -28,7 +28,6 @@ namespace Napoleon
     {
         return Table[i][0];
     }
-
 }
 
 #endif // TRANSPOSITIONTABLE_H

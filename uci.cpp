@@ -86,6 +86,14 @@ namespace Napoleon
             search = thread(Go, ref(stream));
             search.detach();
         }
+		else if (cmd == "perft")
+		{
+			int depth;
+			Benchmark bench;
+			stream >> depth;
+
+			bench.Perft(depth);
+		}
 
         return repeat;
     }
