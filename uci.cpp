@@ -4,113 +4,94 @@
 #include "search.h"
 #include "fenstring.h"
 #include "board.h"
+#include "stopwatch.h"
 #include "benchmark.h"
-#include <thread>
 
 namespace Napoleon
 {
     using namespace std;
+
     Board Uci::board;
+    thread Uci::search;
 
     void Uci::Start()
     {
         SendCommand<Command::Generic>("--------Napoleon Engine--------");
         cout.setf(ios::unitbuf);// Make sure that the outputs are sent straight away to the GUI
 
-        while(ReadCommand()) { };
-    }
-
-    bool Uci::ReadCommand()
-    {
-        thread search;
         string line;
         string cmd;
-        bool repeat = getline(cin, line);
+        while(getline(cin, line))
+        {
+            istringstream stream(line);
+            stream >> cmd;
 
-        if (!repeat)
-            return false;
-
-        istringstream stream(line);
-        stream >> cmd;
-
-        if (cmd == "uci")
-        {
-            SendCommand<Command::Generic>("id name Napoleon");
-            SendCommand<Command::Generic>("id author Crybot");
-            SendCommand<Command::Generic>("uciok");
-        }
-        else if (cmd == "quit")
-        {
-            SendCommand<Command::Generic>("Bye Bye");
-            return false;
-        }
-        else if (cmd == "isready")
-        {
-            SendCommand<Command::Generic>("readyok");
-        }
-        else if (cmd == "ucinewgame")
-        {
-            board.Table.Clear();
-        }
-        else if (cmd == "stop")
-        {
-            Search::StopThinking();
-        }
-        if (cmd == "position")
-        {
-            Move move;
-            string token;
-            stream >> token;
-
-            if (token == "startpos")
+            if (cmd == "uci")
             {
-                board.Equip();
+                SendCommand<Command::Generic>("id name Napoleon");
+                SendCommand<Command::Generic>("id author Crybot");
+                SendCommand<Command::Generic>("uciok");
+            }
+            else if (cmd == "quit")
+            {
+                SendCommand<Command::Generic>("Bye Bye");
+                break;
+            }
+            else if (cmd == "isready")
+            {
+                SendCommand<Command::Generic>("readyok");
+            }
+            else if (cmd == "ucinewgame")
+            {
+                board.Table.Clear();
+            }
+            else if (cmd == "stop")
+            {
+                Search::StopThinking();
+            }
+            else if (cmd == "position")
+            {
+                Move move;
+                string token;
                 stream >> token;
-            }
-            else if (token == "fen")
-            {
-                string fen;
-                while (stream >> token && token != "moves")
-                    fen += token + " ";
 
-                board.LoadGame(FenString(fen));
-            }
+                if (token == "startpos")
+                {
+                    board.Equip();
+                    stream >> token;
+                }
+                else if (token == "fen")
+                {
+                    string fen;
+                    while (stream >> token && token != "moves")
+                        fen += token + " ";
 
-            while (stream >> token && !(move = board.ParseMove(token)).IsNull())
+                    board.LoadGame(FenString(fen));
+                }
+
+                while (stream >> token && !(move = board.ParseMove(token)).IsNull())
+                {
+                    board.MakeMove(move);
+                }
+            }
+            else if (cmd == "go")
             {
-                board.MakeMove(move);
+                if (Search::Task == Stop)
+                    go(stream);
             }
         }
-        else if (cmd == "go")
-        {
-            search = thread(Go, ref(stream));
-            search.detach();
-        }
-		else if (cmd == "perft")
-		{
-			int depth;
-			Benchmark bench;
-			stream >> depth;
-
-            bench.Perft(depth, board);
-		}
-
-        return repeat;
     }
 
-    void Uci::Go(istringstream& stream)
+    void Uci::go(istringstream& stream)
     {
         string token;
         Search::MoveTime = false;
 
-        if (Search::Task != Stop)
-            return;
-
         while(stream >> token)
         {
             if (token == "wtime") stream >> Search::Time[PieceColor::White];
-            if (token == "btime") stream >> Search::Time[PieceColor::Black];
-            if (token == "infinite") Search::Task = Infinite;
+            else if (token == "btime") stream >> Search::Time[PieceColor::Black];
+            else if (token == "infinite") Search::Task = Infinite;
             else if (token == "movetime")
             {
                 stream >> Search::ThinkTime;
@@ -118,9 +99,8 @@ namespace Napoleon
             }
         }
 
-        if (Search::Task == Infinite)
-            Search::InfiniteSearch(board);
-        else
-            Search::StartThinking(board);
+        search = thread(Search::StartThinking, ref(board));
+        search.detach();
     }
+
 }

@@ -1,5 +1,5 @@
 CONFIG += c++11 \
-          c++0x -pthread file_name.cpp
+          c++11 -pthread file_name.cpp \
 
 QMAKE_CXXFLAGS += -Wno-unused-variable \
 

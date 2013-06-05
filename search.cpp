@@ -11,7 +11,7 @@
 
 namespace Napoleon
 {
-    const int Search::AspirationValue = 40;
+    const int Search::AspirationValue = 50;
     bool Search::MoveTime;
     SearchTask Search::Task = Stop;
     StopWatch Search::Timer;
@@ -30,16 +30,10 @@ namespace Napoleon
 
         // if we have an exact movetime we use that value, else we use
         // a fraction of the side to move remaining time
-        ThinkTime = MoveTime ? ThinkTime : time / (30 - (time/(60*1000)));
+        ThinkTime = MoveTime ? ThinkTime : (time / (30 - (time/(60*1000))));
 
-        Task = Think;
-        Move move = iterativeSearch(board);
-        Uci::SendCommand<Command::Move>(move.ToAlgebraic());
-    }
+        if (Task != Infinite) Task = Think;
 
-    void Search::InfiniteSearch(Board& board)
-    {
-        Task = Infinite;
         Move move = iterativeSearch(board);
         Uci::SendCommand<Command::Move>(move.ToAlgebraic());
     }
@@ -109,7 +103,7 @@ namespace Napoleon
 
         for (int i=0; i<pos; i++)
         {
-            if ((Timer.Stop().ElapsedMilliseconds() >= ThinkTime || Timer.Stop().ElapsedMilliseconds()/ThinkTime >= 0.50 || Task == Stop) && Task != Infinite)
+            if ((Timer.Stop().ElapsedMilliseconds() >= ThinkTime || Timer.Stop().ElapsedMilliseconds()/ThinkTime >= 0.65 || Task == Stop) && Task != Infinite)
                 return -Constants::Unknown;
 
             board.MakeMove(moves[i]);
@@ -152,6 +146,7 @@ namespace Napoleon
         if((score = board.Table.Probe(board.zobrist, depth, alpha, &best, beta)) != TranspositionTable::Unknown)
             return score;
 
+        // call to quiescence search
         if(depth == 0)
             return quiescence(alpha, beta, board);
 
@@ -159,14 +154,18 @@ namespace Napoleon
 
         BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
 
-        // deep enhanced razoring
-        if (depth < 4 && !attackers && board.Material[board.SideToMove] > 4000 && best.IsNull() && !board.IsPromotingPawn())
+        // enhanced deep razoring
+        if (    depth < 4
+                && !attackers
+                && board.Material[board.SideToMove] > Constants::Eval::MiddleGameMat
+                && best.IsNull()
+                && !board.IsPromotingPawn())
         {
             score = Evaluation::Evaluate(board);
 
             int margin = razorMargin(depth);
 
-            if (score  + margin <= alpha)
+            if (score + margin <= alpha)
             {
                 int s = quiescence(alpha-margin, beta-margin, board);
                 if (s <= alpha - margin)
@@ -175,7 +174,10 @@ namespace Napoleon
         }
 
         // adaptive null move pruning
-        if(board.AllowNullMove && depth >= 3 && !attackers && board.Material[board.SideToMove] > 4000)
+        if(     board.AllowNullMove
+                && depth >= 3
+                && !attackers
+                && board.Material[board.SideToMove] > Constants::Eval::MiddleGameMat)
         {
             int R = depth > 5 ? 3 : 2; // dynamic depth-based reduction
 
@@ -222,7 +224,7 @@ namespace Napoleon
         }
 
         // extended futility pruning condition
-        if (!attackers
+        if (    !attackers
                 && depth <=2
                 && std::abs(alpha) < Constants::Infinity-100
                 && Evaluation::Evaluate(board) + futilityMargin(depth) <= alpha)

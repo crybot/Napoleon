@@ -3,6 +3,7 @@
 #include "move.h"
 #include "piece.h"
 #include "defines.h"
+#include "fenstring.h"
 
 namespace Napoleon
 {
@@ -246,9 +247,18 @@ namespace Napoleon
             const int All = 2;
         }
 
+        namespace Eval
+        {
+            // Side to move relative
+            const int OpeningGameMat = 6000;
+            const int MiddleGameMat = OpeningGameMat - 500;
+            const int EndGameMat = MiddleGameMat - 1500;
+        }
+
+        const FenString StartPosition = FenString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+
         const int CaptureMask = 0x4;
         const int EpMask = 0x5;
-
 
         const Move NullMove(0, 0);
         const BitBoard Empty = 0x0000000000000000;

@@ -2,6 +2,7 @@
 #define UCI_H
 #include <sstream>
 #include <iostream>
+#include <thread>
 
 namespace Napoleon
 {
@@ -17,12 +18,12 @@ namespace Napoleon
     namespace Uci
     {
         void Start();
-        bool ReadCommand();
         template<Command::Type>
         void SendCommand(std::string);   
-        void Go(std::istringstream&);
+        void go(std::istringstream&);
 
         extern Board board;
+        extern std::thread search;
     }
 
     template<Command::Type cmdType>

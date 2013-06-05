@@ -33,8 +33,9 @@ namespace Napoleon
         ZobristKey hash[Constants::MaxPly]; // debugging
 
         int KingSquare[2]; // color
+        int PSTValue[2]; // color
         int Material[2]; // color
-        int NumOfPieces[2][6]; // color, type
+//        int NumOfPieces[2][6]; // color, type
         Piece PieceSet[64]; // square
 
         BitBoard bitBoardSet[2][6]; // color, type
@@ -57,19 +58,20 @@ namespace Napoleon
         BitBoard GetEnemyPieces() const;
         BitBoard GetPieceSet(Byte, Byte) const;
         BitBoard GetPinnedPieces() const;
-        BitBoard KingAttackers(int square, Byte color);
+        BitBoard KingAttackers(int square, Byte color) const;
 
         void MakeMove(Move);
         void UndoMove(Move);
         void MakeNullMove();
         void UndoNullMove();
 
-        bool IsCapture(Move);
+        bool IsCapture(Move) const;
         bool IsMoveLegal(Move, BitBoard);
-        bool IsAttacked(BitBoard, Byte);
-        bool IsPromotingPawn();
+        bool IsAttacked(BitBoard, Byte) const;
+        bool IsPromotingPawn() const;
+        bool IsOnSquare(Byte, Byte, Square) const;
 
-        Move ParseMove(std::string);
+        Move ParseMove(std::string) const;
 
         std::string GetFen() const;
 
@@ -98,19 +100,24 @@ namespace Napoleon
         void undoCastle(int, int);
     };
 
-    INLINE BitBoard Board::GetPlayerPieces() const
+    inline BitBoard Board::GetPlayerPieces() const
     {
         return Pieces[SideToMove];
     }
 
-    INLINE BitBoard Board::GetEnemyPieces() const
+    inline BitBoard Board::GetEnemyPieces() const
     {
         return Pieces[Utils::Piece::GetOpposite(SideToMove)];
     }
 
-    INLINE BitBoard Board::GetPieceSet(Byte pieceColor, Byte pieceType) const
+    inline BitBoard Board::GetPieceSet(Byte pieceColor, Byte pieceType) const
     {
         return bitBoardSet[pieceColor][pieceType];
+    }
+
+    inline bool Board::IsOnSquare(Byte color, Byte type, Square sq) const
+    {
+        return (bitBoardSet[color][type] & Constants::Masks::SquareMask[sq]);
     }
 
     INLINE BitBoard Board::GetPinnedPieces() const
@@ -137,11 +144,6 @@ namespace Napoleon
         return pinned;
     }
 
-    INLINE bool Board::IsCapture(Move move)
-    {
-        return (PieceSet[move.ToSquare()].Type != PieceType::None);
-    }
-
     INLINE bool Board::IsMoveLegal(Move move, BitBoard pinned)
     {
         if (PieceSet[move.FromSquare()].Type == PieceType::King)
@@ -161,7 +163,7 @@ namespace Napoleon
                 || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  KingSquare[SideToMove]);
     }
 
-    INLINE BitBoard Board::KingAttackers(int square, Byte color)
+    INLINE BitBoard Board::KingAttackers(int square, Byte color) const
     {
         Byte opp = Utils::Piece::GetOpposite(color);
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
@@ -175,10 +177,8 @@ namespace Napoleon
                 | (rookAttacks   & (bitBoardSet[opp][PieceType::Rook] | bitBoardSet[opp][PieceType::Queen]));
     }
 
-    INLINE void Board::MakeNullMove()
+    inline void Board::MakeNullMove()
     {
-        //        if(!AllowNullMove)
-        //            Uci::SendCommand<Command::Generic>("AllowNullMove assert");
         hash[CurrentPly] = zobrist;
         enpSquares[CurrentPly] = EnPassantSquare;
         SideToMove = Utils::Piece::GetOpposite(SideToMove);
@@ -196,12 +196,8 @@ namespace Napoleon
         CurrentPly++;
     }
 
-    INLINE void Board::UndoNullMove()
+    inline void Board::UndoNullMove()
     {
-
-        if(AllowNullMove)
-            Uci::SendCommand<Command::Generic>("!AllowNullMove assert");
-
         CurrentPly--;
         SideToMove = Utils::Piece::GetOpposite(SideToMove);
         EnPassantSquare = enpSquares[CurrentPly];
@@ -212,15 +208,17 @@ namespace Napoleon
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
 
         AllowNullMove = true;
-
-        //        if(hash[CurrentPly] != zobrist)
-        //            Uci::SendCommand<Command::Generic>("hash[CurrentPly] == zobrist assert");
     }
 
-    inline bool Board::IsPromotingPawn()
+    inline bool Board::IsPromotingPawn() const
     {
         const BitBoard rank = (SideToMove == PieceColor::White ? Constants::Ranks::Seven : Constants::Ranks::Two);
         return (bitBoardSet[SideToMove][PieceType::Pawn] & rank);
+    }
+
+    inline bool Board::IsCapture(Move move) const
+    {
+        return (PieceSet[move.ToSquare()].Type != PieceType::None);
     }
 }
 

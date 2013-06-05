@@ -33,7 +33,6 @@ namespace Napoleon
 
         void StartThinking(Board&);
         void StopThinking();
-        void InfiniteSearch(Board&);
         Move iterativeSearch(Board&);
         int searchRoot(int, int, int, Move&, Board&);
 

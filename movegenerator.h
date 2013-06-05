@@ -16,21 +16,9 @@
 
 namespace Napoleon
 {
-    class MoveList
-    {
-    public:
-        MoveList() : size(0) { }
-        Move& operator[](int i) { return moves[i]; }
-        Move* List() { return moves; }
-
-        int size;
-
-    private:
-        Move moves[Constants::MaxMoves];
-    };
-
     namespace MoveGenerator
     {
+        int MoveCount(Board&);
         template<bool>
         void GetPseudoLegalMoves(Move allMoves[],int& pos, BitBoard attackers, Board& board);
         void GetLegalMoves(Move allMoves[],int& pos, Board& board);
@@ -47,6 +35,14 @@ namespace Napoleon
         void GetEvadeMoves(Board& board, BitBoard attackers, Move moveList[], int& pos);
         void GetCaptures(Move allMoves[], int& pos, Board& board);
         void GetNonCaptures(Move allMoves[], int& pos, Board& board);
+    }
+
+    inline int MoveGenerator::MoveCount(Board& board)
+    {
+        int count = 0;
+        Move moves[Constants::MaxMoves];
+        GetLegalMoves(moves, count, board);
+        return count;
     }
 
     template<bool onlyCaptures>
