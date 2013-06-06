@@ -48,7 +48,7 @@ namespace Napoleon
                 IntA8, IntB8, IntC8, IntD8, IntE8, IntF8, IntG8, IntH8
             };
 
-            const int Invalid = 65;
+            const Napoleon::Square Invalid = 65;
             const BitBoard A1 = 0x0000000000000001;
             const BitBoard B1 = 0x0000000000000002;
             const BitBoard C1 = 0x0000000000000004;
@@ -197,6 +197,20 @@ namespace Napoleon
                 0x0040404040404000, 0x0080808080808000
             };
 
+//            const BitBoard RankMask[] =
+//            {
+//                0x000000000000007E, 0x0000000000007E00, 0x00000000007E0000,
+//                0x000000007E000000, 0x0000007E00000000, 0x00007E0000000000,
+//                0x007E000000000000, 0x7E00000000000000
+//            };
+
+            const BitBoard FileMask[] =
+            {
+                0x101010101010101, 0x202020202020202, 0x404040404040404,
+                0x808080808080808, 0x1010101010101010, 0x2020202020202020,
+                0x4040404040404040, 0x8080808080808080
+            };
+
             const BitBoard A1H8DiagonalMask[] =
             {
                 0x0000000000000080, 0x0000000000008040, 0x0000000000804020, 0x0000000080402010,
@@ -237,7 +251,7 @@ namespace Napoleon
         namespace Piece
         {
             const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
-            const int PieceValue[] = { 100, 320, 330, 500, 900, 2000 };
+            const int PieceValue[] = { 100, 320, 330, 500, 1000, 2000 };
         }
 
         namespace Node
@@ -255,7 +269,7 @@ namespace Napoleon
             const int EndGameMat = MiddleGameMat - 1500;
         }
 
-        const FenString StartPosition = FenString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        const std::string StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
         const int CaptureMask = 0x4;
         const int EpMask = 0x5;

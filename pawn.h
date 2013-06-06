@@ -13,13 +13,13 @@ namespace Napoleon
         INLINE static BitBoard GetAnyAttack(BitBoard pawns, Board& board);
 
     private:
-        INLINE static BitBoard GetQuietTargets(Byte color, BitBoard pawns, BitBoard empty);
-        INLINE static BitBoard GetSinglePushTargets(Byte color, BitBoard pawns, BitBoard empty);
-        INLINE static BitBoard GetDoublePushTargets(Byte color, BitBoard pawns, BitBoard empty);
-        INLINE static BitBoard GetPawnsAbleToSinglePush(Byte color, BitBoard pawns, BitBoard empty);
-        INLINE static BitBoard GetPawnsAbleToDoublePush(Byte color, BitBoard pawns, BitBoard empty);
-        INLINE static BitBoard GetEastAttacks(Byte color, BitBoard pawns);
-        INLINE static BitBoard GetWestAttacks(Byte color, BitBoard pawns);
+        INLINE static BitBoard GetQuietTargets(Color color, BitBoard pawns, BitBoard empty);
+        INLINE static BitBoard GetSinglePushTargets(Color color, BitBoard pawns, BitBoard empty);
+        INLINE static BitBoard GetDoublePushTargets(Color color, BitBoard pawns, BitBoard empty);
+        INLINE static BitBoard GetPawnsAbleToSinglePush(Color color, BitBoard pawns, BitBoard empty);
+        INLINE static BitBoard GetPawnsAbleToDoublePush(Color color, BitBoard pawns, BitBoard empty);
+        INLINE static BitBoard GetEastAttacks(Color color, BitBoard pawns);
+        INLINE static BitBoard GetWestAttacks(Color color, BitBoard pawns);
 
     };
 }

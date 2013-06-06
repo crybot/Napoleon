@@ -57,7 +57,7 @@ namespace Napoleon
 
                 if (token == "startpos")
                 {
-                    board.Equip();
+                    board.LoadGame();
                     stream >> token;
                 }
                 else if (token == "fen")
@@ -66,7 +66,7 @@ namespace Napoleon
                     while (stream >> token && token != "moves")
                         fen += token + " ";
 
-                    board.LoadGame(FenString(fen));
+                    board.LoadGame(fen);
                 }
 
                 while (stream >> token && !(move = board.ParseMove(token)).IsNull())

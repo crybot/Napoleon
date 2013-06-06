@@ -21,24 +21,18 @@ namespace Napoleon
         bool AllowNullMove;
 
         bool IsCheck;
-        int HalfMoveClock;
-        int EnPassantSquare;
-        int CurrentPly;
-        Byte CastlingStatus;
-        Byte SideToMove;
-        unsigned long Nps;
         unsigned long FirstMoveCutoff;
         unsigned long TotalCutoffs;
+        int HalfMoveClock;
+        int CurrentPly;
+        Square EnPassantSquare;
+        Color SideToMove;
+        Byte CastlingStatus;
 
+        //        int NumOfPieces[2][6]; // color, type
         ZobristKey hash[Constants::MaxPly]; // debugging
 
-        int KingSquare[2]; // color
-        int PSTValue[2]; // color
-        int Material[2]; // color
-//        int NumOfPieces[2][6]; // color, type
         Piece PieceSet[64]; // square
-
-        BitBoard bitBoardSet[2][6]; // color, type
         BitBoard Pieces[2]; // color
 
         BitBoard OccupiedSquares;
@@ -49,16 +43,15 @@ namespace Napoleon
 
         Board();
 
-        void LoadGame(const FenString&);
-        void Equip();
+        void LoadGame(std::string = Constants::StartPosition);
 
         void Display() const;
         void AddPiece(Piece, Square);
         BitBoard GetPlayerPieces() const;
         BitBoard GetEnemyPieces() const;
-        BitBoard GetPieceSet(Byte, Byte) const;
+        BitBoard GetPieces(Color, Type) const;
         BitBoard GetPinnedPieces() const;
-        BitBoard KingAttackers(int square, Byte color) const;
+        BitBoard KingAttackers(Square, Color) const;
 
         void MakeMove(Move);
         void UndoMove(Move);
@@ -67,63 +60,49 @@ namespace Napoleon
 
         bool IsCapture(Move) const;
         bool IsMoveLegal(Move, BitBoard);
-        bool IsAttacked(BitBoard, Byte) const;
+        bool IsAttacked(BitBoard, Color) const;
         bool IsPromotingPawn() const;
-        bool IsOnSquare(Byte, Byte, Square) const;
+        bool IsOnSquare(Color, Type, Square) const;
+
+        Square KingSquare(Color) const;
+        int PstValue(Color) const;
+        int Material(Color) const;
+        int PawnsOnFile(Color, File) const;
+
+        bool PosIsOk() const;
 
         Move ParseMove(std::string) const;
 
         std::string GetFen() const;
 
     private:
-
-        int enpSquares[Constants::MaxPly];
-        int halfMoveClock[Constants::MaxPly];
+        BitBoard bitBoardSet[2][6]; // color, type
         Byte castlingStatus[Constants::MaxPly];
-        Byte capturedPiece[Constants::MaxPly];
+        Type capturedPiece[Constants::MaxPly];
+        Square enpSquares[Constants::MaxPly];
+        Square kingSquare[2]; // color
+
+        int halfMoveClock[Constants::MaxPly];
+        int pawnsOnFile[2][8]; // color, file
+        int pstValue[2]; // color
+        int material[2]; // color
 
         void clearPieceSet();
         void updateGenericBitBoards();
-        void initializePieceSet();
-        void initializeCastlingStatus();
-        void initializeSideToMove();
-        void initializeEnPassantSquare();
-        void initializeHalfMoveClock();
-        void initializeBitBoards();
         void initializeBitBoards(const FenString&);
         void initializeSideToMove(const FenString&);
         void initializeCastlingStatus(const FenString&);
         void initializeEnPassantSquare(const FenString&);
         void initializeHalfMoveClock(const FenString&);
         void initializePieceSet(const FenString&);
-        void makeCastle(int, int);
-        void undoCastle(int, int);
+        void makeCastle(Square, Square);
+        void undoCastle(Square, Square);
     };
-
-    inline BitBoard Board::GetPlayerPieces() const
-    {
-        return Pieces[SideToMove];
-    }
-
-    inline BitBoard Board::GetEnemyPieces() const
-    {
-        return Pieces[Utils::Piece::GetOpposite(SideToMove)];
-    }
-
-    inline BitBoard Board::GetPieceSet(Byte pieceColor, Byte pieceType) const
-    {
-        return bitBoardSet[pieceColor][pieceType];
-    }
-
-    inline bool Board::IsOnSquare(Byte color, Byte type, Square sq) const
-    {
-        return (bitBoardSet[color][type] & Constants::Masks::SquareMask[sq]);
-    }
 
     INLINE BitBoard Board::GetPinnedPieces() const
     {
         Byte enemy = Utils::Piece::GetOpposite(SideToMove);
-        int kingSq = KingSquare[SideToMove];
+        int kingSq = kingSquare[SideToMove];
 
         BitBoard playerPieces = GetPlayerPieces();
         BitBoard b;
@@ -160,10 +139,10 @@ namespace Napoleon
         }
 
         return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[move.FromSquare()]) == 0)
-                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  KingSquare[SideToMove]);
+                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  kingSquare[SideToMove]);
     }
 
-    INLINE BitBoard Board::KingAttackers(int square, Byte color) const
+    INLINE BitBoard Board::KingAttackers(Square square, Byte color) const
     {
         Byte opp = Utils::Piece::GetOpposite(color);
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
@@ -210,6 +189,22 @@ namespace Napoleon
         AllowNullMove = true;
     }
 
+    inline BitBoard Board::GetPlayerPieces() const
+    {
+        return Pieces[SideToMove];
+    }
+
+    inline BitBoard Board::GetEnemyPieces() const
+    {
+        return Pieces[Utils::Piece::GetOpposite(SideToMove)];
+    }
+
+    inline BitBoard Board::GetPieces(Color pieceColor, Type pieceType) const
+    {
+        return bitBoardSet[pieceColor][pieceType];
+    }
+
+
     inline bool Board::IsPromotingPawn() const
     {
         const BitBoard rank = (SideToMove == PieceColor::White ? Constants::Ranks::Seven : Constants::Ranks::Two);
@@ -219,6 +214,70 @@ namespace Napoleon
     inline bool Board::IsCapture(Move move) const
     {
         return (PieceSet[move.ToSquare()].Type != PieceType::None);
+    }
+
+    inline bool Board::IsOnSquare(Color color, Type type, Square sq) const
+    {
+        return (bitBoardSet[color][type] & Constants::Masks::SquareMask[sq]);
+    }
+
+    inline int Board::PawnsOnFile(Color color, File file) const
+    {
+        return pawnsOnFile[color][file];
+    }
+
+    inline Square Board::KingSquare(Color color) const
+    {
+        return kingSquare[color];
+    }
+
+    inline int Board::PstValue(Color color) const
+    {
+        return pstValue[color];
+    }
+
+    inline int Board::Material(Color color) const
+    {
+        return material[color];
+    }
+
+    inline bool Board::PosIsOk() const
+    {
+        BitBoard playerPieces = 0;
+        BitBoard enemyPieces = 0;
+        Color enemy = Utils::Piece::GetOpposite(SideToMove);
+
+        for (int i=0; i<PieceType::None; i++)
+        {
+            playerPieces |= bitBoardSet[SideToMove][i];
+            enemyPieces |= bitBoardSet[enemy][i];
+        }
+
+        if (SideToMove != PieceColor::White && SideToMove != PieceColor::Black)
+            return false;
+
+        if (GetPlayerPieces() & GetEnemyPieces())
+            return false;
+
+        if (playerPieces & enemyPieces)
+            return false;
+
+        if (playerPieces != GetPlayerPieces())
+            return false;
+
+        if (enemyPieces != GetEnemyPieces())
+            return false;
+
+        if ((playerPieces | enemyPieces) != OccupiedSquares)
+            return false;
+
+        if (PieceSet[kingSquare[PieceColor::White]].Color != PieceColor::White)
+            return false;
+
+        if (PieceSet[kingSquare[PieceColor::Black]].Color != PieceColor::Black)
+            return false;
+
+        return true;
     }
 }
 

@@ -19,7 +19,7 @@ namespace Napoleon
         BitBoard occupiedSquares = board.OccupiedSquares;
         BitBoard targets = Constants::Empty;
 
-        int  square = Utils::BitBoard::BitScanForward(rooks);
+        Square  square = Utils::BitBoard::BitScanForward(rooks);
 
         targets |= MoveDatabase::GetRankAttacks(occupiedSquares, square);
         targets |= MoveDatabase::GetFileAttacks(occupiedSquares, square);

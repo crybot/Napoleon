@@ -22,7 +22,7 @@ namespace Napoleon
                 return GetSquareIndex(x, y);
             }
 
-            std::string ToAlgebraic(int square)
+            std::string ToAlgebraic(Napoleon::Square square)
             {
                 if (square == Constants::Squares::Invalid)
                     return "Invalid";

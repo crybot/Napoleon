@@ -11,7 +11,7 @@
 
 namespace Napoleon
 {
-    const int Search::AspirationValue = 50;
+    const int Search::AspirationValue = 40;
     bool Search::MoveTime;
     SearchTask Search::Task = Stop;
     StopWatch Search::Timer;
@@ -152,12 +152,12 @@ namespace Napoleon
 
         BitBoard pinned = board.GetPinnedPieces();
 
-        BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
+        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
 
         // enhanced deep razoring
-        if (    depth < 4
+        if (depth < 4
                 && !attackers
-                && board.Material[board.SideToMove] > Constants::Eval::MiddleGameMat
+                && board.Material(board.SideToMove) > Constants::Eval::MiddleGameMat
                 && best.IsNull()
                 && !board.IsPromotingPawn())
         {
@@ -174,10 +174,10 @@ namespace Napoleon
         }
 
         // adaptive null move pruning
-        if(     board.AllowNullMove
+        if(board.AllowNullMove
                 && depth >= 3
                 && !attackers
-                && board.Material[board.SideToMove] > Constants::Eval::MiddleGameMat)
+                && board.Material(board.SideToMove) > Constants::Eval::MiddleGameMat)
         {
             int R = depth > 5 ? 3 : 2; // dynamic depth-based reduction
 
@@ -224,7 +224,7 @@ namespace Napoleon
         }
 
         // extended futility pruning condition
-        if (    !attackers
+        if (!attackers
                 && depth <=2
                 && std::abs(alpha) < Constants::Infinity-100
                 && Evaluation::Evaluate(board) + futilityMargin(depth) <= alpha)
@@ -253,7 +253,7 @@ namespace Napoleon
                         && i > 0
                         && !capture
                         && !moves[i].IsPromotion()
-                        && !board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove)
+                        && !board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove)
                         )
                 {
                     board.UndoMove(moves[i]);
@@ -346,7 +346,7 @@ namespace Napoleon
         int score;
         Move moves[Constants::MaxMoves];
 
-        BitBoard attackers = board.KingAttackers(board.KingSquare[board.SideToMove], board.SideToMove);
+        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
 
         MoveGenerator::GetPseudoLegalMoves<true>(moves, pos, attackers, board); // get only captures
 

@@ -17,17 +17,17 @@ namespace Napoleon
     }
 
 
-    BitBoard Pawn::GetQuietTargets(Byte color, BitBoard pawns, BitBoard empty)
+    BitBoard Pawn::GetQuietTargets(Color color, BitBoard pawns, BitBoard empty)
     {
         return GetSinglePushTargets(color, pawns, empty) | GetDoublePushTargets(color, pawns, empty);
     }
 
-    BitBoard Pawn::GetSinglePushTargets(Byte color, BitBoard pawns, BitBoard empty)
+    BitBoard Pawn::GetSinglePushTargets(Color color, BitBoard pawns, BitBoard empty)
     {
         return color == PieceColor::White ? CompassRose::OneStepNorth(pawns) & empty : CompassRose::OneStepSouth(pawns) & empty;
     }
 
-    BitBoard Pawn::GetDoublePushTargets(Byte color, BitBoard pawns, BitBoard empty)
+    BitBoard Pawn::GetDoublePushTargets(Color color, BitBoard pawns, BitBoard empty)
     {
         BitBoard singlePush = GetSinglePushTargets(color, pawns, empty);
 
@@ -36,7 +36,7 @@ namespace Napoleon
                 : CompassRose::OneStepSouth(singlePush) & empty & Constants::Ranks::Five;
     }
 
-    BitBoard Pawn::GetPawnsAbleToSinglePush(Byte color, BitBoard pawns, BitBoard empty)
+    BitBoard Pawn::GetPawnsAbleToSinglePush(Color color, BitBoard pawns, BitBoard empty)
     {
         switch (color)
         {
@@ -49,7 +49,7 @@ namespace Napoleon
         }
     }
 
-    BitBoard Pawn::GetPawnsAbleToDoublePush(Byte color, BitBoard pawns, BitBoard empty)
+    BitBoard Pawn::GetPawnsAbleToDoublePush(Color color, BitBoard pawns, BitBoard empty)
     {
         switch (color)
         {
@@ -68,12 +68,12 @@ namespace Napoleon
         }
     }
 
-    BitBoard Pawn::GetEastAttacks(Byte color, BitBoard pawns)
+    BitBoard Pawn::GetEastAttacks(Color color, BitBoard pawns)
     {
         return color == PieceColor::White ? CompassRose::OneStepNorthEast(pawns) : CompassRose::OneStepSouthEast(pawns);
     }
 
-    BitBoard Pawn::GetWestAttacks(Byte color, BitBoard pawns)
+    BitBoard Pawn::GetWestAttacks(Color color, BitBoard pawns)
     {
         return color == PieceColor::White ? CompassRose::OneStepNorthWest(pawns) : CompassRose::OneStepSouthWest(pawns);
     }

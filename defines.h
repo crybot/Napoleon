@@ -21,7 +21,9 @@ namespace Napoleon
     typedef unsigned char Color;
     typedef unsigned char Byte;
     typedef unsigned long long ZobristKey;
-    typedef int Square;
+    typedef unsigned int Square;
+    typedef unsigned int File;
+    typedef unsigned int Rank;
     typedef int MoveType;
 }
 

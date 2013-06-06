@@ -78,28 +78,53 @@ namespace Napoleon
         -30,-40,-40,-50,-50,-40,-40,-30
     };
 
+    int Evaluation::multiPawnP[8] = { 0, 0, 30, 65, 150, 300, 300, 300 };
+
     int Evaluation::Evaluate(Board & board)
     {
         using namespace Utils::BitBoard;
+        using namespace PieceColor;
+        using namespace Constants::Squares;
 
         int score = 0;
-        int material = board.Material[PieceColor::White] - board.Material[PieceColor::Black];
 
-        int wM = board.PSTValue[PieceColor::White];
-        int bM = board.PSTValue[PieceColor::Black];
+        // material evaluation
+        int material = board.Material(White) - board.Material(Black);
 
-        int square = board.SideToMove == PieceColor::White ? Constants::Squares::IntD1 : Constants::Squares::IntD8;
-
-        if (board.IsOnSquare(board.SideToMove, PieceType::Queen, square))
-            if (board.Material[board.SideToMove] > Constants::Eval::MiddleGameMat)
-                score -= 15;
+        // Piece Square Value evaluation
+        int wM = board.PstValue(White);
+        int bM = board.PstValue(Black);
 
         score += material + (wM - bM);
+
+        // premature queen development
+        if (board.IsOnSquare(White, PieceType::Queen, IntD1))
+            if (board.Material(White) > Constants::Eval::MiddleGameMat)
+                score -= 15;
+
+        if (board.IsOnSquare(Black, PieceType::Queen, IntD8))
+            if (board.Material(Black) > Constants::Eval::MiddleGameMat)
+                score += 15;
+
+//        // tempo bonus
+//        if (board.SideToMove == White)
+//            score += 10;
+//        else
+//            score -= 10;
+
+        /* PAWN STRUCTURE */
+
+        // doubled, tripled pawns evaluation
+        for (File f = 0; f<8; f++)
+        {
+            score -= multiPawnP[board.PawnsOnFile(White, f)];
+            score += multiPawnP[board.PawnsOnFile(Black, f)];
+        }
 
         return (score * (1-(board.SideToMove*2)) );
     }
 
-    int Evaluation::EvaluatePiece(Piece piece, int square, Board& board)
+    int Evaluation::EvaluatePiece(Piece piece, Square square, Board& board)
     {
         using namespace Utils::Square;
         using namespace PieceColor;

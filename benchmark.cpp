@@ -16,7 +16,7 @@ namespace Napoleon
     Benchmark::Benchmark()
     {
         board = Board();
-        board.Equip();
+        board.LoadGame();
     }
 
     void Benchmark::Start()
@@ -38,7 +38,7 @@ namespace Napoleon
         for (unsigned i=0; i<strings.size(); i++)
         {
             boost::split(fields, strings[i], boost::is_any_of(";"));
-            board.LoadGame(FenString(fields[0]));
+            board.LoadGame(fields[0]);
 
             std::cout << Console::Yellow << "Position: " << i+1 << std::endl << fields[0] << std::endl;
             for (unsigned l=1; l<fields.size(); l++)
@@ -91,7 +91,7 @@ namespace Napoleon
         for (unsigned i=0; i<50; i++)
         {
             boost::split(fields, strings[i], boost::is_any_of(";"));
-            board.LoadGame(FenString(fields[0]));
+            board.LoadGame(fields[0]);
 
             Search::StartThinking(board);
             std::cout << i << std::endl;

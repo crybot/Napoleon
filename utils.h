@@ -18,7 +18,7 @@ namespace Napoleon
             int GetRankIndex(int);
             int GetSquareIndex(int, int);
             int Parse(std::string);
-            std::string ToAlgebraic(int);
+            std::string ToAlgebraic(Napoleon::Square);
         }
 
         namespace BitBoard

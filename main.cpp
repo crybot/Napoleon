@@ -66,7 +66,7 @@ void SearchMove(int depth, Board& board)
 
 int main()
 {
-    //#define MAIN
+#define MAIN
 
 #ifndef MAIN
 
@@ -84,7 +84,12 @@ int main()
     StopWatch watch;
     Board board;
     Benchmark bench;
-    board.LoadGame(FenString("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"));
+    board.LoadGame();
+
+    //    board.Display();
+
+    //    Utils::BitBoard::Display(board.bitBoardSet[board.SideToMove][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[board.SideToMove ^ 1][PieceType::Pawn]);
 
     //    cout << "Size HashEntry: " << sizeof(HashEntry) << endl;
 
@@ -165,8 +170,6 @@ int main()
                 watch.Start();
                 SearchMove(depth, board);
                 cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
-                cout << "KNodes per second: " << board.Nps / watch.ElapsedMilliseconds() << endl;
-                board.Nps = 0;
                 //                cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
             }
         }
@@ -175,7 +178,7 @@ int main()
         {
             if (fields.size() >= 5)
             {
-                board.LoadGame(FenString(cmd.substr(fields[0].size()+1)));
+                board.LoadGame(cmd.substr(fields[0].size()+1));
             }
         }
 
@@ -187,7 +190,7 @@ int main()
         else if (cmd == "new")
         {
             board = Board();
-            board.Equip();
+            board.LoadGame();
         }
 
         else if (fields[0] == "move")
@@ -253,8 +256,6 @@ int main()
             watch.Start();
             Search::StartThinking(board);
             cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
-            cout << "KNodes per second: " << board.Nps / watch.ElapsedMilliseconds() << endl;
-            board.Nps = 0;
             //            cout << "PV: " << board.Table.Table[board.zobrist % board.Table.Size].BestMove.ToAlgebraic() << endl;
         }
 

@@ -6,8 +6,8 @@ namespace Napoleon
     void MoveGenerator::GetQueenMoves(BitBoard queens, Board &board, Move moveList[], int &pos, BitBoard target)
     {
         BitBoard targets;
-        int fromIndex;
-        int toIndex;
+        Square fromIndex;
+        Square toIndex;
 
         while (queens != 0)
         {
