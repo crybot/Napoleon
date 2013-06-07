@@ -66,7 +66,7 @@ void SearchMove(int depth, Board& board)
 
 int main()
 {
-#define MAIN
+    //#define MAIN
 
 #ifndef MAIN
 

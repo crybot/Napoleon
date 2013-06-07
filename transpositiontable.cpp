@@ -5,7 +5,7 @@ namespace Napoleon
 {
     TranspositionTable::TranspositionTable(unsigned long size)
     {
-		BucketSize = 4;
+        BucketSize = 4;
         Size = size/(sizeof(HashEntry*)*BucketSize);
 
         Table = new HashEntry*[Size];

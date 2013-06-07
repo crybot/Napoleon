@@ -154,6 +154,8 @@ namespace Napoleon
 
         BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
 
+        if (attackers) ++depth;
+
         // enhanced deep razoring
         if (depth < 4
                 && !attackers
@@ -488,53 +490,34 @@ namespace Napoleon
         }
     }
 
+    // extract the pv line from transposition table
+    std::string Search::GetPv(Board& board, Move toMake)
+    {
+        std::string pv;
+
+        if (toMake.IsNull())
+            return pv;
+        else
+        {
+            pv = toMake.ToAlgebraic() + " ";
+
+            board.MakeMove(toMake);
+            pv += GetPv(board, board.Table.GetPv(board.zobrist));
+            board.UndoMove(toMake);
+
+            return pv;
+        }
+    }
+
     // return search info
     std::string Search::GetInfo(Board& board, Move toMake, int score, int depth, int lastTime)
     {
         std::ostringstream info;
-        std::string PV;
-        Move best;
-        Move pv[Constants::MaxMoves];
-
-        pv[0] = toMake;
-
-        board.MakeMove(toMake);
-
-        PV += toMake.ToAlgebraic() + " ";
-
-        int l;
-        for (l=1; l<depth; l++)
-        {
-            best = board.Table.GetPv(board.zobrist);
-
-            if (best.IsNull())
-            {
-                break;
-            }
-
-            pv[l] = best;
-
-            assert(!best.IsNull());
-
-            board.MakeMove(best);
-
-            PV += best.ToAlgebraic() + " ";
-        }
-
-        for (int k=l-1; k>=0; k--)
-        {
-            assert(k<depth);
-            assert(!pv[k].IsNull());
-
-            board.UndoMove(pv[k]);
-        }
-
         double delta = Timer.Stop().ElapsedMilliseconds() - lastTime;
-        double nps = delta > 0 ? nodes / delta : nodes / 1;
-        nps*=1000;
+        double nps = (delta > 0 ? nodes / delta : nodes / 1)*1000;
 
         info << "depth " << depth << " score cp " << score << " time " << Timer.Stop().ElapsedMilliseconds() << " nodes "
-             << nodes << " nps " << int(nps) << " pv " << PV;
+             << nodes << " nps " << int(nps) << " pv " << GetPv(board, toMake);
 
         return info.str();
     }

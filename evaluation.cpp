@@ -10,7 +10,7 @@ namespace Napoleon
         0,  0,  0,  0,  0,  0,  0,  0,
         5, 10, 15,-20,-20, 15, 10,  5,
         5, -5,-10,  0, 0,-10, -5,  5,
-        0,  0,  0, 20, 25,  0,  0,  0,
+        0,  0,  0, 20, 20,  0,  0,  0,
         5,  5, 10, 25, 25, 10,  5,  5,
         10, 10, 20, 30, 30, 20, 10, 10,
         50, 50, 50, 50, 50, 50, 50, 50,
@@ -100,21 +100,21 @@ namespace Napoleon
         // premature queen development
         if (board.IsOnSquare(White, PieceType::Queen, IntD1))
             if (board.Material(White) > Constants::Eval::MiddleGameMat)
-                score -= 15;
+                score -= 10;
 
         if (board.IsOnSquare(Black, PieceType::Queen, IntD8))
             if (board.Material(Black) > Constants::Eval::MiddleGameMat)
-                score += 15;
+                score += 10;
 
-//        // tempo bonus
-//        if (board.SideToMove == White)
-//            score += 10;
-//        else
-//            score -= 10;
+        // tempo bonus
+        if (board.SideToMove == White)
+            score += 5;
+        else
+            score -= 5;
 
         /* PAWN STRUCTURE */
 
-        // doubled, tripled pawns evaluation
+        // doubled/tripled pawns evaluation
         for (File f = 0; f<8; f++)
         {
             score -= multiPawnP[board.PawnsOnFile(White, f)];

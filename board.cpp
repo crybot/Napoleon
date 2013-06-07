@@ -14,7 +14,7 @@ namespace Napoleon
 {
     Board::Board()
     {
-        Table = TranspositionTable(67108864);
+        Table = TranspositionTable(67108864 * 2);
         MoveDatabase::InitAttacks();
         Zobrist::Init();
 
