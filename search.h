@@ -30,7 +30,7 @@ namespace Napoleon
         extern Move killerMoves[Constants::MaxPly][2];
 
         std::string GetInfo(Board&, Move, int, int, int);
-        std::string GetPv(Board&, Move);
+        std::string GetPv(Board&, Move, int);
 
         void StartThinking(Board&);
         void StopThinking();

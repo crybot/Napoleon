@@ -25,6 +25,7 @@ namespace Napoleon
     typedef unsigned int File;
     typedef unsigned int Rank;
     typedef int MoveType;
+
 }
 
 #endif // DEFINES_H

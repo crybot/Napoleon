@@ -10,6 +10,7 @@ namespace Napoleon
     public:
         static int Evaluate(Board&);
         static int EvaluatePiece(Piece, Square, Board&);
+        static int CalculatePST(Piece, Square, Board&);
 
     private:
         template<Byte>

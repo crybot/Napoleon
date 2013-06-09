@@ -50,6 +50,7 @@ namespace Napoleon
         BitBoard GetPlayerPieces() const;
         BitBoard GetEnemyPieces() const;
         BitBoard GetPieces(Color, Type) const;
+        BitBoard GetPieces(Color) const;
         BitBoard GetPinnedPieces() const;
         BitBoard KingAttackers(Square, Color) const;
 
@@ -199,11 +200,15 @@ namespace Napoleon
         return Pieces[Utils::Piece::GetOpposite(SideToMove)];
     }
 
-    inline BitBoard Board::GetPieces(Color pieceColor, Type pieceType) const
+    inline BitBoard Board::GetPieces(Color color, Type type) const
     {
-        return bitBoardSet[pieceColor][pieceType];
+        return bitBoardSet[color][type];
     }
 
+    inline BitBoard Board::GetPieces(Color color) const
+    {
+        return Pieces[color];
+    }
 
     inline bool Board::IsPromotingPawn() const
     {

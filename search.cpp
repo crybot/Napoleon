@@ -154,8 +154,6 @@ namespace Napoleon
 
         BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
 
-        if (attackers) ++depth;
-
         // enhanced deep razoring
         if (depth < 4
                 && !attackers
@@ -192,7 +190,7 @@ namespace Napoleon
         }
 
         // internal iterative deepening (IID)
-        if (depth >= 3 &&  best.IsNull())
+        if (depth >= 3 && best.IsNull())
         {
             int R = 2;
 
@@ -206,6 +204,7 @@ namespace Napoleon
         // make best move (hash move)
         if(!best.IsNull())
         {
+            assert(board.IsMoveLegal(best, pinned));
             legal++;
             board.MakeMove(best);
             score = -search(depth - 1, -beta, -alpha, board);
@@ -350,6 +349,9 @@ namespace Napoleon
 
         BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
 
+        if (attackers)
+            return search(1, alpha, beta, board);
+
         MoveGenerator::GetPseudoLegalMoves<true>(moves, pos, attackers, board); // get only captures
 
         BitBoard pinned = board.GetPinnedPieces();
@@ -491,18 +493,18 @@ namespace Napoleon
     }
 
     // extract the pv line from transposition table
-    std::string Search::GetPv(Board& board, Move toMake)
+    std::string Search::GetPv(Board& board, Move toMake, int depth)
     {
         std::string pv;
 
-        if (toMake.IsNull())
+        if (toMake.IsNull() || depth == 0)
             return pv;
         else
         {
             pv = toMake.ToAlgebraic() + " ";
 
             board.MakeMove(toMake);
-            pv += GetPv(board, board.Table.GetPv(board.zobrist));
+            pv += GetPv(board, board.Table.GetPv(board.zobrist), depth-1);
             board.UndoMove(toMake);
 
             return pv;
@@ -517,7 +519,7 @@ namespace Napoleon
         double nps = (delta > 0 ? nodes / delta : nodes / 1)*1000;
 
         info << "depth " << depth << " score cp " << score << " time " << Timer.Stop().ElapsedMilliseconds() << " nodes "
-             << nodes << " nps " << int(nps) << " pv " << GetPv(board, toMake);
+             << nodes << " nps " << int(nps) << " pv " << GetPv(board, toMake, depth);
 
         return info.str();
     }

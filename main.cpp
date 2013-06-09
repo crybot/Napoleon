@@ -100,27 +100,27 @@ int main()
 
     //    assert(!move.IsEnPassant());
 
-    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::White][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[Color::White][PieceType::Pawn]);
     //    cin.get();
-    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::Black][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[Color::Black][PieceType::Pawn]);
     //    cin.get();
 
     //    board.MakeMove(move);
     //    board.Display();
     //    cin.get();
 
-    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::White][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[Color::White][PieceType::Pawn]);
     //    cin.get();
-    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::Black][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[Color::Black][PieceType::Pawn]);
     //    cin.get();
 
     //    board.UndoMove(move);
     //    board.Display();
     //    cin.get();
 
-    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::White][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[Color::White][PieceType::Pawn]);
     //    cin.get();
-    //    Utils::BitBoard::Display(board.bitBoardSet[PieceColor::Black][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[Color::Black][PieceType::Pawn]);
     //    cin.get();
 
 
@@ -246,7 +246,7 @@ int main()
             }while( pos > 0);
 
             board.Display();
-            cout << Console::Red << "#Mate for " << (board.SideToMove == PieceColor::White ? "White#" : "Black#");
+            cout << Console::Red << "#Mate for " << (board.SideToMove == Color::White ? "White#" : "Black#");
             cout << endl << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
 
         }

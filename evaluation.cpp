@@ -68,7 +68,7 @@ namespace Napoleon
 
     int Evaluation::kingSquareValue[64] =
     {
-        20, 30, 50,  0,  0, 10, 35, 20,
+        20, 30, 10,  0,  0, 10, 35, 20,
         20, 10,  0,  0,  0,  0, 10, 20,
         -10,-20,-20,-20,-20,-20,-20,-10,
         -20,-30,-30,-40,-40,-30,-30,-20,
@@ -78,7 +78,7 @@ namespace Napoleon
         -30,-40,-40,-50,-50,-40,-40,-30
     };
 
-    int Evaluation::multiPawnP[8] = { 0, 0, 30, 65, 150, 300, 300, 300 };
+    int Evaluation::multiPawnP[8] = { 0, 0, 20, 50, 100, 100, 100, 100 };
 
     int Evaluation::Evaluate(Board & board)
     {
@@ -92,10 +92,10 @@ namespace Napoleon
         int material = board.Material(White) - board.Material(Black);
 
         // Piece Square Value evaluation
-        int wM = board.PstValue(White);
-        int bM = board.PstValue(Black);
+        int wPST = board.PstValue(White);
+        int bPST = board.PstValue(Black);
 
-        score += material + (wM - bM);
+        score += material + (wPST - bPST);
 
         // premature queen development
         if (board.IsOnSquare(White, PieceType::Queen, IntD1))
@@ -121,10 +121,50 @@ namespace Napoleon
             score += multiPawnP[board.PawnsOnFile(Black, f)];
         }
 
+        // mobility evaluation
+        Piece piece;
+        for (Napoleon::Square sq = 0; sq<64; sq++)
+        {
+            piece = board.PieceSet[sq];
+            if (piece.Type != PieceType::None)
+            {
+                if (piece.Color == White)
+                    score += EvaluatePiece(piece, sq, board);
+                else
+                    score -= EvaluatePiece(piece, sq, board);
+            }
+        }
+
         return (score * (1-(board.SideToMove*2)) );
     }
 
     int Evaluation::EvaluatePiece(Piece piece, Square square, Board& board)
+    {
+        using namespace Utils::BitBoard;
+        BitBoard b = 0;
+
+        switch(piece.Type)
+        {
+        case PieceType::Bishop:
+            b = (MoveDatabase::GetA1H8DiagonalAttacks(board.OccupiedSquares, square)
+                 | MoveDatabase::GetH1A8DiagonalAttacks(board.OccupiedSquares, square))
+                    & ~board.GetPieces(piece.Color);
+
+            return 0.5*PopCount(b);
+
+        case PieceType::Rook:
+            b =  (MoveDatabase::GetFileAttacks(board.OccupiedSquares, square)
+                  | MoveDatabase::GetRankAttacks(board.OccupiedSquares, square))
+                    & ~board.GetPieces(piece.Color);
+
+            return 0.3*PopCount(b);
+
+        default:
+            return 0;
+        }
+    }
+
+    int Evaluation::CalculatePST(Piece piece, Square square, Board& board)
     {
         using namespace Utils::Square;
         using namespace PieceColor;
@@ -149,45 +189,6 @@ namespace Napoleon
 
         case PieceType::King:
             return piece.Color == White ? kingSquareValue[square] : kingSquareValue[GetSquareIndex(square % 8, 7 - (square/8))];
-        }
-
-        return 0;
-    }
-
-    template<Byte piece>
-    int Evaluation::evaluateMobility(Board& board, BitBoard pieces)
-    {
-        using namespace Utils::BitBoard;
-        int square;
-        BitBoard b = 0;
-
-        switch(piece)
-        {
-        case PieceType::Bishop:
-            while (pieces)
-            {
-                square = BitScanForwardReset(pieces);
-
-                b |= MoveDatabase::GetA1H8DiagonalAttacks(board.OccupiedSquares, square)
-                        | MoveDatabase::GetH1A8DiagonalAttacks(board.OccupiedSquares, square);
-            }
-
-            return 0.5*PopCount(b);
-
-        case PieceType::Queen:
-            while(pieces)
-            {
-                square = BitScanForwardReset(pieces);
-
-                b |= MoveDatabase::GetA1H8DiagonalAttacks(board.OccupiedSquares, square)
-                        | MoveDatabase::GetH1A8DiagonalAttacks(board.OccupiedSquares, square)
-                        | MoveDatabase::GetFileAttacks(board.OccupiedSquares, square)
-                        | MoveDatabase::GetRankAttacks(board.OccupiedSquares, square);
-            }
-            return 0.01*PopCount(b);
-
-        default:
-            break;
         }
 
         return 0;
