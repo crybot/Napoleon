@@ -117,13 +117,14 @@ namespace Napoleon
 
         unsigned long long nodes = 0;
 
-
+        if ((count = board.Table.Probe(board.zobrist, depth, -32767, &move, 32767)) != TranspositionTable::Unknown)
+            return count;
 
         MoveGenerator::GetLegalMoves(moves, pos, board);
 
         if (depth == 1)
         {
-
+            board.Table.Save(board.zobrist, depth, pos, Constants::NullMove, Exact);
             return pos;
         }
 
@@ -137,7 +138,7 @@ namespace Napoleon
             board.UndoMove(moves[i]);
         }
 
-
+        board.Table.Save(board.zobrist, depth, nodes, Constants::NullMove, Exact);
         return nodes;
     }
 

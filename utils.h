@@ -36,7 +36,7 @@ namespace Napoleon
             Byte GetPiece(char);
             char GetInitial(Byte);
             char GetInitial(Napoleon::Piece);
-            Byte GetOpposite(Byte);
+            Color GetOpposite(Color);
         }
 
         INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
@@ -119,9 +119,9 @@ namespace Napoleon
             return file + 8 * rank;
         }
 
-        inline Byte Piece::GetOpposite(Byte color)
+        inline Color Piece::GetOpposite(Color color)
         {
-            return 1 ^ color;
+            return Color(1 ^ color);
         }
     }
 }

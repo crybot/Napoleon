@@ -10,6 +10,7 @@ namespace Napoleon
     public:
         static int Evaluate(Board&);
         static int EvaluatePiece(Piece, Square, Board&);
+        static int CalculatePST(Piece, Square, Board&);
 
     private:
         template<Byte>
@@ -20,7 +21,8 @@ namespace Napoleon
         static int bishopSquareValue[64];
         static int rookSquareValue[64];
         static int queenSquareValue[64];
-        static int kingSquareValue[64];
+        static int kingMiddleGame[64];
+		static int kingEndGame[64];
 
         static int multiPawnP[8]; // penalization for doubled, tripled... pawns
 
