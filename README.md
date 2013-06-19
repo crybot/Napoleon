@@ -1,10 +1,9 @@
 NapoleonPP
 ==========
 
-Motore scacchistico cross-platform cross-compiler scritto in C++.
+Cross-platform/cross-compiler chess engine writte in C++.
 
-Il programma utilizza un generatore di mosse basato sulle bitboard.
-Per saperne di piu` leggere il seguente articolo: http://sdrv.ms/14KHXQV
+More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
 Features:
 - Cross platform (Windows, Unix, Mac)
