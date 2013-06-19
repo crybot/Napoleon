@@ -1,7 +1,7 @@
 NapoleonPP
 ==========
 
-Cross-platform/cross-compiler chess engine writte in C++.
+Cross-platform/cross-compiler chess engine written in C++.
 
 More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
