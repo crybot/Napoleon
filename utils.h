@@ -44,7 +44,7 @@ namespace Napoleon
 #ifdef __GNUG__
             return __builtin_ctzll(bitBoard); // conta il numero di 0 precedenti al primo bit piu` significativo
 
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_WIN64)
             unsigned long index;
             _BitScanForward64(&index, bitBoard);
 
@@ -62,7 +62,7 @@ namespace Napoleon
 #ifdef __GNUG__
 			return  __builtin_ctzll(bb); // conta il numero di 0 precedenti al primo bit piu` significativo
 
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_WIN64)
 			unsigned long index;
 			_BitScanForward64(&index, bb);
 

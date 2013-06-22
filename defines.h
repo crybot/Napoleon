@@ -6,7 +6,7 @@
 
 #ifdef __GNUC__
 #   define INLINE __inline __attribute__ ((__always_inline__))
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_WIN64)
 #   include<intrin.h>
 #	pragma intrinsic(_BitScanForward64)
 #   define INLINE __forceinline
