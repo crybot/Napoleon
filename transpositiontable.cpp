@@ -1,5 +1,6 @@
 #include "transpositiontable.h"
 #include "constants.h"
+#include <iostream>
 #include <ctime>
 namespace Napoleon
 {
@@ -8,7 +9,15 @@ namespace Napoleon
         BucketSize = 4;
         Size = size/(sizeof(HashEntry*)*BucketSize);
 
+		try
+		{
         Table = new HashEntry*[Size];
+		}
+		catch(std::bad_alloc& ex)
+		{
+			std::cout << "bad alloc" << std::endl;
+		}
+
         for (unsigned i=0; i<Size; i++)
         {
             Table[i] = new HashEntry[BucketSize];
