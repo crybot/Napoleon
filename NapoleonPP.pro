@@ -1,8 +1,9 @@
-CONFIG += c++11 \
-          c++11 -pthread file_name.cpp \
+QMAKE_CXXFLAGS += -std=c++0x -pthread
+LIBS += -pthread
+
+CONFIG -= qt \
 
 QMAKE_CXXFLAGS += -Wno-unused-variable \
-
 
 SOURCES += \
     main.cpp \

@@ -9,6 +9,7 @@
 #include "evaluation.h"
 #include <iostream>
 #include <cstring>
+#include <cmath>
 
 #define ASSERT(b) if(!b) {std::cout << "Position not ok!\n"; abort();}
 
@@ -16,7 +17,7 @@ namespace Napoleon
 {
     Board::Board()
     {
-        Table = TranspositionTable(2097152);
+        Table = TranspositionTable(std::pow(2, 21));
         MoveDatabase::InitAttacks();
         Zobrist::Init();
 
