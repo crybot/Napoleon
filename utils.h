@@ -39,38 +39,56 @@ namespace Napoleon
             Color GetOpposite(Color);
         }
 
+#ifdef __GNUC__
         INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
-		{
-#ifdef __GNUG__
-            return __builtin_ctzll(bitBoard); // conta il numero di 0 precedenti al primo bit piu` significativo
+        {
+            Napoleon::BitBoard index;
+            __asm__("bsfq %1, %0": "=r"(index): "rm"(bitBoard) );
+            return index;
+        }
+
+        INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
+        {
+            Napoleon::BitBoard index;
+            __asm__("bsfq %1, %0": "=r"(index): "rm"(bitBoard) );
+
+            bitBoard &= (bitBoard - 1);
+
+            return  index;
+        }
 
 #elif defined(_MSC_VER) && defined(_WIN64)
+        INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
+        {
             unsigned long index;
             _BitScanForward64(&index, bitBoard);
 
             return (int)index;
-
-#else
-			return Constants::DeBrujinTable[((bitBoard & -bitBoard) * Constants::DeBrujinValue) >> 58];
-#endif
         }
 
         INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
-		{
-			Napoleon::BitBoard bb = bitBoard;
-			bitBoard &= (bitBoard - 1);
-#ifdef __GNUG__
-			return  __builtin_ctzll(bb); // conta il numero di 0 precedenti al primo bit piu` significativo
+        {
+            unsigned long index;
+            _BitScanForward64(&index, bitBoard);
 
-#elif defined(_MSC_VER) && defined(_WIN64)
-			unsigned long index;
-			_BitScanForward64(&index, bb);
+            bitBoard &= (bitBoard - 1);
 
-			return (int)index;
+            return (int)index;
+        }
 #else
-			return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
+        INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
+        {
+            return Constants::DeBrujinTable[((bitBoard & -bitBoard) * Constants::DeBrujinValue) >> 58];
+        }
+
+        INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
+        {
+            Napoleon::BitBoard bb = bitBoard;
+            bitBoard &= (bitBoard - 1);
+
+            return Constants::DeBrujinTable[((bb & -bb) * Constants::DeBrujinValue) >> 58];
+        }
 #endif
-		}
 
         INLINE int BitBoard::PopCount(Napoleon::BitBoard bitBoard)
         {
