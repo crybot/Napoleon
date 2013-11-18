@@ -18,7 +18,7 @@ namespace Napoleon
 
         const HashEntry& operator[](int) const;
 
-        void Save(ZobristKey, Byte, int, Move, Byte);
+        void Save(ZobristKey, Byte, int, Move, ScoreType);
         int Probe(ZobristKey, Byte, int, Move*, int);
         void Clear();
         Move GetPv(ZobristKey);

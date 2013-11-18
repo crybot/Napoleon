@@ -2,12 +2,9 @@
 
 namespace Napoleon
 {
-    HashEntry::HashEntry()
-    {
+    HashEntry::HashEntry()  { }
 
-    }
-
-    HashEntry::HashEntry(ZobristKey hash, Byte depth, int score, Move bestMove, Byte bound)
+    HashEntry::HashEntry(ZobristKey hash, Byte depth, int score, Move bestMove, ScoreType bound)
     {
         Hash = hash;
         Depth = depth;

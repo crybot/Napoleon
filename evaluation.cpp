@@ -119,7 +119,7 @@ namespace Napoleon
 				score += 10;
 
 		// tempo bonus
-		if (board.SideToMove == White)
+        if (board.SideToMove() == White)
 			score += 5;
 		else
 			score -= 5;
@@ -147,7 +147,7 @@ namespace Napoleon
 			}
 		}
 
-		return score * (1-(board.SideToMove*2));
+        return score * (1-(board.SideToMove()*2));
 	}
 
 	int Evaluation::EvaluatePiece(Piece piece, Square square, Board& board)
@@ -180,7 +180,7 @@ namespace Napoleon
 		}
 	}
 
-	int Evaluation::CalculatePST(Piece piece, Square square, Board& board)
+    int Evaluation::CalculatePST(Piece piece, Square square, Board& board)
 	{
 		using namespace Utils::Square;
 		using namespace PieceColor;

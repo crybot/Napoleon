@@ -50,18 +50,18 @@ namespace Napoleon
     {
         if (attackers)
         {
-            board.IsCheck = true;
             GetEvadeMoves<onlyCaptures>(board, attackers, allMoves, pos);
+            board.SetCheckState(true);
         }
         else if (onlyCaptures)
         {
             GetCaptures(allMoves, pos, board);
-            board.IsCheck = false;
+            board.SetCheckState(false);
         }
         else
         {
             GetAllMoves(allMoves, pos, board);
-            board.IsCheck = false;
+            board.SetCheckState(false);
         }
     }
 
@@ -74,23 +74,23 @@ namespace Napoleon
     INLINE void MoveGenerator::GetCaptures(Move allMoves[], int& pos, Board& board)
     {
         BitBoard enemy = board.GetEnemyPieces();
-        GetPawnMoves<true>(board.GetPieces(board.SideToMove, PieceType::Pawn), board, allMoves, pos, enemy);
-        GetKnightMoves(board.GetPieces(board.SideToMove, PieceType::Knight), board, allMoves, pos, enemy);
-        GetBishopMoves(board.GetPieces(board.SideToMove, PieceType::Bishop), board, allMoves, pos, enemy);
-        GetQueenMoves(board.GetPieces(board.SideToMove, PieceType::Queen), board, allMoves, pos, enemy);
-        GetKingMoves(board.GetPieces(board.SideToMove, PieceType::King), board, allMoves, pos, enemy);
-        GetRookMoves(board.GetPieces(board.SideToMove, PieceType::Rook), board, allMoves, pos, enemy);
+        GetPawnMoves<true>(board.GetPieces(board.SideToMove(), PieceType::Pawn), board, allMoves, pos, enemy);
+        GetKnightMoves(board.GetPieces(board.SideToMove(), PieceType::Knight), board, allMoves, pos, enemy);
+        GetBishopMoves(board.GetPieces(board.SideToMove(), PieceType::Bishop), board, allMoves, pos, enemy);
+        GetQueenMoves(board.GetPieces(board.SideToMove(), PieceType::Queen), board, allMoves, pos, enemy);
+        GetKingMoves(board.GetPieces(board.SideToMove(), PieceType::King), board, allMoves, pos, enemy);
+        GetRookMoves(board.GetPieces(board.SideToMove(), PieceType::Rook), board, allMoves, pos, enemy);
     }
 
     INLINE void MoveGenerator::GetNonCaptures(Move allMoves[], int&pos, Board& board)
     {
         BitBoard enemy = ~board.GetEnemyPieces();
-        GetPawnMoves<false>(board.GetPieces(board.SideToMove, PieceType::Pawn), board, allMoves, pos, enemy);
-        GetKnightMoves(board.GetPieces(board.SideToMove, PieceType::Knight), board, allMoves, pos, enemy);
-        GetBishopMoves(board.GetPieces(board.SideToMove, PieceType::Bishop), board, allMoves, pos, enemy);
-        GetQueenMoves(board.GetPieces(board.SideToMove, PieceType::Queen), board, allMoves, pos, enemy);
-        GetKingMoves(board.GetPieces(board.SideToMove, PieceType::King), board, allMoves, pos, enemy);
-        GetRookMoves(board.GetPieces(board.SideToMove, PieceType::Rook), board, allMoves, pos, enemy);
+        GetPawnMoves<false>(board.GetPieces(board.SideToMove(), PieceType::Pawn), board, allMoves, pos, enemy);
+        GetKnightMoves(board.GetPieces(board.SideToMove(), PieceType::Knight), board, allMoves, pos, enemy);
+        GetBishopMoves(board.GetPieces(board.SideToMove(), PieceType::Bishop), board, allMoves, pos, enemy);
+        GetQueenMoves(board.GetPieces(board.SideToMove(), PieceType::Queen), board, allMoves, pos, enemy);
+        GetKingMoves(board.GetPieces(board.SideToMove(), PieceType::King), board, allMoves, pos, enemy);
+        GetRookMoves(board.GetPieces(board.SideToMove(), PieceType::Rook), board, allMoves, pos, enemy);
         GetCastleMoves(board, allMoves, pos);
     }
 
@@ -110,12 +110,12 @@ namespace Napoleon
             if (ep)
             {
                 // en passant
-                if (board.EnPassantSquare != Constants::Squares::Invalid)
+                if (board.EnPassantSquare() != Constants::Squares::Invalid)
                 {
-                    epTargets = MoveDatabase::PawnAttacks[board.SideToMove][fromIndex];
+                    epTargets = MoveDatabase::PawnAttacks[board.SideToMove()][fromIndex];
 
-                    if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare]) != 0)
-                        moveList[pos++] =  Move(fromIndex, board.EnPassantSquare, EnPassant);
+                    if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare()]) != 0)
+                        moveList[pos++] =  Move(fromIndex, board.EnPassantSquare(), EnPassant);
                 }
             }
 
@@ -124,8 +124,8 @@ namespace Napoleon
                 toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
 
                 // promotions
-                if ((Utils::Square::GetRankIndex(toIndex) == 7 && board.SideToMove == PieceColor::White) ||
-                        (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove == PieceColor::Black))
+                if ((Utils::Square::GetRankIndex(toIndex) == 7 && board.SideToMove() == PieceColor::White) ||
+                        (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove() == PieceColor::Black))
                 {
                     moveList[pos++] =  Move(fromIndex, toIndex, QueenPromotion);
                     moveList[pos++] =  Move(fromIndex, toIndex, RookPromotion);
@@ -218,42 +218,42 @@ namespace Napoleon
 
     INLINE void MoveGenerator::GetCastleMoves(Board& board, Move moveList[], int &pos)
     {
-        if (board.SideToMove == PieceColor::White)
+        if (board.SideToMove() == PieceColor::White)
         {
-            if (board.CastlingStatus & Constants::Castle::WhiteCastleOO)
+            if (board.CastlingStatus() & Constants::Castle::WhiteCastleOO)
             {
                 if ((Constants::Castle::WhiteCastleMaskOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOO, board.SideToMove))
+                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOO, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::WhiteCastlingOO;
                 }
 
             }
-            if (board.CastlingStatus & Constants::Castle::WhiteCastleOOO)
+            if (board.CastlingStatus() & Constants::Castle::WhiteCastleOOO)
             {
                 if ((Constants::Castle::WhiteCastleMaskOOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOOO ^ Constants::Squares::B1, board.SideToMove))
+                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOOO ^ Constants::Squares::B1, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::WhiteCastlingOOO;
                 }
             }
         }
 
-        else if (board.SideToMove == PieceColor::Black)
+        else if (board.SideToMove() == PieceColor::Black)
         {
-            if (board.CastlingStatus & Constants::Castle::BlackCastleOO)
+            if (board.CastlingStatus() & Constants::Castle::BlackCastleOO)
             {
                 if ((Constants::Castle::BlackCastleMaskOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOO, board.SideToMove))
+                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOO, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::BlackCastlingOO;
                 }
             }
-            if (board.CastlingStatus & Constants::Castle::BlackCastleOOO)
+            if (board.CastlingStatus() & Constants::Castle::BlackCastleOOO)
             {
                 if ((Constants::Castle::BlackCastleMaskOOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOOO^ Constants::Squares::B8, board.SideToMove))
+                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOOO^ Constants::Squares::B8, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::BlackCastlingOOO;
                 }
             }
@@ -267,7 +267,7 @@ namespace Napoleon
         BitBoard b;
         Square to;
         Square from, checksq;
-        Square ksq = board.KingSquare(board.SideToMove);
+        Square ksq = board.KingSquare(board.SideToMove());
         int checkersCnt = 0;
         BitBoard sliderAttacks = 0;
 
@@ -330,18 +330,18 @@ namespace Napoleon
         else
             target = MoveDatabase::ObstructedTable[checksq][ksq] | checkers;
 
-        GetPawnMoves<true>(board.GetPieces(board.SideToMove, PieceType::Pawn), board, moveList, pos, target);
-        GetKnightMoves(board.GetPieces(board.SideToMove, PieceType::Knight), board, moveList, pos, target);
-        GetBishopMoves(board.GetPieces(board.SideToMove, PieceType::Bishop), board, moveList, pos, target);
-        GetRookMoves(board.GetPieces(board.SideToMove, PieceType::Rook), board, moveList, pos, target);
-        GetQueenMoves(board.GetPieces(board.SideToMove, PieceType::Queen), board, moveList, pos, target);
+        GetPawnMoves<true>(board.GetPieces(board.SideToMove(), PieceType::Pawn), board, moveList, pos, target);
+        GetKnightMoves(board.GetPieces(board.SideToMove(), PieceType::Knight), board, moveList, pos, target);
+        GetBishopMoves(board.GetPieces(board.SideToMove(), PieceType::Bishop), board, moveList, pos, target);
+        GetRookMoves(board.GetPieces(board.SideToMove(), PieceType::Rook), board, moveList, pos, target);
+        GetQueenMoves(board.GetPieces(board.SideToMove(), PieceType::Queen), board, moveList, pos, target);
     }
 
 
     INLINE void MoveGenerator::GetLegalMoves(Move allMoves[],int& pos, Board& board)
     {
         BitBoard pinned = board.GetPinnedPieces();
-        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
+        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove());
 
         if (attackers)
             GetEvadeMoves<false>(board, attackers, allMoves, pos);

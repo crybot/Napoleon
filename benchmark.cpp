@@ -10,13 +10,16 @@
 #include "constants.h"
 #include "console.h"
 #include "search.h"
+#include "board.h"
 
+
+// ONLY USEFUL FOR DEBUG
 namespace Napoleon
 {
-    Benchmark::Benchmark()
+    Benchmark::Benchmark(Board& board)
+        :board(board)
     {
-        board = Board();
-        board.LoadGame();
+
     }
 
     void Benchmark::Start()
@@ -49,7 +52,7 @@ namespace Napoleon
 
                 std::cout << Console::Reset <<  "Perft " << depth << ": " << std::endl;
 
-                result = Perft(depth, board);
+                result = Perft(depth);
 
                 if(result != excpected)
                 {
@@ -95,7 +98,6 @@ namespace Napoleon
 
             Search::StartThinking(board);
             std::cout << i << std::endl;
-
         }
 
         std::cout << "Cutoff on first move: " << board.FirstMoveCutoff << std::endl;
@@ -105,12 +107,12 @@ namespace Napoleon
 
     }
 
-    unsigned long long Benchmark::Perft(int depth, Board& board)
+    unsigned long long Benchmark::Perft(int depth)
     {
         int pos = 0;
         int count;
         Move move;
-        Move moves[Constants::MaxMoves + 2];
+        Move moves[Constants::MaxMoves];
 
         unsigned long long nodes = 0;
 
@@ -127,7 +129,7 @@ namespace Napoleon
         for (int i = 0; i < pos; i++)
         {
             board.MakeMove(moves[i]);
-            nodes += Perft(depth - 1, board);
+            nodes += Perft(depth - 1);
             board.UndoMove(moves[i]);
         }
 

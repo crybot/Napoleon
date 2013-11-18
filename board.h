@@ -18,16 +18,8 @@ namespace Napoleon
     class Board
     {
     public:
-        bool AllowNullMove;
-
-        bool IsCheck;
         unsigned long FirstMoveCutoff;
         unsigned long TotalCutoffs;
-        int HalfMoveClock;
-        int CurrentPly;
-        Square EnPassantSquare;
-        Color SideToMove;
-        Byte CastlingStatus;
 
         //        int NumOfPieces[2][6]; // color, type
         ZobristKey hash[Constants::MaxPly]; // debugging
@@ -59,14 +51,25 @@ namespace Napoleon
         void MakeNullMove();
         void UndoNullMove();
 
+        void SetCheckState(bool);
+
         bool IsCapture(Move) const;
         bool IsMoveLegal(Move, BitBoard);
         bool IsAttacked(BitBoard, Color) const;
         bool IsPromotingPawn() const;
         bool IsOnSquare(Color, Type, Square) const;
-		bool IsRepetition() const;
+        bool IsRepetition() const;
 
         Square KingSquare(Color) const;
+
+        Color SideToMove() const;
+        Byte CastlingStatus() const;
+        Square EnPassantSquare() const;
+        int HalfMoveClock() const;
+        int CurrentPly() const;
+        bool AllowNullMove() const;
+        bool IsCheck() const;
+
         int PstValue(Color) const;
         int Material(Color) const;
         int PawnsOnFile(Color, File) const;
@@ -74,17 +77,25 @@ namespace Napoleon
         bool PosIsOk() const;
 
         Move ParseMove(std::string) const;
-
         std::string GetFen() const;
 
     private:
         BitBoard bitBoardSet[2][6]; // color, type
-        Byte castlingStatus[Constants::MaxPly];
+        Byte castlingStatusHistory[Constants::MaxPly];
         Type capturedPiece[Constants::MaxPly];
         Square enpSquares[Constants::MaxPly];
         Square kingSquare[2]; // color
 
-        int halfMoveClock[Constants::MaxPly];
+        Color sideToMove;
+        Byte castlingStatus;
+        Square enPassantSquare;
+
+        int halfMoveClock;
+        int currentPly;
+        bool allowNullMove;
+        bool isCheck;
+
+        int halfMoveClockHistory[Constants::MaxPly];
         int pawnsOnFile[2][8]; // color, file
         int pstValue[2]; // color
         int material[2]; // color
@@ -92,7 +103,7 @@ namespace Napoleon
         void clearPieceSet();
         void updateGenericBitBoards();
         void initializeBitBoards(const FenString&);
-        void initializeSideToMove(const FenString&);
+        void initializesideToMove(const FenString&);
         void initializeCastlingStatus(const FenString&);
         void initializeEnPassantSquare(const FenString&);
         void initializeHalfMoveClock(const FenString&);
@@ -101,10 +112,50 @@ namespace Napoleon
         void undoCastle(Square, Square);
     };
 
+    inline Byte Board::CastlingStatus() const
+    {
+        return castlingStatus;
+    }
+
+    INLINE Color Board::SideToMove() const
+    {
+        return sideToMove;
+    }
+
+    inline Square Board::EnPassantSquare() const
+    {
+        return enPassantSquare;
+    }
+
+    inline int Board::HalfMoveClock() const
+    {
+        return halfMoveClock;
+    }
+
+    inline int Board::CurrentPly() const
+    {
+        return currentPly;
+    }
+
+    inline bool Board::AllowNullMove() const
+    {
+        return allowNullMove;
+    }
+
+    inline bool Board::IsCheck() const
+    {
+        return isCheck;
+    }
+
+    inline void Board::SetCheckState(bool isCheck)
+    {
+        this->isCheck = isCheck;
+    }
+
     INLINE BitBoard Board::GetPinnedPieces() const
     {
-        Byte enemy = Utils::Piece::GetOpposite(SideToMove);
-        int kingSq = kingSquare[SideToMove];
+        Byte enemy = Utils::Piece::GetOpposite(sideToMove);
+        int kingSq = kingSquare[sideToMove];
 
         BitBoard playerPieces = GetPlayerPieces();
         BitBoard b;
@@ -129,19 +180,19 @@ namespace Napoleon
     {
         if (PieceSet[move.FromSquare()].Type == PieceType::King)
         {
-            return !IsAttacked(Constants::Masks::SquareMask[move.ToSquare()], SideToMove);
+            return !IsAttacked(Constants::Masks::SquareMask[move.ToSquare()], sideToMove);
         }
 
         if (move.IsEnPassant())
         {
             MakeMove(move);
-            bool islegal = !IsAttacked(bitBoardSet[Utils::Piece::GetOpposite(SideToMove)][PieceType::King], Utils::Piece::GetOpposite(SideToMove));
+            bool islegal = !IsAttacked(bitBoardSet[Utils::Piece::GetOpposite(sideToMove)][PieceType::King], Utils::Piece::GetOpposite(sideToMove));
             UndoMove(move);
             return islegal;
         }
 
         return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[move.FromSquare()]) == 0)
-                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  kingSquare[SideToMove]);
+                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  kingSquare[sideToMove]);
     }
 
     INLINE BitBoard Board::KingAttackers(Square square, Byte color) const
@@ -160,45 +211,45 @@ namespace Napoleon
 
     inline void Board::MakeNullMove()
     {
-        hash[CurrentPly] = zobrist;
-        enpSquares[CurrentPly] = EnPassantSquare;
-        SideToMove = Utils::Piece::GetOpposite(SideToMove);
-        EnPassantSquare = Constants::Squares::Invalid;
+        hash[currentPly] = zobrist;
+        enpSquares[currentPly] = enPassantSquare;
+        sideToMove = Utils::Piece::GetOpposite(sideToMove);
+        enPassantSquare = Constants::Squares::Invalid;
 
         zobrist ^= Zobrist::Color;
 
-        if (EnPassantSquare != Constants::Squares::Invalid)
-            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(EnPassantSquare)];
+        if (enPassantSquare != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
 
-        if (enpSquares[CurrentPly] != Constants::Squares::Invalid)
-            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
+        if (enpSquares[currentPly] != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[currentPly])];
 
-        AllowNullMove = false;
-        CurrentPly++;
+        allowNullMove = false;
+        currentPly++;
     }
 
     inline void Board::UndoNullMove()
     {
-        CurrentPly--;
-        SideToMove = Utils::Piece::GetOpposite(SideToMove);
-        EnPassantSquare = enpSquares[CurrentPly];
+        currentPly--;
+        sideToMove = Utils::Piece::GetOpposite(sideToMove);
+        enPassantSquare = enpSquares[currentPly];
 
         zobrist ^= Zobrist::Color;
 
-        if (enpSquares[CurrentPly] != Constants::Squares::Invalid)
-            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[CurrentPly])];
+        if (enpSquares[currentPly] != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[currentPly])];
 
-        AllowNullMove = true;
+        allowNullMove = true;
     }
 
     inline BitBoard Board::GetPlayerPieces() const
     {
-        return Pieces[SideToMove];
+        return Pieces[sideToMove];
     }
 
     inline BitBoard Board::GetEnemyPieces() const
     {
-        return Pieces[Utils::Piece::GetOpposite(SideToMove)];
+        return Pieces[Utils::Piece::GetOpposite(sideToMove)];
     }
 
     inline BitBoard Board::GetPieces(Color color, Type type) const
@@ -213,8 +264,8 @@ namespace Napoleon
 
     inline bool Board::IsPromotingPawn() const
     {
-        const BitBoard rank = (SideToMove == PieceColor::White ? Constants::Ranks::Seven : Constants::Ranks::Two);
-        return (bitBoardSet[SideToMove][PieceType::Pawn] & rank);
+        const BitBoard rank = (sideToMove == PieceColor::White ? Constants::Ranks::Seven : Constants::Ranks::Two);
+        return (bitBoardSet[sideToMove][PieceType::Pawn] & rank);
     }
 
     inline bool Board::IsCapture(Move move) const
@@ -247,31 +298,30 @@ namespace Napoleon
         return material[color];
     }
 
-	inline bool Board::IsRepetition() const
-	{
-		for(int i=0; i<CurrentPly; i++)
-		{
-			if (hash[i] == zobrist)
-				return true;
-		}
+    inline bool Board::IsRepetition() const
+    {
+        for(int i=0; i<currentPly; i++)
+        {
+            if (hash[i] == zobrist)
+                return true;
+        }
+        return false;
+    }
 
-		return false;
-	}
-
-	// used for debug
+    // used for debug
     inline bool Board::PosIsOk() const
     {
         BitBoard playerPieces = 0;
         BitBoard enemyPieces = 0;
-        Color enemy = Utils::Piece::GetOpposite(SideToMove);
+        Color enemy = Utils::Piece::GetOpposite(sideToMove);
 
         for (int i=0; i<PieceType::None; i++)
         {
-            playerPieces |= bitBoardSet[SideToMove][i];
+            playerPieces |= bitBoardSet[sideToMove][i];
             enemyPieces |= bitBoardSet[enemy][i];
         }
 
-        if (SideToMove != PieceColor::White && SideToMove != PieceColor::Black)
+        if (sideToMove != PieceColor::White && sideToMove != PieceColor::Black)
             return false;
 
         if (GetPlayerPieces() & GetEnemyPieces())

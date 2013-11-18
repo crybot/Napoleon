@@ -26,7 +26,7 @@ namespace Napoleon
     // it sends the move to the uci gui
     void Search::StartThinking(Board& board)
     {
-        int time = Time[board.SideToMove];
+        int time = Time[board.SideToMove()];
 
         // if we have an exact movetime we use that value, else we use
         // a fraction of the side to move remaining time
@@ -135,7 +135,7 @@ namespace Napoleon
         nodes++;
 
         bool futility = false;
-        int bound = Alpha;
+        ScoreType bound = ScoreType::Alpha;
         int pos = 0;
         int score;
         int legal = 0;
@@ -152,12 +152,12 @@ namespace Napoleon
 
         BitBoard pinned = board.GetPinnedPieces();
 
-        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
+        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove());
 
         // enhanced deep razoring
         if (depth < 4
                 && !attackers
-                && board.Material(board.SideToMove) > Constants::Eval::MiddleGameMat
+                && board.Material(board.SideToMove()) > Constants::Eval::MiddleGameMat
                 && best.IsNull()
                 && !board.IsPromotingPawn())
         {
@@ -174,10 +174,10 @@ namespace Napoleon
         }
 
         // adaptive null move pruning
-        if(board.AllowNullMove
+        if(board.AllowNullMove()
                 && depth >= 3
                 && !attackers
-                && board.Material(board.SideToMove) > Constants::Eval::MiddleGameMat)
+                && board.Material(board.SideToMove()) > Constants::Eval::MiddleGameMat)
         {
             int R = depth > 5 ? 3 : 2; // dynamic depth-based reduction
 
@@ -219,7 +219,7 @@ namespace Napoleon
 
             if(score > alpha)
             {
-                bound = Exact;
+                bound = ScoreType::Exact;
                 alpha = score;
             }
         }
@@ -258,7 +258,7 @@ namespace Napoleon
                         && i > 0
                         && !capture
                         && !moves[i].IsPromotion()
-                        && !board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove)
+                        && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
                         )
                 {
                     board.UndoMove(moves[i]);
@@ -288,10 +288,10 @@ namespace Napoleon
                             killerMoves[depth][1] = killerMoves[depth][0];
                         }
                         killerMoves[depth][0] = moves[i];
-                        history[board.SideToMove][moves[i].ButterflyIndex()] += depth*depth;
+                        history[board.SideToMove()][moves[i].ButterflyIndex()] += depth*depth;
                     }
 
-                    board.Table.Save(board.zobrist, depth, beta, best, Beta);
+                    board.Table.Save(board.zobrist, depth, beta, best, ScoreType::Beta);
 
                     if (i == 0) // DEBUG
                         board.FirstMoveCutoff++; // DEBUG
@@ -303,7 +303,7 @@ namespace Napoleon
                 if(score > alpha)
                 {
                     PVS = false;
-                    bound = Exact;
+                    bound = ScoreType::Exact;
                     alpha = score; // alpha acts like max in MiniMax
                     best = moves[i];
                 }
@@ -313,14 +313,14 @@ namespace Napoleon
         // check for stalemate and checkmate
         if (legal == 0)
         {
-            if (board.IsCheck)
+            if (board.IsCheck())
                 alpha = -Constants::Infinity - depth; // return best score (for the minimazer) for the deepest mate
             else
                 alpha = 0; // return draw score (TODO contempt factor)
         }
 
         // check for fifty moves rule
-        if (board.HalfMoveClock >= 100)
+        if (board.HalfMoveClock() >= 100)
             alpha = 0;
 
         board.Table.Save(board.zobrist, depth, alpha, best, bound);
@@ -351,7 +351,7 @@ namespace Napoleon
         int score;
         Move moves[Constants::MaxMoves];
 
-        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove), board.SideToMove);
+        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove());
 
         if (attackers)
             return search(1, alpha, beta, board);
@@ -422,14 +422,14 @@ namespace Napoleon
                 moveScores[i] = - 1 ;
             else if (moves[i] == killerMoves[depth][1])
                 moveScores[i] = - 2 ;
-            else if ((historyScore = history[board.SideToMove][moves[i].ButterflyIndex()]) > max)
+            else if ((historyScore = history[board.SideToMove()][moves[i].ButterflyIndex()]) > max)
                 max = historyScore;
         }
 
         for (int i=0; i<high; i++)
         {
             if (!board.IsCapture(moves[i]) && moves[i] != killerMoves[depth][0] && moves[i] != killerMoves[depth][1])
-                moveScores[i] = history[board.SideToMove][moves[i].ButterflyIndex()] - max + min - 3;
+                moveScores[i] = history[board.SideToMove()][moves[i].ButterflyIndex()] - max + min - 3;
         }
     }
 
@@ -490,9 +490,7 @@ namespace Napoleon
 
         if (min != low)
         {
-            Move temp = moves[low];
-            moves[low] = moves[min];
-            moves[min] = temp;
+            std::swap(moves[low], moves[min]);
         }
     }
 
@@ -522,8 +520,8 @@ namespace Napoleon
         double delta = Timer.Stop().ElapsedMilliseconds() - lastTime;
         double nps = (delta > 0 ? nodes / delta : nodes / 1)*1000;
 
-        info << "depth " << depth << " score cp " << score << " time " << Timer.Stop().ElapsedMilliseconds() << " nodes "
-             << nodes << " nps " << int(nps) << " pv " << GetPv(board, toMake, depth);
+        info << "depth " << depth << " score cp " << score << " time " << Timer.ElapsedMilliseconds() << " nodes "
+             << nodes << " nps " << static_cast<int>(nps) << " pv " << GetPv(board, toMake, depth);
 
         return info.str();
     }

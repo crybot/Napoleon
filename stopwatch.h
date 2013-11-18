@@ -2,21 +2,26 @@
 #define STOPWATCH_H
 #include <chrono>
 
-using namespace std::chrono;
-typedef std::chrono::milliseconds MS;
-
-class StopWatch
+namespace Napoleon
 {
-public:
-    StopWatch();
-    void Start();
-    StopWatch& Stop();
-    double ElapsedMilliseconds();
-    double ElapsedSeconds();
+    using namespace std::chrono;
+    typedef std::chrono::milliseconds MS;
 
-private:
-    high_resolution_clock::time_point begin;
-    high_resolution_clock::time_point end;
-};
+    class StopWatch
+    {
+    public:
+        StopWatch();
+        StopWatch& Stop();
+        void Start();
+        double ElapsedMilliseconds();
+        double ElapsedSeconds();
+
+        static StopWatch StartNew();
+
+    private:
+        high_resolution_clock::time_point begin;
+        high_resolution_clock::time_point end;
+    };
+}
 
 #endif // STOPWATCH_H

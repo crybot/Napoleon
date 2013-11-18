@@ -1,9 +1,7 @@
 QMAKE_CXXFLAGS += -std=c++0x -pthread
 LIBS += -pthread
 
-CONFIG -= qt \
-
-QMAKE_CXXFLAGS += -Wno-unused-variable \
+CONFIG -= qt -Wl,--no-as-needed
 
 SOURCES += \
     main.cpp \

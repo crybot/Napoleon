@@ -1,19 +1,19 @@
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
-#include "board.h"
 
 namespace Napoleon
 {
+    class Board;
     class Benchmark
     {
     public:
-        Benchmark();
+        Benchmark(Board&);
         void Start();
         void CutoffTest();
 
-        unsigned long long Perft(int, Board&);
+        unsigned long long Perft(int);
     private:
-        Board board;
+        Board& board;
     };
 }
 

@@ -4,6 +4,7 @@
 
 namespace Napoleon
 {
+    // cannot convert to strongly-typed c++11 enums because we need implicit conversion
     namespace PieceType
     {
         const Type Pawn = 0;
@@ -15,6 +16,7 @@ namespace Napoleon
         const Type None = 6;
     }
 
+    // cannot convert to strongly-typed c++11 enums because we need implicit conversion
     namespace PieceColor
     {
         const Color White = 0;

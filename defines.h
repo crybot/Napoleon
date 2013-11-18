@@ -16,15 +16,15 @@
 
 namespace Napoleon
 {
-    using BitBoard = unsigned long long;
-    using Type = unsigned char;
-    using Color = unsigned char;
-    using Byte = unsigned char;
-    using ZobristKey = unsigned long long;
-    using Square = unsigned int;
-    using File = unsigned int;
-    using Rank = unsigned int;
-    using MoveType = int;
+    typedef unsigned long long BitBoard;
+    typedef unsigned char Type;
+    typedef unsigned char Color;
+    typedef unsigned char Byte;
+    typedef unsigned long long ZobristKey;
+    typedef unsigned long long Random64;
+    typedef unsigned int Square;
+    typedef unsigned int File;
+    typedef unsigned int Rank;
 }
 
 #endif // DEFINES_H

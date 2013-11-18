@@ -1,26 +1,35 @@
 #include "stopwatch.h"
 
-
-StopWatch::StopWatch() { }
-
-void StopWatch::Start()
+namespace Napoleon
 {
-    begin = high_resolution_clock::now();
-}
+    StopWatch::StopWatch() { }
 
-StopWatch& StopWatch::Stop()
-{
-    end = high_resolution_clock::now();
-    return *this;
-}
+    void StopWatch::Start()
+    {
+        begin = high_resolution_clock::now();
+    }
 
-double StopWatch::ElapsedMilliseconds()
-{
-    return duration_cast<MS>(end - begin).count();
-}
+    StopWatch& StopWatch::Stop()
+    {
+        end = high_resolution_clock::now();
+        return *this;
+    }
 
-double StopWatch::ElapsedSeconds()
-{
-    return duration_cast<MS>(end - begin).count() / (double)1000;
+    double StopWatch::ElapsedMilliseconds()
+    {
+        return duration_cast<MS>(end - begin).count();
+    }
 
+    double StopWatch::ElapsedSeconds()
+    {
+        return duration_cast<MS>(end - begin).count() / static_cast<double>(1000);
+    }
+
+    StopWatch StopWatch::StartNew()
+    {
+        StopWatch watch;
+        watch.Start();
+
+        return watch;
+    }
 }

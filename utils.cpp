@@ -15,20 +15,20 @@ namespace Napoleon
         {
             int Parse(std::string square)
             {
-                // converte la notazione algebrica (es. a1) in coordinate decimali
-                std::transform(square.begin(), square.end(), square.begin(), ::tolower); // converte la stringa in minuscolo
-                int x = (int)(square[0] - 'a');
-                int y = (int)(square[1] - '1');
+                // convert algebraic notation (e.g. a1) in orthogonal coordinates
+                std::transform(square.begin(), square.end(), square.begin(), ::tolower); // convert string in lower case
+                int x = static_cast<int>(square[0] - 'a');
+                int y = static_cast<int>(square[1] - '1');
                 return GetSquareIndex(x, y);
             }
 
             std::string ToAlgebraic(Napoleon::Square square)
             {
                 if (square == Constants::Squares::Invalid)
-                    return "Invalid";
+                    throw std::logic_error("Invalid Square");
 
                 std::string str = "";
-                str += (char)(GetFileIndex(square) + 97);
+                str += static_cast<char>(GetFileIndex(square) + 'a');
                 str += boost::lexical_cast<std::string>(GetRankIndex(square) + 1);
 
                 return str;
@@ -37,9 +37,9 @@ namespace Napoleon
 
         namespace BitBoard
         {
-            bool IsBitSet(Napoleon::BitBoard bitBoard, int posBit)
+            bool IsBitSet(Napoleon::BitBoard bitBoard, int bitPos)
             {
-                return (bitBoard & ((Napoleon::BitBoard)1 << (posBit))) != 0;
+                return (bitBoard & (static_cast<Napoleon::BitBoard>(1) << bitPos)) != 0;
             }
 
             void Display(Napoleon::BitBoard bitBoard)
@@ -68,7 +68,6 @@ namespace Napoleon
                 }
                 std::cout << "\n    A  B  C  D  E  F  G  H\n";
             }
-
         }
 
         namespace Piece
@@ -154,7 +153,6 @@ namespace Napoleon
                     }
                 }
             }
-
         }
     }
 }

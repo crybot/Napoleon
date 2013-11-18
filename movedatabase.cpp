@@ -2,8 +2,6 @@
 #include "compassrose.h"
 #include "knight.h"
 #include "king.h"
-#include <cmath>
-#include <stdlib.h>
 
 namespace Napoleon
 {

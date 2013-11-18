@@ -5,8 +5,11 @@
 
 namespace Napoleon
 {
-    const MoveType KingCastle = 0x2, QueenCastle = 0x3, EnPassant = 0x5, QueenPromotion = 0xB,
-    RookPromotion = 0xA, BishopPromotion = 0x9, KnightPromotion = 0x8;
+    enum MoveType
+    {
+        KingCastle = 0x2, QueenCastle = 0x3, EnPassant = 0x5, QueenPromotion = 0xB,
+        RookPromotion = 0xA, BishopPromotion = 0x9, KnightPromotion = 0x8
+    };
 
     class Move
     {

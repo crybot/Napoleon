@@ -6,19 +6,17 @@
 
 namespace Napoleon
 {
-    namespace Command
+    enum class Command
     {
-        typedef int Type;
-        const Type Generic = 0;
-        const Type Move = 1;
-        const Type Info = 2;
-    }
+        Generic, Move, Info
+    };
 
     class Board;
     namespace Uci
     {
         void Start();
-        template<Command::Type>
+
+        template<Command>
         void SendCommand(std::string);   
         void go(std::istringstream&);
 
@@ -26,7 +24,7 @@ namespace Napoleon
         extern std::thread search;
     }
 
-    template<Command::Type cmdType>
+    template<Command cmdType>
     void Uci::SendCommand(std::string command)
     {
         switch(cmdType)

@@ -11,7 +11,7 @@ namespace Napoleon
     public:
         std::string FullString;
         Piece PiecePlacement[64];
-        Byte SideToMove;
+        Byte sideToMove;
         bool CanWhiteShortCastle;
         bool CanWhiteLongCastle;
         bool CanBlackShortCastle;
@@ -25,7 +25,7 @@ namespace Napoleon
 
     private:
         void parsePiecePlacement(std::string);
-        void parseSideToMove(std::string);
+        void parsesideToMove(std::string);
         void parseCastling(std::string);
         void parseEnPassant(std::string);
         void parseHalfMove(std::string);

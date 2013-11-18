@@ -2,6 +2,7 @@
 #define CONSOLE_H
 #include <string>
 
+// deprecated system-dependent console output colors
 namespace Console
 {
     const std::string Green = "\e[32m";

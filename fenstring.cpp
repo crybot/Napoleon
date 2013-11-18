@@ -26,7 +26,7 @@ namespace Napoleon
         std::string fullMove = fields[5];
 
         parsePiecePlacement(piecePlacement);
-        parseSideToMove(sideToMove);
+        parsesideToMove(sideToMove);
         parseCastling(castling);
         parseEnPassant(enPassant);
         parseHalfMove(halfMove);
@@ -86,6 +86,7 @@ namespace Napoleon
                     PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::King);
                     break;
                 default:
+//                    empty += std::stoi(std::string(&ranks[i][l]))-1; // TO TEST
                     empty += (boost::lexical_cast<int>(ranks[i][l]) - 1);
                     break;
                 }
@@ -95,15 +96,15 @@ namespace Napoleon
         return;
     }
 
-    void FenString::parseSideToMove(std::string field)
+    void FenString::parsesideToMove(std::string field)
     {
         switch (field[0])
         {
         case 'w':
-            SideToMove = PieceColor::White;
+            sideToMove = PieceColor::White;
             break;
         case 'b':
-            SideToMove = PieceColor::Black;
+            sideToMove = PieceColor::Black;
             break;
         }
     }
@@ -150,6 +151,6 @@ namespace Napoleon
 
     void FenString::parseHalfMove(std::string field)
     {
-        HalfMove = boost::lexical_cast<int>(field);
+        HalfMove = std::stoi(field);
     }
 }

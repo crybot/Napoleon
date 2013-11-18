@@ -4,7 +4,6 @@
 #include "stopwatch.h"
 #include "piece.h"
 #include "compassrose.h"
-#include "board.h"
 #include "pawn.h"
 #include "knight.h"
 #include "king.h"
@@ -24,6 +23,7 @@
 #include "evaluation.h"
 #include "console.h"
 #include "uci.h"
+#include "board.h"
 
 using namespace Napoleon;
 using namespace std;
@@ -43,9 +43,11 @@ void Divide(int depth, Board& board, Benchmark bench)
     for (int i = 0; i < pos; i++)
     {
         board.MakeMove(moves[i]);
-        temp = bench.Perft(depth - 1, board);
+
+        temp = bench.Perft(depth - 1);
         total += temp;
         std::cout << moves[i].ToAlgebraic() << "\t" << temp << std::endl;
+
         board.UndoMove(moves[i]);
         NumMoves++;
     }
@@ -88,8 +90,8 @@ int main()
 
     //    board.Display();
 
-    //    Utils::BitBoard::Display(board.bitBoardSet[board.SideToMove][PieceType::Pawn]);
-    //    Utils::BitBoard::Display(board.bitBoardSet[board.SideToMove ^ 1][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[board.sideToMove][PieceType::Pawn]);
+    //    Utils::BitBoard::Display(board.bitBoardSet[board.sideToMove ^ 1][PieceType::Pawn]);
 
     //    cout << "Size HashEntry: " << sizeof(HashEntry) << endl;
 
@@ -246,7 +248,7 @@ int main()
             }while( pos > 0);
 
             board.Display();
-            cout << Console::Red << "#Mate for " << (board.SideToMove == Color::White ? "White#" : "Black#");
+            cout << Console::Red << "#Mate for " << (board.sideToMove == Color::White ? "White#" : "Black#");
             cout << endl << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
 
         }

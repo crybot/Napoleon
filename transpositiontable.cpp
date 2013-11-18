@@ -9,14 +9,14 @@ namespace Napoleon
         BucketSize = 4;
         Size = size/(sizeof(HashEntry*)*BucketSize);
 
-		try
-		{
-        Table = new HashEntry*[Size];
-		}
-		catch(std::bad_alloc& ex)
-		{
-			std::cout << "bad alloc" << std::endl;
-		}
+        try
+        {
+            Table = new HashEntry*[Size];
+        }
+        catch(std::bad_alloc& ex)
+        {
+            std::cout << "Transposition table bad allocation: " << ex.what() << std::endl;
+        }
 
         for (unsigned i=0; i<Size; i++)
         {
@@ -24,25 +24,25 @@ namespace Napoleon
         }
     }
 
-    void TranspositionTable::Save(ZobristKey key, Byte depth, int score, Move move, Byte bound)
+    void TranspositionTable::Save(ZobristKey key, Byte depth, int score, Move move, ScoreType bound)
     {
-        HashEntry* hash;
         int min = Constants::MaxPly;
 
+        HashEntry hash;
         for (int i=0; i<BucketSize; i++)
         {
-            hash = &Table[key % Size][i];
-            if (hash->Depth < min)
-                min = hash->Depth;
+            hash = Table[key % Size][i];
+            if (hash.Depth < min)
+                min = hash.Depth;
         }
 
-        hash = &Table[key % Size][min];
+        HashEntry& hashToOverride = Table[key % Size][min];
 
-        hash->Hash = key;
-        hash->Score = score;
-        hash->Depth = depth;
-        hash->Bound = bound;
-        hash->BestMove = move;
+        hashToOverride.Hash = key;
+        hashToOverride.Score = score;
+        hashToOverride.Depth = depth;
+        hashToOverride.Bound = bound;
+        hashToOverride.BestMove = move;
     }
 
     int TranspositionTable::Probe(ZobristKey key, Byte depth, int alpha, Move* move, int beta)
@@ -55,11 +55,11 @@ namespace Napoleon
             {
                 if (hash->Depth >= depth)
                 {
-                    if (hash->Bound == Exact)
+                    if (hash->Bound == ScoreType::Exact)
                         return hash->Score;
-                    if (hash->Bound == Alpha && hash->Score <= alpha)
+                    if (hash->Bound == ScoreType::Alpha && hash->Score <= alpha)
                         return alpha;
-                    if (hash->Bound == Beta && hash->Score >= beta)
+                    if (hash->Bound == ScoreType::Beta && hash->Score >= beta)
                         return beta;
                 }
                 *move = hash->BestMove; // get best move on this position

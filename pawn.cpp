@@ -8,12 +8,12 @@ namespace Napoleon
     {
         BitBoard empty = board.EmptySquares;
 
-        return GetQuietTargets(board.SideToMove, pawns, empty) | GetAnyAttack(pawns, board);
+        return GetQuietTargets(board.SideToMove(), pawns, empty) | GetAnyAttack(pawns, board);
     }
 
     BitBoard Pawn::GetAnyAttack(BitBoard pawns, Board& board)
     {
-        return (GetEastAttacks(board.SideToMove, pawns) | GetWestAttacks(board.SideToMove, pawns)) & board.GetEnemyPieces();
+        return (GetEastAttacks(board.SideToMove(), pawns) | GetWestAttacks(board.SideToMove(), pawns)) & board.GetEnemyPieces();
     }
 
 
