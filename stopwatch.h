@@ -6,21 +6,21 @@ namespace Napoleon
 {
     using namespace std::chrono;
     typedef std::chrono::milliseconds MS;
+    typedef std::chrono::steady_clock t_clock;
 
     class StopWatch
     {
     public:
         StopWatch();
-        StopWatch& Stop();
-        void Start();
+        void Restart();
         double ElapsedMilliseconds();
         double ElapsedSeconds();
 
         static StopWatch StartNew();
 
     private:
-        high_resolution_clock::time_point begin;
-        high_resolution_clock::time_point end;
+        t_clock::time_point begin;
+        t_clock::time_point end;
     };
 }
 

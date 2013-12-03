@@ -18,7 +18,7 @@ namespace Napoleon
     int Search::Time[2] = { 60000, 60000 };
     int Search::ThinkTime;
     int Search::moveScores[Constants::MaxMoves];
-    int Search::history[2][4096];
+    int Search::history[2][64*64];
     int Search::nodes;
     Move Search::killerMoves[Constants::MaxPly][2];
 
@@ -54,12 +54,12 @@ namespace Napoleon
 
         memset(history, 0, sizeof(history));
 
-        Timer.Start();
+        Timer.Restart();
         nodes = 0;
 
         score = searchRoot(i++, -Constants::Infinity, Constants::Infinity, move, board);
 
-        while((i<100 && Timer.Stop().ElapsedMilliseconds() < ThinkTime && Timer.Stop().ElapsedMilliseconds() / ThinkTime < 0.50) || Task == Infinite )
+        while((i<100 && Timer.ElapsedMilliseconds() < ThinkTime && Timer.ElapsedMilliseconds() / ThinkTime < 0.50) || Task == Infinite )
         {
             if (Task == Stop)
                 break;
@@ -96,14 +96,14 @@ namespace Napoleon
         int pos = 0;
         int move = 0;
         int score;
-        int startTime = Timer.Stop().ElapsedMilliseconds();
+        int startTime = Timer.ElapsedMilliseconds();
         Move moves[Constants::MaxMoves];
 
         MoveGenerator::GetLegalMoves(moves, pos, board);
 
         for (int i=0; i<pos; i++)
         {
-            if ((Timer.Stop().ElapsedMilliseconds() >= ThinkTime || Timer.Stop().ElapsedMilliseconds()/ThinkTime >= 0.65 || Task == Stop) && Task != Infinite)
+            if ((Timer.ElapsedMilliseconds() >= ThinkTime || Timer.ElapsedMilliseconds()/ThinkTime >= 0.65 || Task == Stop) && Task != Infinite)
                 return -Constants::Unknown;
 
             board.MakeMove(moves[i]);
@@ -141,6 +141,9 @@ namespace Napoleon
         int legal = 0;
         Move best = Constants::NullMove;
         Move moves[Constants::MaxMoves];
+
+        if (Task == Stop)
+            return alpha;
 
         // Transposition table lookup
         if((score = board.Table.Probe(board.zobrist, depth, alpha, &best, beta)) != TranspositionTable::Unknown)
@@ -190,11 +193,11 @@ namespace Napoleon
         }
 
         // internal iterative deepening (IID)
-        if (depth >= 3 && best.IsNull())
+        if (depth > 4 && best.IsNull())
         {
             int R = 2;
 
-            search(depth - R - 1, Constants::Infinity, -Constants::Infinity, board); // make a full width search to find a new bestmove
+            search(depth - R - 1, -Constants::Infinity, Constants::Infinity, board); // make a full width search to find a new bestmove
 
             //Transposition table lookup
             if((score = board.Table.Probe(board.zobrist, depth, alpha, &best, beta)) != TranspositionTable::Unknown)
@@ -224,8 +227,8 @@ namespace Napoleon
             }
         }
 
-		if (board.IsRepetition())
-			return 0;
+        if (board.IsRepetition())
+            return 0;
 
         // extended futility pruning condition
         if (!attackers
@@ -247,6 +250,7 @@ namespace Napoleon
         for(int i=0; i<pos; i++)
         {
             pickMove(moves, i, pos);
+
             if(board.IsMoveLegal(moves[i], pinned))
             {
                 legal++;
@@ -314,7 +318,7 @@ namespace Napoleon
         if (legal == 0)
         {
             if (board.IsCheck())
-                alpha = -Constants::Infinity - depth; // return best score (for the minimazer) for the deepest mate
+                alpha = -Constants::Infinity + depth; // return best score (for the minimazer) for the deepest mate
             else
                 alpha = 0; // return draw score (TODO contempt factor)
         }
@@ -365,7 +369,7 @@ namespace Napoleon
             if (board.IsMoveLegal(moves[i], pinned))
             {
                 // delta futility pruning
-                if (Constants::Piece::PieceValue[board.PieceSet[moves[i].ToSquare()].Type] + stand_pat + 200 < alpha && !moves[i].IsPromotion())
+                if (Constants::Piece::PieceValue[board.GetPieceOnSquare(moves[i].ToSquare()).Type] + stand_pat + 200 < alpha && !moves[i].IsPromotion())
                     continue;
 
                 board.MakeMove(moves[i]);
@@ -378,6 +382,7 @@ namespace Napoleon
                     alpha = score;
             }
         }
+
         return alpha;
     }
 
@@ -410,11 +415,11 @@ namespace Napoleon
 
         for (int i=0; i<high; i++)
         {
-            captured = board.PieceSet[moves[i].ToSquare()].Type;
+            captured = board.GetPieceOnSquare(moves[i].ToSquare()).Type;
             // MVV-LVA
             if (board.IsCapture(moves[i]))
             {
-                moveScores[i] = captureScore = PieceValue[captured] - PieceValue[board.PieceSet[moves[i].FromSquare()].Type];
+                moveScores[i] = captureScore = PieceValue[captured] - PieceValue[board.GetPieceOnSquare(moves[i].FromSquare()).Type];
                 if (captureScore < min)
                     min = captureScore;
             }
@@ -473,13 +478,13 @@ namespace Napoleon
             {
                 from = moves[i].FromSquare();
                 to = moves[i].ToSquare();
-                captured = board.PieceSet[to].Type;
+                captured = board.GetPieceOnSquare(to).Type;
 
-                if (PieceValue[captured] >  PieceValue[board.PieceSet[moves[min].ToSquare()].Type])
+                if (PieceValue[captured] >  PieceValue[board.GetPieceOnSquare(moves[min].ToSquare()).Type])
                 {
                     if (min != low)
                     {
-                        if (PieceValue[board.PieceSet[from].Type] < PieceValue[board.PieceSet[moves[min].FromSquare()].Type])
+                        if (PieceValue[board.GetPieceOnSquare(from).Type] < PieceValue[board.GetPieceOnSquare(moves[min].FromSquare()).Type])
                             min = i;
                     }
                     else
@@ -517,7 +522,7 @@ namespace Napoleon
     std::string Search::GetInfo(Board& board, Move toMake, int score, int depth, int lastTime)
     {
         std::ostringstream info;
-        double delta = Timer.Stop().ElapsedMilliseconds() - lastTime;
+        double delta = Timer.ElapsedMilliseconds() - lastTime;
         double nps = (delta > 0 ? nodes / delta : nodes / 1)*1000;
 
         info << "depth " << depth << " score cp " << score << " time " << Timer.ElapsedMilliseconds() << " nodes "

@@ -2,33 +2,28 @@
 
 namespace Napoleon
 {
-    StopWatch::StopWatch() { }
+    StopWatch::StopWatch() :begin(t_clock::now())
+    { }
 
-    void StopWatch::Start()
+    void StopWatch::Restart()
     {
-        begin = high_resolution_clock::now();
-    }
-
-    StopWatch& StopWatch::Stop()
-    {
-        end = high_resolution_clock::now();
-        return *this;
+        begin = t_clock::now();
     }
 
     double StopWatch::ElapsedMilliseconds()
     {
-        return duration_cast<MS>(end - begin).count();
+        return duration_cast<MS>(t_clock::now() - begin).count();
     }
 
     double StopWatch::ElapsedSeconds()
     {
-        return duration_cast<MS>(end - begin).count() / static_cast<double>(1000);
+        return duration_cast<std::chrono::seconds>(t_clock::now() - begin).count();
     }
 
     StopWatch StopWatch::StartNew()
     {
         StopWatch watch;
-        watch.Start();
+        watch.Restart();
 
         return watch;
     }

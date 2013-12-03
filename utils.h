@@ -39,12 +39,11 @@ namespace Napoleon
             Color GetOpposite(Color);
         }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && defined(__LP64__)
         INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
         {
-            Napoleon::BitBoard index;
-            __asm__("bsfq %1, %0": "=r"(index): "rm"(bitBoard) );
-            return index;
+            __asm__("bsfq %0, %0": "=r"(bitBoard): "0" (bitBoard) );
+            return bitBoard;
         }
 
         INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
@@ -56,6 +55,21 @@ namespace Napoleon
 
             return  index;
         }
+
+#elif defined(__GNUC__)
+        INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)
+        {
+            return __builtin_ctzll(bitBoard);
+        }
+
+        INLINE int BitBoard::BitScanForwardReset(Napoleon::BitBoard& bitBoard)
+        {
+            Napoleon::BitBoard bb = bitBoard;
+            bitBoard &= (bitBoard - 1);
+
+            return __builtin_ctzll(bb);
+        }
+
 
 #elif defined(_MSC_VER) && defined(_WIN64)
         INLINE int BitBoard::BitScanForward(Napoleon::BitBoard bitBoard)

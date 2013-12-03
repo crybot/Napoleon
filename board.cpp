@@ -21,8 +21,8 @@ namespace Napoleon
         MoveDatabase::InitAttacks();
         Zobrist::Init();
 
-        Pieces[PieceColor::White] = Constants::Empty;
-        Pieces[PieceColor::Black] = Constants::Empty;
+        pieces[PieceColor::White] = Constants::Empty;
+        pieces[PieceColor::Black] = Constants::Empty;
         OccupiedSquares = Constants::Empty;
         EmptySquares = Constants::Empty;
         FirstMoveCutoff = 0;
@@ -35,7 +35,7 @@ namespace Napoleon
 
     void Board::AddPiece(Piece piece, Square sq)
     {
-        PieceSet[sq] = piece;
+        pieceSet[sq] = piece;
 
         if (piece.Type != PieceType::None)
         {
@@ -53,23 +53,23 @@ namespace Napoleon
     {
         for (Square i=0; i<64; i++)
         {
-            PieceSet[i] = Constants::Piece::Null;
+            pieceSet[i] = Constants::Piece::Null;
         }
     }
 
     void Board::updateGenericBitBoards()
     {
-        Pieces[PieceColor::White] =
+        pieces[PieceColor::White] =
                 bitBoardSet[PieceColor::White][PieceType::Pawn] | bitBoardSet[PieceColor::White][PieceType::Knight]
                 | bitBoardSet[PieceColor::White][PieceType::Bishop] | bitBoardSet[PieceColor::White][PieceType::Rook]
                 | bitBoardSet[PieceColor::White][PieceType::Queen] | bitBoardSet[PieceColor::White][PieceType::King];
 
-        Pieces[PieceColor::Black] =
+        pieces[PieceColor::Black] =
                 bitBoardSet[PieceColor::Black][PieceType::Pawn] | bitBoardSet[PieceColor::Black][PieceType::Knight]
                 | bitBoardSet[PieceColor::Black][PieceType::Bishop] | bitBoardSet[PieceColor::Black][PieceType::Rook]
                 | bitBoardSet[PieceColor::Black][PieceType::Queen] | bitBoardSet[PieceColor::Black][PieceType::King];
 
-        OccupiedSquares = Pieces[PieceColor::White] |  Pieces[PieceColor::Black];
+        OccupiedSquares = pieces[PieceColor::White] |  pieces[PieceColor::Black];
         EmptySquares = ~OccupiedSquares;
     }
 
@@ -85,13 +85,13 @@ namespace Napoleon
 
             for (int c = 0; c <= 7; c++)
             {
-                piece = PieceSet[Utils::Square::GetSquareIndex(c, r)];
+                piece = pieceSet[Utils::Square::GetSquareIndex(c, r)];
                 std::cout << '[';
                 if (piece.Type != PieceType::None)
                 {
                     std::cout << (piece.Color == PieceColor::White ? Console::Green : Console::Red);
 
-                    std::cout << Utils::Piece::GetInitial(PieceSet[Utils::Square::GetSquareIndex(c, r)].Type);
+                    std::cout << Utils::Piece::GetInitial(pieceSet[Utils::Square::GetSquareIndex(c, r)].Type);
                 }
                 else
                 {
@@ -210,7 +210,7 @@ namespace Napoleon
         Square to = Utils::Square::Parse(str.substr(2));
         Move move;
 
-        if (to == enPassantSquare && PieceSet[from].Type == PieceType::Pawn)
+        if (to == enPassantSquare && pieceSet[from].Type == PieceType::Pawn)
             move =  Move(from, to, EnPassant);
 
         else if (str == "e1g1")
@@ -241,23 +241,23 @@ namespace Napoleon
         Square from = move.FromSquare();
         Square to = move.ToSquare();
         Type promoted;
-        Type captured = move.IsEnPassant() ? PieceType::Pawn : PieceSet[to].Type;
-        Type pieceMoved = PieceSet[from].Type;
+        Type captured = move.IsEnPassant() ? PieceType::Pawn : pieceSet[to].Type;
+        Type pieceMoved = pieceSet[from].Type;
         Color enemy = Utils::Piece::GetOpposite(sideToMove);
 
         bool capture = captured != PieceType::None;
 
         castlingStatusHistory[currentPly] = castlingStatus;  // salva i diritti di arrocco correnti
-        enpSquares[currentPly] = enPassantSquare; // salva l'attuale casella enpassant
+        enpSquaresHistory[currentPly] = enPassantSquare; // salva l'attuale casella enpassant
         halfMoveClockHistory[currentPly] = halfMoveClock; // salva l'attuale contatore di semi-mosse
-        hash[currentPly] = zobrist; // salva l'hash key per verificare se la posizione si e` ripetuta
-        capturedPiece[currentPly] = captured; // salva il pezzo catturato
+        hashHistory[currentPly] = zobrist; // salva l'hash key per verificare se la posizione si e` ripetuta
+        capturedPieceHistory[currentPly] = captured; // salva il pezzo catturato
 
         zobrist ^= Zobrist::Color; // aggiorna il colore della posizione
 
         //ARRAY
-        PieceSet[to] = PieceSet[from]; // muove il pezzo
-        PieceSet[from] = Constants::Piece::Null; // svuota la casella di partenza
+        pieceSet[to] = pieceSet[from]; // muove il pezzo
+        pieceSet[from] = Constants::Piece::Null; // svuota la casella di partenza
         pstValue[sideToMove] -= Evaluation::CalculatePST(Piece(sideToMove, pieceMoved), from, *this);
         pstValue[sideToMove] += Evaluation::CalculatePST(Piece(sideToMove, pieceMoved), to, *this);
 
@@ -272,7 +272,7 @@ namespace Napoleon
         zobrist ^= Zobrist::Piece[sideToMove][pieceMoved][to]; // aggiorna zobrist key (sposta il pezzo mosso)
 
         // aggiorna i pezzi del giocatore
-        Pieces[sideToMove] ^= FromTo;
+        pieces[sideToMove] ^= FromTo;
 
         // se ilpezzo mosso e` il re si aggiorna la sua casella
         if (pieceMoved == PieceType::King)
@@ -312,7 +312,7 @@ namespace Napoleon
         else if (move.IsPromotion())
         {
             promoted = move.PiecePromoted();
-            PieceSet[to] = Piece(sideToMove, promoted);
+            pieceSet[to] = Piece(sideToMove, promoted);
             bitBoardSet[sideToMove][PieceType::Pawn] ^= To;
             bitBoardSet[sideToMove][promoted] ^= To;
             //            NumOfPieces[sideToMove][PieceType::Pawn]--;
@@ -339,19 +339,19 @@ namespace Napoleon
                 if (sideToMove == PieceColor::White)
                 {
                     piece = Constants::Masks::SquareMask[enPassantSquare - 8];
-                    PieceSet[enPassantSquare - 8] = Constants::Piece::Null;
+                    pieceSet[enPassantSquare - 8] = Constants::Piece::Null;
                     pstValue[enemy] -= Evaluation::CalculatePST(Piece(enemy, PieceType::Pawn), enPassantSquare - 8, *this);
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
                 else
                 {
                     piece = Constants::Masks::SquareMask[enPassantSquare + 8];
-                    PieceSet[enPassantSquare + 8] = Constants::Piece::Null;
+                    pieceSet[enPassantSquare + 8] = Constants::Piece::Null;
                     pstValue[enemy] -= Evaluation::CalculatePST(Piece(enemy, PieceType::Pawn), enPassantSquare + 8, *this);
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare + 8]; // rimuove il pedone bianco catturato en passant
                 }
 
-                Pieces[enemy] ^= piece;
+                pieces[enemy] ^= piece;
                 bitBoardSet[enemy][PieceType::Pawn] ^= piece;
                 OccupiedSquares ^= FromTo ^ piece;
                 EmptySquares ^= FromTo ^ piece;
@@ -392,7 +392,7 @@ namespace Napoleon
 
                 pstValue[enemy] -= Evaluation::CalculatePST(Piece(enemy, captured), to, *this);
                 bitBoardSet[enemy][captured] ^= To;
-                Pieces[enemy] ^= To; //aggiorna i pezzi dell'avversario
+                pieces[enemy] ^= To; //aggiorna i pezzi dell'avversario
                 OccupiedSquares ^= From;
                 EmptySquares ^= From;
                 zobrist ^= Zobrist::Piece[enemy][captured][to]; // rimuove il pezzo catturato
@@ -456,7 +456,7 @@ namespace Napoleon
         // decrementa profondita`
         currentPly--;
 
-        captured = capturedPiece[currentPly];
+        captured = capturedPieceHistory[currentPly];
 
         capture = captured != PieceType::None;
 
@@ -468,8 +468,8 @@ namespace Napoleon
         if (enPassantSquare != Constants::Squares::Invalid)
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
 
-        if (enpSquares[currentPly] != Constants::Squares::Invalid)
-            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquares[currentPly])];
+        if (enpSquaresHistory[currentPly] != Constants::Squares::Invalid)
+            zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
 
         halfMoveClock = halfMoveClockHistory[currentPly];
 
@@ -477,13 +477,13 @@ namespace Napoleon
         if (promotion)
             pieceMoved = PieceType::Pawn;
         else
-            pieceMoved = PieceSet[to].Type;
+            pieceMoved = pieceSet[to].Type;
 
         // reimposta il turno
         sideToMove = Utils::Piece::GetOpposite(sideToMove);
 
         // ARRAY
-        PieceSet[from] = PieceSet[to]; // muove il pezzo
+        pieceSet[from] = pieceSet[to]; // muove il pezzo
 
         if (!promotion)
         {
@@ -502,7 +502,7 @@ namespace Napoleon
         zobrist ^= Zobrist::Piece[sideToMove][pieceMoved][to]; // aggiorna zobrist key (sposta il pezzo mosso)
 
         // aggiorna i pezzi del giocatore
-        Pieces[sideToMove] ^= FromTo;
+        pieces[sideToMove] ^= FromTo;
 
         // se ilpezzo mosso e` il re si aggiorna la sua casella
         if (pieceMoved == PieceType::King)
@@ -531,7 +531,7 @@ namespace Napoleon
 
             material[sideToMove] += Constants::Piece::PieceValue[PieceType::Pawn];
             material[sideToMove] -= Constants::Piece::PieceValue[promoted];
-            PieceSet[from] = Piece(sideToMove, PieceType::Pawn);
+            pieceSet[from] = Piece(sideToMove, PieceType::Pawn);
             bitBoardSet[sideToMove][promoted] ^= To;
             bitBoardSet[sideToMove][PieceType::Pawn] ^= To;
             zobrist ^= Zobrist::Piece[sideToMove][PieceType::Pawn][to];
@@ -544,31 +544,31 @@ namespace Napoleon
         }
 
         // reimposta la casella enpassant
-        enPassantSquare = enpSquares[currentPly];
+        enPassantSquare = enpSquaresHistory[currentPly];
 
         if (capture)
         {
             if (move.IsEnPassant())
             {
-                PieceSet[to] = Constants::Piece::Null; // svuota la casella di partenza perche` non c'erano pezzi prima
+                pieceSet[to] = Constants::Piece::Null; // svuota la casella di partenza perche` non c'erano pezzi prima
                 BitBoard piece;
 
                 if (sideToMove == PieceColor::White)
                 {
                     piece = Constants::Masks::SquareMask[enPassantSquare - 8];
-                    PieceSet[enPassantSquare - 8] = Piece(PieceColor::Black, PieceType::Pawn);
+                    pieceSet[enPassantSquare - 8] = Piece(PieceColor::Black, PieceType::Pawn);
                     pstValue[enemy] += Evaluation::CalculatePST(Piece(enemy, PieceType::Pawn), enPassantSquare - 8, *this);
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
                 else
                 {
                     piece = Constants::Masks::SquareMask[enPassantSquare + 8];
-                    PieceSet[enPassantSquare + 8] = Piece(PieceColor::White, PieceType::Pawn);
+                    pieceSet[enPassantSquare + 8] = Piece(PieceColor::White, PieceType::Pawn);
                     pstValue[enemy] += Evaluation::CalculatePST(Piece(enemy, PieceType::Pawn), enPassantSquare + 8, *this);
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare + 8]; // rimuove il pedone nero catturato en passant
                 }
 
-                Pieces[enemy] ^= piece;
+                pieces[enemy] ^= piece;
                 bitBoardSet[enemy][PieceType::Pawn] ^= piece;
                 OccupiedSquares ^= FromTo ^ piece;
                 EmptySquares ^= FromTo ^ piece;
@@ -580,7 +580,7 @@ namespace Napoleon
             else
             {
                 assert(captured != PieceType::None);
-                assert(captured == capturedPiece[currentPly]);
+                assert(captured == capturedPieceHistory[currentPly]);
 
                 if (captured == PieceType::Rook)
                 {
@@ -599,10 +599,10 @@ namespace Napoleon
                 pstValue[enemy] += Evaluation::CalculatePST(Piece(enemy, captured), to, *this);
 
                 // reinserisce il pezzo catturato nella sua casella
-                PieceSet[to] = Piece(enemy, captured);
+                pieceSet[to] = Piece(enemy, captured);
                 bitBoardSet[enemy][captured] ^= To;
 
-                Pieces[enemy] ^= To; //aggiorna i pezzi dell'avversario
+                pieces[enemy] ^= To; //aggiorna i pezzi dell'avversario
                 OccupiedSquares ^= From;
                 EmptySquares ^= From;
 
@@ -616,7 +616,7 @@ namespace Napoleon
         else
         {
             // svuota la casella di partenza perche` non c'erano pezzi prima
-            PieceSet[to] = Constants::Piece::Null;
+            pieceSet[to] = Constants::Piece::Null;
             OccupiedSquares ^= FromTo;
             EmptySquares ^= FromTo;
         }
@@ -658,12 +658,12 @@ namespace Napoleon
         }
 
         rook = Constants::Masks::SquareMask[fromR] | Constants::Masks::SquareMask[toR];
-        Pieces[sideToMove] ^= rook;
+        pieces[sideToMove] ^= rook;
         bitBoardSet[sideToMove][PieceType::Rook] ^= rook;
         OccupiedSquares ^= rook;
         EmptySquares ^= rook;
-        PieceSet[fromR] = Constants::Piece::Null; // sposta la torre
-        PieceSet[toR] = Piece(sideToMove, PieceType::Rook); // sposta la torre
+        pieceSet[fromR] = Constants::Piece::Null; // sposta la torre
+        pieceSet[toR] = Piece(sideToMove, PieceType::Rook); // sposta la torre
 
         pstValue[sideToMove] -= Evaluation::CalculatePST(Piece(sideToMove, PieceType::Rook), fromR, *this);
         pstValue[sideToMove] += Evaluation::CalculatePST(Piece(sideToMove, PieceType::Rook), toR, *this);
@@ -706,12 +706,12 @@ namespace Napoleon
         }
 
         rook = Constants::Masks::SquareMask[fromR] | Constants::Masks::SquareMask[toR];
-        Pieces[sideToMove] ^= rook;
+        pieces[sideToMove] ^= rook;
         bitBoardSet[sideToMove][PieceType::Rook] ^= rook;
         OccupiedSquares ^= rook;
         EmptySquares ^= rook;
-        PieceSet[fromR] = Piece(sideToMove, PieceType::Rook); // sposta la torre
-        PieceSet[toR] = Constants::Piece::Null; // sposta la torre
+        pieceSet[fromR] = Piece(sideToMove, PieceType::Rook); // sposta la torre
+        pieceSet[toR] = Constants::Piece::Null; // sposta la torre
 
         pstValue[sideToMove] += Evaluation::CalculatePST(Piece(sideToMove, PieceType::Rook), fromR, *this);
         pstValue[sideToMove] -= Evaluation::CalculatePST(Piece(sideToMove, PieceType::Rook), toR, *this);
@@ -772,7 +772,7 @@ namespace Napoleon
             int empty = 0;
             for (int c=0; c<8; c++)
             {
-                if (PieceSet[GetSquareIndex(c, r)].Type == PieceType::None)
+                if (pieceSet[GetSquareIndex(c, r)].Type == PieceType::None)
                     empty++;
 
                 else
@@ -783,7 +783,7 @@ namespace Napoleon
                         empty = 0;
                     }
 
-                    fen += GetInitial(PieceSet[GetSquareIndex(c, r)]);
+                    fen += GetInitial(pieceSet[GetSquareIndex(c, r)]);
                 }
             }
             if (empty != 0)

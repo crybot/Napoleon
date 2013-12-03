@@ -279,7 +279,7 @@ namespace Napoleon
             checkersCnt++;
             checksq = Utils::BitBoard::BitScanForwardReset(b);
 
-            switch (board.PieceSet[checksq].Type)
+            switch (board.GetPieceOnSquare(checksq).Type)
             {
             case PieceType::Bishop: sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq]; break;
             case PieceType::Rook: sliderAttacks |= MoveDatabase::PseudoRookAttacks[checksq]; break;

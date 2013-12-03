@@ -5,16 +5,10 @@
 namespace Napoleon
 {
     // cannot convert to strongly-typed c++11 enums because we need implicit conversion
-    namespace PieceType
+    enum PieceType : Type
     {
-        const Type Pawn = 0;
-        const Type Knight = 1;
-        const Type Bishop = 2;
-        const Type Rook = 3;
-        const Type Queen = 4;
-        const Type King = 5;
-        const Type None = 6;
-    }
+        Pawn, Knight, Bishop,Rook, Queen, King, None
+    };
 
     // cannot convert to strongly-typed c++11 enums because we need implicit conversion
     namespace PieceColor

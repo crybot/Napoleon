@@ -16,7 +16,6 @@ namespace Napoleon
 
     void Uci::Start()
     {
-        std::cout << "size : " << sizeof(HashEntry) << std::endl;
         SendCommand<Command::Generic>("--------Napoleon Engine--------");
         cout.setf(ios::unitbuf);// Make sure that the outputs are sent straight away to the GUI
 
@@ -61,7 +60,7 @@ namespace Napoleon
 
                 cout << "Perft(" << depth << "): ";
                 cout << "Total Nodes: " << bench.Perft(depth) << endl;
-                cout << "Time (ms): " << watch.Stop().ElapsedMilliseconds() << endl;
+                cout << "Time (ms): " << watch.ElapsedMilliseconds() << endl;
             }
             else if (cmd == "position")
             {
