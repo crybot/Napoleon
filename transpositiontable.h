@@ -9,24 +9,27 @@ namespace Napoleon
     {
     public:
         static const int Unknown = -999999;
+        static const int BucketSize = 4;
 
-        int BucketSize;
-        unsigned long Size;
-        HashEntry** Table;
+        TranspositionTable(int size = 1);
 
-        TranspositionTable(unsigned long size = 1024);
-
-        const HashEntry& operator[](int) const;
-
+        void SetSize(int);
         void Save(ZobristKey, Byte, int, Move, ScoreType);
-        int Probe(ZobristKey, Byte, int, Move*, int);
         void Clear();
+        std::pair<int, Move> Probe(ZobristKey, Byte, int, int);
         Move GetPv(ZobristKey);
+
+    private:
+        unsigned long long mask;
+        unsigned long entries;
+        HashEntry* table;
+
+        HashEntry* at(ZobristKey, int = 0) const;
     };
 
-    INLINE const HashEntry& TranspositionTable::operator[](int i) const
+    inline HashEntry* TranspositionTable::at(ZobristKey key, int index) const
     {
-        return Table[i][0];
+        return table + (key & mask) + index;
     }
 }
 

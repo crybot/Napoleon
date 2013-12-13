@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <iostream>
 #include <cassert>
-#include <boost/lexical_cast.hpp>
 
 namespace Napoleon
 {
@@ -25,11 +24,11 @@ namespace Napoleon
             std::string ToAlgebraic(Napoleon::Square square)
             {
                 if (square == Constants::Squares::Invalid)
-                    throw std::logic_error("Invalid Square");
+                    return "Invalid";
 
                 std::string str = "";
                 str += static_cast<char>(GetFileIndex(square) + 'a');
-                str += boost::lexical_cast<std::string>(GetRankIndex(square) + 1);
+                str += std::to_string(GetRankIndex(square) + 1);
 
                 return str;
             }

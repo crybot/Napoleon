@@ -81,10 +81,6 @@ namespace Napoleon
         std::vector<std::string> strings;
         std::vector<std::string> fields;
         std::string buff;
-        int err = 0;
-        unsigned long long result;
-        unsigned long long excpected;
-        int depth;
 
         while (getline(ff, buff))
         {
@@ -96,7 +92,7 @@ namespace Napoleon
             boost::split(fields, strings[i], boost::is_any_of(";"));
             board.LoadGame(fields[0]);
 
-            Search::StartThinking(board);
+            Search::StartThinking(SearchType::Infinite, board);
             std::cout << i << std::endl;
         }
 

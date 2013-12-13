@@ -23,7 +23,9 @@ SOURCES += \
     transpositiontable.cpp \
     zobrist.cpp \
     hashentry.cpp \
-    uci.cpp
+    uci.cpp \
+    searchinfo.cpp \
+    moveselector.cpp
 
 HEADERS += \
     move.h \
@@ -50,4 +52,6 @@ HEADERS += \
     transpositiontable.h \
     zobrist.h \
     hashentry.h \
-    uci.h
+    uci.h \
+    searchinfo.h \
+    moveselector.h

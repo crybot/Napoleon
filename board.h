@@ -35,14 +35,14 @@ namespace Napoleon
 
         void Display() const;
         void AddPiece(Piece, Square);
-        BitBoard GetPlayerPieces() const;
-        BitBoard GetEnemyPieces() const;
-        BitBoard GetPieces(Color, Type) const;
-        BitBoard GetPieces(Color) const;
-        BitBoard GetPinnedPieces() const;
+        BitBoard PlayerPieces() const;
+        BitBoard EnemyPieces() const;
+        BitBoard Pieces(Color, Type) const;
+        BitBoard Pieces(Color) const;
+        BitBoard PinnedPieces() const;
         BitBoard KingAttackers(Square, Color) const;
 
-        Piece GetPieceOnSquare(Square) const;
+        Piece PieceOnSquare(Square) const;
 
         void MakeMove(Move);
         void UndoMove(Move);
@@ -118,12 +118,12 @@ namespace Napoleon
         void undoCastle(Square, Square);
     };
 
-    INLINE BitBoard Board::GetPinnedPieces() const
+    INLINE BitBoard Board::PinnedPieces() const
     {
         Byte enemy = Utils::Piece::GetOpposite(sideToMove);
         int kingSq = kingSquare[sideToMove];
 
-        BitBoard playerPieces = GetPlayerPieces();
+        BitBoard playerPieces = PlayerPieces();
         BitBoard b;
         BitBoard pinned = 0;
         BitBoard pinners = ((bitBoardSet[enemy][PieceType::Rook] | bitBoardSet[enemy][PieceType::Queen] ) & MoveDatabase::PseudoRookAttacks[kingSq])
@@ -248,27 +248,27 @@ namespace Napoleon
         this->isCheck = isCheck;
     }
 
-    inline BitBoard Board::GetPlayerPieces() const
+    inline BitBoard Board::PlayerPieces() const
     {
         return pieces[sideToMove];
     }
 
-    inline BitBoard Board::GetEnemyPieces() const
+    inline BitBoard Board::EnemyPieces() const
     {
         return pieces[Utils::Piece::GetOpposite(sideToMove)];
     }
 
-    inline BitBoard Board::GetPieces(Color color, Type type) const
+    inline BitBoard Board::Pieces(Color color, Type type) const
     {
         return bitBoardSet[color][type];
     }
 
-    inline BitBoard Board::GetPieces(Color color) const
+    inline BitBoard Board::Pieces(Color color) const
     {
         return pieces[color];
     }
 
-    inline Piece Board::GetPieceOnSquare(Square square) const
+    inline Piece Board::PieceOnSquare(Square square) const
     {
         return pieceSet[square];
     }
@@ -281,7 +281,7 @@ namespace Napoleon
 
     inline bool Board::IsCapture(Move move) const
     {
-        return (pieceSet[move.ToSquare()].Type != PieceType::None);
+        return (pieceSet[move.ToSquare()].Type != PieceType::None || move.IsEnPassant());
     }
 
     inline bool Board::IsOnSquare(Color color, Type type, Square sq) const
@@ -335,16 +335,16 @@ namespace Napoleon
         if (sideToMove != PieceColor::White && sideToMove != PieceColor::Black)
             return false;
 
-        if (GetPlayerPieces() & GetEnemyPieces())
+        if (PlayerPieces() & EnemyPieces())
             return false;
 
         if (playerPieces & enemyPieces)
             return false;
 
-        if (playerPieces != GetPlayerPieces())
+        if (playerPieces != PlayerPieces())
             return false;
 
-        if (enemyPieces != GetEnemyPieces())
+        if (enemyPieces != EnemyPieces())
             return false;
 
         if ((playerPieces | enemyPieces) != OccupiedSquares)

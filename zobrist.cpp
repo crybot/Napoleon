@@ -1,4 +1,5 @@
 #include "zobrist.h"
+#include <random>
 
 namespace Napoleon
 {
@@ -7,34 +8,46 @@ namespace Napoleon
     ZobristKey Zobrist::Enpassant[8];
     ZobristKey Zobrist::Color;
 
-    ZobristKey Zobrist::random()
+    class RandomGenerator
     {
-        return rand() ^ ((ZobristKey)rand() << 15) ^ ((ZobristKey)rand() << 30) ^ ((ZobristKey)rand() << 45) ^ ((ZobristKey)rand() << 60);
-    }
+    public:
+        RandomGenerator() :gen(std::mt19937_64::default_seed) {   }
+
+        unsigned long long Next()
+        {
+            return dist(gen);
+        }
+
+    private:
+        std::uniform_int_distribution<unsigned long long> dist;
+        std::mt19937_64 gen;
+    };
 
     void Zobrist::Init()
     {
+        RandomGenerator gen;
+
         for (int i=0; i< 2; i++)
         {
             for (int j=0; j<6; j++)
             {
                 for (int k=0; k<64; k++)
                 {
-                    Piece[i][j][k] = random();
+                    Piece[i][j][k] = gen.Next();
                 }
             }
         }
 
-        Color = random();
+        Color = gen.Next();
 
         for (int i=0; i<16; i++)
         {
-            Castling[i] = random();
+            Castling[i] = gen.Next();
         }
 
         for (int i=0; i<8; i++)
         {
-            Enpassant[i] = random();
+            Enpassant[i] = gen.Next();
         }
     }
 }

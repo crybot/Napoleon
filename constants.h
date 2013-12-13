@@ -264,8 +264,8 @@ namespace Napoleon
         namespace Eval
         {
             // Side to move relative
-            const int OpeningGameMat = 6000;
-            const int MiddleGameMat = OpeningGameMat - 500;
+            const int OpeningGameMat = 6100;
+            const int MiddleGameMat = OpeningGameMat - 600;
             const int EndGameMat = MiddleGameMat - 1500;
         }
 

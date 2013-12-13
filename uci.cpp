@@ -29,8 +29,25 @@ namespace Napoleon
             if (cmd == "uci")
             {
                 SendCommand<Command::Generic>("id name Napoleon");
-                SendCommand<Command::Generic>("id author Crybot");
+                SendCommand<Command::Generic>("id author Marco \"Crybot\" Pampaloni");
+
+                SendCommand<Command::Generic>("option name Hash type spin default 1 min 1 max 1024");
+
                 SendCommand<Command::Generic>("uciok");
+            }
+            else if (cmd == "setoption")
+            {
+                string token;
+                stream >> token; // "name"
+                stream >> token;
+
+                if(token == "Hash")
+                {
+                    stream >> token; // "value"
+                    stream >> token;
+                    board.Table.SetSize(std::stoi(token));
+                }
+
             }
             else if (cmd == "quit")
             {
@@ -87,9 +104,13 @@ namespace Napoleon
                     board.MakeMove(move);
                 }
             }
+            else if (cmd == "disp")
+            {
+                board.Display();
+            }
             else if (cmd == "go")
             {
-                if (Search::Task == Stop)
+                if (Search::StopSignal)
                     go(stream);
             }
         }
@@ -98,21 +119,34 @@ namespace Napoleon
     void Uci::go(istringstream& stream)
     {
         string token;
-        Search::MoveTime = false;
+        SearchType type;
 
         while(stream >> token)
         {
-            if (token == "wtime") stream >> Search::Time[PieceColor::White];
-            else if (token == "btime") stream >> Search::Time[PieceColor::Black];
-            else if (token == "infinite") Search::Task = Infinite;
-            else if (token == "movetime")
+            if (token == "movetime")
             {
-                stream >> Search::ThinkTime;
-                Search::MoveTime = true;
+                stream >> Search::MoveTime;
+                type = SearchType::TimePerMove;
             }
+
+            else if (token == "wtime")
+            {
+                stream >> Search::GameTime[PieceColor::White];
+                type = SearchType::TimePerGame;
+            }
+            else if (token == "btime")
+            {
+                stream >> Search::GameTime[PieceColor::Black];
+                type = SearchType::TimePerGame;
+            }
+            else if (token == "infinite")
+            {
+                type = SearchType::Infinite;
+            }
+
         }
 
-        search = thread(Search::StartThinking, ref(board));
+        search = thread(Search::StartThinking, type, ref(board));
         search.detach();
     }
 

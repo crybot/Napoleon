@@ -13,7 +13,7 @@ namespace Napoleon
 
     BitBoard Pawn::GetAnyAttack(BitBoard pawns, Board& board)
     {
-        return (GetEastAttacks(board.SideToMove(), pawns) | GetWestAttacks(board.SideToMove(), pawns)) & board.GetEnemyPieces();
+        return (GetEastAttacks(board.SideToMove(), pawns) | GetWestAttacks(board.SideToMove(), pawns)) & board.EnemyPieces();
     }
 
 

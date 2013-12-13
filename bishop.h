@@ -24,7 +24,7 @@ namespace Napoleon
         targets |= MoveDatabase::GetA1H8DiagonalAttacks(occupiedSquares, square);
         targets |= MoveDatabase::GetH1A8DiagonalAttacks(occupiedSquares, square);
 
-        return targets & ~board.GetPlayerPieces();
+        return targets & ~board.PlayerPieces();
     }
 }
 

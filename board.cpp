@@ -16,7 +16,7 @@
 namespace Napoleon
 {
     Board::Board()
-        :Table(std::pow(2, 21))
+        :Table(256)
     {
         MoveDatabase::InitAttacks();
         Zobrist::Init();
@@ -241,7 +241,7 @@ namespace Napoleon
         Square from = move.FromSquare();
         Square to = move.ToSquare();
         Type promoted;
-        Type captured = move.IsEnPassant() ? PieceType::Pawn : pieceSet[to].Type;
+        Type captured = move.IsEnPassant() ? static_cast<Type>(PieceType::Pawn) : pieceSet[to].Type;
         Type pieceMoved = pieceSet[from].Type;
         Color enemy = Utils::Piece::GetOpposite(sideToMove);
 
@@ -734,12 +734,12 @@ namespace Napoleon
             to = Utils::BitBoard::BitScanForwardReset(target);
             pawnAttacks = MoveDatabase::PawnAttacks[side][to];
 
-            if ((GetPieces(enemyColor, PieceType::Pawn) & pawnAttacks) != 0) return true;
-            if ((GetPieces(enemyColor, PieceType::Knight) & MoveDatabase::KnightAttacks[to]) != 0) return true;
-            if ((GetPieces(enemyColor, PieceType::King) & MoveDatabase::KingAttacks[to]) != 0) return true;
+            if ((Pieces(enemyColor, PieceType::Pawn) & pawnAttacks) != 0) return true;
+            if ((Pieces(enemyColor, PieceType::Knight) & MoveDatabase::KnightAttacks[to]) != 0) return true;
+            if ((Pieces(enemyColor, PieceType::King) & MoveDatabase::KingAttacks[to]) != 0) return true;
 
             // file / rank attacks
-            slidingAttackers = GetPieces(enemyColor, PieceType::Queen) | GetPieces(enemyColor, PieceType::Rook);
+            slidingAttackers = Pieces(enemyColor, PieceType::Queen) | Pieces(enemyColor, PieceType::Rook);
 
             if (slidingAttackers != 0)
             {
@@ -748,7 +748,7 @@ namespace Napoleon
             }
 
             // diagonals
-            slidingAttackers = GetPieces(enemyColor, PieceType::Queen) | GetPieces(enemyColor, PieceType::Bishop);
+            slidingAttackers = Pieces(enemyColor, PieceType::Queen) | Pieces(enemyColor, PieceType::Bishop);
 
             if (slidingAttackers != 0)
             {

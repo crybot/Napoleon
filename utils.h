@@ -26,9 +26,10 @@ namespace Napoleon
             bool IsBitSet(Napoleon::BitBoard, int);
             void Display(Napoleon::BitBoard);
 
-            int PopCount(Napoleon::BitBoard bitBoard);
-            int BitScanForward( Napoleon::BitBoard bitBoard);
-            int BitScanForwardReset(Napoleon::BitBoard& bitBoard);
+            int PopCount(Napoleon::BitBoard);
+            int BitScanForward( Napoleon::BitBoard);
+            int BitScanForwardReset(Napoleon::BitBoard&);
+            int BitScanReverse(Napoleon::BitBoard);
         }
 
         namespace Piece

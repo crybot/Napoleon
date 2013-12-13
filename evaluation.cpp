@@ -139,7 +139,7 @@ namespace Napoleon
         Piece piece;
         for (Napoleon::Square sq = 0; sq<64; sq++)
         {
-            piece = board.GetPieceOnSquare(sq);
+            piece = board.PieceOnSquare(sq);
             if (piece.Type != PieceType::None)
             {
                 if (piece.Color == White)
@@ -171,7 +171,7 @@ namespace Napoleon
         //        targets |= MoveDatabase::GetA1H8DiagonalAttacks(occupiedSquares, kingSquare);
         //        targets |= MoveDatabase::GetH1A8DiagonalAttacks(occupiedSquares, kingSquare);
 
-        //        score += Utils::BitBoard::PopCount(targets & ~board.GetPieces(Utils::Piece::GetOpposite(board.SideToMove())));
+        //        score += Utils::BitBoard::PopCount(targets & ~board.GetPieces(Utils::Piece::GetOpposite(board.SideToMove())))/5;
 
         return score * (1-(board.SideToMove()*2));
     }
@@ -184,20 +184,20 @@ namespace Napoleon
         switch(piece.Type)
         {
         case PieceType::Knight:
-            b = MoveDatabase::KnightAttacks[square] & ~board.GetPieces(piece.Color);
+            b = MoveDatabase::KnightAttacks[square] & ~board.Pieces(piece.Color);
             return 0.3*PopCount(b);
 
         case PieceType::Bishop:
             b = (MoveDatabase::GetA1H8DiagonalAttacks(board.OccupiedSquares, square)
                  | MoveDatabase::GetH1A8DiagonalAttacks(board.OccupiedSquares, square))
-                    & ~board.GetPieces(piece.Color);
+                    & ~board.Pieces(piece.Color);
 
             return 0.5*PopCount(b);
 
         case PieceType::Rook:
             b = (MoveDatabase::GetFileAttacks(board.OccupiedSquares, square)
                  | MoveDatabase::GetRankAttacks(board.OccupiedSquares, square))
-                    & ~board.GetPieces(piece.Color);
+                    & ~board.Pieces(piece.Color);
 
             return 0.1*PopCount(b);
 

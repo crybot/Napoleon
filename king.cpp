@@ -9,7 +9,7 @@ namespace Napoleon
     BitBoard King::GetAllTargets(BitBoard king, Board& board)
     {
         BitBoard kingMoves = MoveDatabase::KingAttacks[(Utils::BitBoard::BitScanForward(king))];
-        return kingMoves & ~board.GetPlayerPieces();
+        return kingMoves & ~board.PlayerPieces();
     }
 
     BitBoard King::GetKingAttacks(BitBoard king)

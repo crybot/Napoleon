@@ -12,7 +12,6 @@ namespace Napoleon
         extern ZobristKey Color;
 
         void Init();
-        ZobristKey random();
     }
 }
 
