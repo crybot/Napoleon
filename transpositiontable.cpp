@@ -1,5 +1,6 @@
 #include "transpositiontable.h"
 #include "constants.h"
+#include "utils.h"
 #include <iostream>
 #include <cmath>
 #include <cstring>
@@ -14,7 +15,7 @@ namespace Napoleon
     void TranspositionTable::SetSize(int mb)
     {
         // get a power of two size in megabytes
-        mb = std::pow(2, int(std::log2(mb)));
+        mb = std::pow(2, int(Utils::Math::Log2(mb)));
 
         // mb * 2^x = mb << x   <==> mb = 2^k
         entries = ( (mb*std::pow(2, 20)) / sizeof(HashEntry)); // number of bytes * size of HashEntry = number of entries

@@ -117,10 +117,12 @@
     <ClCompile Include="..\move.cpp" />
     <ClCompile Include="..\movedatabase.cpp" />
     <ClCompile Include="..\movegenerator.cpp" />
+    <ClCompile Include="..\moveselector.cpp" />
     <ClCompile Include="..\pawn.cpp" />
     <ClCompile Include="..\piece.cpp" />
     <ClCompile Include="..\queen.cpp" />
     <ClCompile Include="..\search.cpp" />
+    <ClCompile Include="..\searchinfo.cpp" />
     <ClCompile Include="..\stopwatch.cpp" />
     <ClCompile Include="..\transpositiontable.cpp" />
     <ClCompile Include="..\uci.cpp" />
@@ -143,11 +145,13 @@
     <ClInclude Include="..\move.h" />
     <ClInclude Include="..\movedatabase.h" />
     <ClInclude Include="..\movegenerator.h" />
+    <ClInclude Include="..\moveselector.h" />
     <ClInclude Include="..\pawn.h" />
     <ClInclude Include="..\piece.h" />
     <ClInclude Include="..\queen.h" />
     <ClInclude Include="..\rook.h" />
     <ClInclude Include="..\search.h" />
+    <ClInclude Include="..\searchinfo.h" />
     <ClInclude Include="..\stopwatch.h" />
     <ClInclude Include="..\transpositiontable.h" />
     <ClInclude Include="..\uci.h" />

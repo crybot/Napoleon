@@ -75,6 +75,12 @@
     <ClCompile Include="..\zobrist.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
+    <ClCompile Include="..\moveselector.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\searchinfo.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\benchmark.h">
@@ -150,6 +156,12 @@
       <Filter>File di intestazione</Filter>
     </ClInclude>
     <ClInclude Include="..\zobrist.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="..\moveselector.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="..\searchinfo.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
   </ItemGroup>
