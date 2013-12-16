@@ -54,14 +54,14 @@ namespace Napoleon
 						std::cout << '[';
 						if (IsBitSet(bitBoard, Square::GetSquareIndex(c, r)))
 						{
-							std::cout << Console::Green << '1';
+							std::cout /*<< Console::Green*/ << '1';
 						}
 						else
 						{
-							std::cout << Console::Red << '0';
+							std::cout /*<< Console::Red*/ << '0';
 						}
 
-						std::cout << Console::Reset << ']';
+						std::cout /*<< Console::Reset*/ << ']';
 					}
 					std::cout << std::endl;
 				}

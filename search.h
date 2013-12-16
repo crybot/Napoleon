@@ -13,7 +13,6 @@
 
 namespace Napoleon
 {
-    enum SearchTask { Think, Infinite, Stop, Quit };
     static const int rMargin[] = { 0, Constants::Piece::PieceValue[PieceType::Knight],  Constants::Piece::PieceValue[PieceType::Rook] };
 
     enum class SearchType

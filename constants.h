@@ -251,7 +251,7 @@ namespace Napoleon
         namespace Piece
         {
             const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
-            const int PieceValue[] = { 100, 320, 330, 500, 1000, 2000 };
+			const int PieceValue[] = { 100, 320, 330, 500, 1000, 2000, 99999 }; // Null-Piece = +Inf
         }
 
         namespace Node
@@ -294,6 +294,7 @@ namespace Napoleon
 
         const int Infinity = 200000;
         const int Unknown = 2*Infinity;
+		const int Mate = std::numeric_limits<short>::max();
         const int MaxMoves = 192;
         const int MaxPly = 1024;
 

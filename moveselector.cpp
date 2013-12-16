@@ -36,9 +36,9 @@ namespace Napoleon
             // MVV-LVA
             if (board.IsCapture(moves[i]))
             {
-                captured = moves[i].IsEnPassant() ? Type(PieceType::Pawn) : board.PieceOnSquare(moves[i].ToSquare()).Type;
+                //captured = moves[i].IsEnPassant() ? Type(PieceType::Pawn) : board.PieceOnSquare(moves[i].ToSquare()).Type;
 
-                scores[i] = PieceValue[captured] - PieceValue[board.PieceOnSquare(moves[i].FromSquare()).Type];
+				scores[i] = board.See(moves[i]);
             }
 
             else if (moves[i] == info.FirstKiller(ply))

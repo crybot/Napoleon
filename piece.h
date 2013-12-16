@@ -7,7 +7,7 @@ namespace Napoleon
     // cannot convert to strongly-typed c++11 enums because we need implicit conversion
     enum PieceType : Type
     {
-        Pawn, Knight, Bishop,Rook, Queen, King, None
+        Pawn, Knight, Bishop, Rook, Queen, King, None
     };
 
     // cannot convert to strongly-typed c++11 enums because we need implicit conversion

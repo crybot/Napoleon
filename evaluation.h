@@ -26,6 +26,7 @@ namespace Napoleon
 
         static int multiPawnP[8]; // penalization for doubled, tripled... pawns
 
+
     };
 
 }

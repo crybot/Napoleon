@@ -72,7 +72,7 @@ int main()
 
 #ifndef MAIN
 
-    Uci::Start();
+	Uci::Start();
 
 #endif
 

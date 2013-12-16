@@ -16,7 +16,7 @@
 namespace Napoleon
 {
     Board::Board()
-        :Table(256)
+        :Table(128)
     {
         MoveDatabase::InitAttacks();
         Zobrist::Init();
