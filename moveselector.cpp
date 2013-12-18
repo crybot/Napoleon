@@ -29,7 +29,7 @@ namespace Napoleon
 
         int max = 0;
         int historyScore;
-        Type captured;
+//        Type captured;
 
         for (auto i=0; i<count; i++)
         {

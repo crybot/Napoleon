@@ -3,7 +3,7 @@
 #include "move.h"
 #include "piece.h"
 #include "defines.h"
-#include "fenstring.h"
+#include <limits>
 
 namespace Napoleon
 {

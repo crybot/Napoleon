@@ -106,8 +106,6 @@ namespace Napoleon
     unsigned long long Benchmark::Perft(int depth)
     {
         int pos = 0;
-        int count;
-        Move move;
         Move moves[Constants::MaxMoves];
 
         unsigned long long nodes = 0;

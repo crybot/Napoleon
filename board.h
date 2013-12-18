@@ -381,10 +381,9 @@ namespace Napoleon
 			depth++;
 		}
 
-		int max = depth;
 		while (--depth)
 		{
-			gain[depth-1]= -std::max(-gain[depth-1], gain[depth]);
+            gain[depth-1] = -std::max(-gain[depth-1], gain[depth]);
 		}
 
 		return gain[0];
