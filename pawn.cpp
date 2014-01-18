@@ -1,6 +1,5 @@
 #include "pawn.h"
 #include "board.h"
-#include "compassrose.h"
 
 namespace Napoleon
 {   
@@ -16,25 +15,6 @@ namespace Napoleon
         return (GetEastAttacks(board.SideToMove(), pawns) | GetWestAttacks(board.SideToMove(), pawns)) & board.EnemyPieces();
     }
 
-
-    BitBoard Pawn::GetQuietTargets(Color color, BitBoard pawns, BitBoard empty)
-    {
-        return GetSinglePushTargets(color, pawns, empty) | GetDoublePushTargets(color, pawns, empty);
-    }
-
-    BitBoard Pawn::GetSinglePushTargets(Color color, BitBoard pawns, BitBoard empty)
-    {
-        return color == PieceColor::White ? CompassRose::OneStepNorth(pawns) & empty : CompassRose::OneStepSouth(pawns) & empty;
-    }
-
-    BitBoard Pawn::GetDoublePushTargets(Color color, BitBoard pawns, BitBoard empty)
-    {
-        BitBoard singlePush = GetSinglePushTargets(color, pawns, empty);
-
-        return color == PieceColor::White
-                ? CompassRose::OneStepNorth(singlePush) & empty & Constants::Ranks::Four
-                : CompassRose::OneStepSouth(singlePush) & empty & Constants::Ranks::Five;
-    }
 
     BitBoard Pawn::GetPawnsAbleToSinglePush(Color color, BitBoard pawns, BitBoard empty)
     {

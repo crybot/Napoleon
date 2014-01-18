@@ -3,7 +3,7 @@
 #include <string>
 #include "defines.h"
 #include "piece.h"
-
+#include "move.h"
 namespace Napoleon
 {
     class FenString
@@ -18,6 +18,7 @@ namespace Napoleon
         bool CanBlackLongCastle;
         int EnPassantSquare;
         int HalfMove;
+        std::string BestMove;
 
         FenString(std::string);
 
@@ -29,6 +30,7 @@ namespace Napoleon
         void parseCastling(std::string);
         void parseEnPassant(std::string);
         void parseHalfMove(std::string);
+        void parseBestMove(std::string);
     };
 
 }

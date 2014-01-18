@@ -28,11 +28,12 @@ namespace Napoleon
         extern int MoveTime;
         extern int GameTime[2]; // by color
         extern SearchInfo searchInfo;
+        extern bool sendOutput;
 
         std::string GetInfo(Board&, Move, int, int, int);
         std::string GetPv(Board&, Move, int);
 
-        void StartThinking(SearchType, Board&);
+        Move StartThinking(SearchType, Board&, bool=true, bool=false);
         void StopThinking();
         Move iterativeSearch(Board&);
         int searchRoot(int, int, int, Move&, Board&);
@@ -40,18 +41,18 @@ namespace Napoleon
         int search(int, int, int, int, Board&);
         int quiescence(int, int, Board&);
 
-        int futilityMargin(int);
-        int razorMargin(int);
+        //        int futilityMargin(int);
+        //        int razorMargin(int);
     }
 
-    inline int Search::futilityMargin(int depth)
-    {
-        return rMargin[depth];
-    }
-    inline int Search::razorMargin(int depth)
-    {
-        return (50 + 25*(depth-1));
-    }
+    //    inline int Search::futilityMargin(int depth)
+    //    {
+    //        return rMargin[depth];
+    //    }
+    //    inline int Search::razorMargin(int depth)
+    //    {
+    //        return (50 + 25*(depth-1));
+    //    }
 }
 
 #endif // SEARCH_H

@@ -2,8 +2,9 @@
 #include "utils.h"
 #include "constants.h"
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+//#include <boost/lexical_cast.hpp>
 #include <vector>
+#include <sstream>
 
 namespace Napoleon
 {
@@ -15,21 +16,47 @@ namespace Napoleon
 
     void FenString::Parse()
     {
-        std::vector<std::string> fields;
-        boost::split(fields, FullString, boost::is_any_of(" "));
+        std::istringstream stream(FullString);
 
-        std::string piecePlacement = fields[0];
-        std::string sideToMove = fields[1];
-        std::string castling = fields[2];
-        std::string enPassant = fields[3];
-        std::string halfMove = fields[4];
-        std::string fullMove = fields[5];
+        std::string piecePlacement;
+        std::string sideToMove;
+        std::string castling;
+        std::string enPassant;
+        std::string halfMove;
+        std::string fullMove;
+        std::string bestMove;
+
+        stream >> piecePlacement;
+        stream >> sideToMove;
+        stream >> castling;
+        stream >> enPassant;
+
+        std::string token;
+        stream >> token;
+
+        if (token == "bm") // EPD string
+        {
+            stream >> bestMove;
+        }
+        else
+        {
+            halfMove = token;
+            stream >> fullMove;
+        }
+
 
         parsePiecePlacement(piecePlacement);
         parsesideToMove(sideToMove);
         parseCastling(castling);
         parseEnPassant(enPassant);
-        parseHalfMove(halfMove);
+
+        if (!halfMove.empty())
+            parseHalfMove(halfMove);
+
+        if (!bestMove.empty())
+            parseBestMove(bestMove);
+
+
     }
 
     void FenString::parsePiecePlacement(std::string field)
@@ -86,8 +113,9 @@ namespace Napoleon
                     PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::King);
                     break;
                 default:
-//                    empty += std::stoi(std::string(&ranks[i][l]))-1; // TO TEST
-                    empty += (boost::lexical_cast<int>(ranks[i][l]) - 1);
+                    empty += std::stoi(std::string(&ranks[i][l]))-1; // TO TEST
+
+                    //                    empty += (boost::lexical_cast<int>(ranks[i][l]) - 1);
                     break;
                 }
             }
@@ -153,4 +181,15 @@ namespace Napoleon
     {
         HalfMove = std::stoi(field);
     }
+
+    void FenString::parseBestMove(std::string field)
+    {
+        BestMove = field;
+
+        //we don't care if the move gives check or mate (for now)
+        if (field.back() == '+' || field.back() == '#')
+            BestMove = field.substr(0, field.size()-1);
+    }
+
+
 }

@@ -1,4 +1,3 @@
-#include <iostream>
 #include "uci.h"
 
 using namespace Napoleon;
@@ -6,7 +5,7 @@ using namespace std;
 
 int main()
 {
-	Uci::Start();
+    Uci::Start();
 
     return 0;
 }

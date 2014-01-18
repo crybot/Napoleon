@@ -33,6 +33,30 @@ namespace Napoleon
                 pawnsOnFile[c][f] = 0;
     }
 
+    void Board::LoadGame(std::string pos)
+    {
+        FenString fenString(pos);
+
+        for (Color c = PieceColor::White; c < PieceColor::None; c++)
+            for (File f = 0; f < 8; f++)
+                pawnsOnFile[c][f] = 0;
+
+        material[PieceColor::White] = 0;
+        material[PieceColor::Black] = 0;
+        pstValue[PieceColor::White] = 0;
+        pstValue[PieceColor::Black] = 0;
+        allowNullMove = true;
+        currentPly = 0;
+        zobrist = 0;
+        initializeCastlingStatus(fenString);
+        initializesideToMove(fenString);
+        initializePieceSet(fenString);
+        initializeEnPassantSquare(fenString);
+        initializeBitBoards(fenString);
+
+        assert(this->PosIsOk());
+    }
+
     void Board::AddPiece(Piece piece, Square sq)
     {
         pieceSet[sq] = piece;
@@ -116,24 +140,6 @@ namespace Napoleon
         std::cout << (castlingStatus & Constants::Castle::BlackCastleOOO ? "q" : "") << std::endl;
         std::cout << "HalfMove Clock: " << halfMoveClock << std::endl;
         std::cout << "Ply: " << currentPly << std::endl;
-    }
-
-    void Board::LoadGame(std::string pos)
-    {
-        FenString fenString(pos);
-
-        material[PieceColor::White] = 0;
-        material[PieceColor::Black] = 0;
-        pstValue[PieceColor::White] = 0;
-        pstValue[PieceColor::Black] = 0;
-        allowNullMove = true;
-        currentPly = 0;
-        zobrist = 0;
-        initializeCastlingStatus(fenString);
-        initializesideToMove(fenString);
-        initializePieceSet(fenString);
-        initializeEnPassantSquare(fenString);
-        initializeBitBoards(fenString);
     }
 
     void Board::initializeCastlingStatus(const FenString& fenString)

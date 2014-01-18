@@ -11,6 +11,7 @@
 #include "console.h"
 #include "search.h"
 #include "board.h"
+#include "stopwatch.h"
 
 
 // ONLY USEFUL FOR DEBUG
@@ -22,57 +23,50 @@ namespace Napoleon
 
     }
 
-    void Benchmark::Start()
+    void Benchmark::Start(int depth)
     {
-        std::ifstream ff("perft.epd");
+        std::ifstream fstream("ECM.epd");
+
+        std::string str = "";
         std::vector<std::string> strings;
         std::vector<std::string> fields;
         std::string buff;
-        int err = 0;
-        unsigned long long result;
-        unsigned long long excpected;
-        int depth;
+        int nodesVisited = 0;
+        int correct = 0;
 
-        while (getline(ff, buff))
+        while (getline(fstream, buff))
         {
             strings.push_back(buff);
         }
 
-        for (unsigned i=0; i<strings.size(); i++)
+        StopWatch watch = StopWatch::StartNew();
+
+        int i = 1;
+        for (std::string line : strings)
         {
-            boost::split(fields, strings[i], boost::is_any_of(";"));
-            board.LoadGame(fields[0]);
+            std::cout << i++ << " ";
+            boost::split(fields, line, boost::is_any_of(";"));
 
-            std::cout << Console::Yellow << "Position: " << i+1 << std::endl << fields[0] << std::endl;
-            for (unsigned l=1; l<fields.size(); l++)
-            {
-                std::istringstream buffer(fields[l].substr(1));
-                buffer >> depth;
-                buffer >> excpected;
+            FenString epd(fields[0]);
+            board.LoadGame(epd.FullString);
 
-                std::cout << Console::Reset <<  "Perft " << depth << ": " << std::endl;
+            Search::searchInfo.SetDepthLimit(depth);
+            Move move = Search::StartThinking(SearchType::Infinite, board, false);
 
-                result = Perft(depth);
+            if(move.ToSan(board) == epd.BestMove)
+                correct++;
 
-                if(result != excpected)
-                {
-                    std::cout << Console::Red << "Nodes: " << result << std::endl;
-                    std::cout << Console::Red << "Expected: " << excpected << std::endl;
-                    err++;
-                }
-                else
-                {
-                    std::cout << Console::Green << "Nodes: " << result << std::endl;
-                    std::cout << Console::Green << "Expected: " << excpected << std::endl;
-                }
-            }
+            nodesVisited += Search::searchInfo.Nodes();
         }
 
-        if (err == 0)
-            std::cout << Console::Green << "Test Succesfully Passed!" << std::endl;
-        else
-            std::cout << Console::Red << "Test Not Passed!" << std::endl;
-        std::cout << Console::Reset;
+
+        std::cout << str << std::endl;
+        std::cout << "correct: " << correct << "/" << strings.size() << std::endl;
+        std::cout << "rate: " << ((float)correct/(float)strings.size())*100 << std::endl;
+        std::cout << "nodes visited: " << nodesVisited << std::endl;
+        std::cout << "elapsed time(ms): " << watch.ElapsedMilliseconds() << std::endl;
+
+        fstream.close();
     }
 
     void Benchmark::CutoffTest()

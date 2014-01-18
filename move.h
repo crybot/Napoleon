@@ -11,6 +11,7 @@ namespace Napoleon
         RookPromotion = 0xA, BishopPromotion = 0x9, KnightPromotion = 0x8
     };
 
+    class Board;
     class Move
     {
     public:
@@ -32,6 +33,7 @@ namespace Napoleon
         bool operator== (const Move&) const;
         bool operator!= (const Move&) const;
         std::string ToAlgebraic() const;
+        std::string ToSan(Board&) const;
 
     private:
         unsigned short move;

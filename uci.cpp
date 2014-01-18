@@ -104,6 +104,14 @@ namespace Napoleon
                     board.MakeMove(move);
                 }
             }
+            else if (cmd == "ECM")
+            {
+                int depth;
+                stream >> depth;
+
+                Benchmark bench(board);
+                bench.Start(depth);
+            }
             else if (cmd == "disp")
             {
                 board.Display();
@@ -120,10 +128,24 @@ namespace Napoleon
     {
         string token;
         SearchType type;
+        bool san = false;
 
         while(stream >> token)
         {
-            if (token == "movetime")
+            if (token == "test")
+            {
+                san = true;
+            }
+
+            else if (token == "depth")
+            {
+                int depth;
+                stream >> depth;
+
+                Search::searchInfo.SetDepthLimit(depth);
+                type = SearchType::Infinite;
+            }
+            else if (token == "movetime")
             {
                 stream >> Search::MoveTime;
                 type = SearchType::TimePerMove;
@@ -146,7 +168,7 @@ namespace Napoleon
 
         }
 
-        search = thread(Search::StartThinking, type, ref(board));
+        search = thread(Search::StartThinking, type, ref(board), true, san);
         search.detach();
     }
 

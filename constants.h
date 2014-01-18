@@ -204,12 +204,12 @@ namespace Napoleon
 //                0x007E000000000000, 0x7E00000000000000
 //            };
 
-            const BitBoard FileMask[] =
-            {
-                0x101010101010101, 0x202020202020202, 0x404040404040404,
-                0x808080808080808, 0x1010101010101010, 0x2020202020202020,
-                0x4040404040404040, 0x8080808080808080
-            };
+//            const BitBoard FileMask[] =
+//            {
+//                0x101010101010101, 0x202020202020202, 0x404040404040404,
+//                0x808080808080808, 0x1010101010101010, 0x2020202020202020,
+//                0x4040404040404040, 0x8080808080808080
+//            };
 
             const BitBoard A1H8DiagonalMask[] =
             {
@@ -252,13 +252,6 @@ namespace Napoleon
         {
             const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
 			const int PieceValue[] = { 100, 320, 330, 500, 1000, 2000, 99999 }; // Null-Piece = +Inf
-        }
-
-        namespace Node
-        {
-            const int Pv = 0;
-            const int Cut = 1;
-            const int All = 2;
         }
 
         namespace Eval

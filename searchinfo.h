@@ -13,9 +13,10 @@ namespace Napoleon
     public:
         enum class Time : int { Infinite = -1 };
 
-        SearchInfo(int time = int(Time::Infinite), int nodes = 0, int maxDepth = 1);
+        SearchInfo(int time = int(Time::Infinite), int maxDepth = 1, int nodes = 0);
 
         void NewSearch(int time = int(Time::Infinite));
+        void StopSearch();
         int IncrementDepth();
         int MaxDepth();
         int Nodes();
@@ -25,6 +26,7 @@ namespace Napoleon
         void VisitNode();
         void SetKillers(Move, int);
         void SetHistory(Move, Color, int);
+        void SetDepthLimit(int);
 
         Move FirstKiller(int);
         Move SecondKiller(int);
@@ -34,8 +36,9 @@ namespace Napoleon
         double ElapsedTime();
 
     private:
-        int nodes;
+        int depthLimit;
         int maxDepth;
+        int nodes;
         int maxPly;
         int history[2][64*64];
         int allocatedTime; // milliseconds
@@ -45,7 +48,7 @@ namespace Napoleon
 
     inline bool SearchInfo::TimeOver()
     {
-        if (allocatedTime == int(Time::Infinite))
+        if (allocatedTime == int(Time::Infinite) && maxDepth <= depthLimit)
             return false;
 
         return (timer.ElapsedMilliseconds() >= allocatedTime || timer.ElapsedMilliseconds() / allocatedTime >= 0.85);
