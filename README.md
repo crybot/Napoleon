@@ -5,7 +5,7 @@ Cross-platform/cross-compiler chess engine written in C++.
 
 More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
-Current Version: 1.2.1
+Current Version: 1.3.0
 
 Features:
 - Cross platform (Windows, Unix, Mac)
