@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cstdio>
 #include <sstream>
+#include <algorithm>
 
 namespace Napoleon
 {

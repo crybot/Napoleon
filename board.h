@@ -11,6 +11,7 @@
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 namespace Napoleon
 {

@@ -3,6 +3,7 @@
 #include "piece.h"
 #include "constants.h"
 #include "board.h"
+#include <cctype>
 
 namespace Napoleon
 {
