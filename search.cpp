@@ -251,7 +251,7 @@ namespace Napoleon
         }
 
         //        // internal iterative deepening (IID)
-        //        if (depth > 4 && best.IsNull())
+        //        if (depth > 5 && best.IsNull())
         //        {
         //            int R = 2;
 
@@ -285,13 +285,23 @@ namespace Napoleon
         if (board.IsRepetition())
             return 0;
 
+        //limited razoring
+        if (!attackers
+                && depth == 3
+                && !extension
+                && Evaluation::Evaluate(board) + 900 <= alpha
+                )
+        {
+            depth=2;
+        }
+
         //extended futility pruning condition
         if (!attackers
                 && depth == 2
                 && !extension
                 && std::abs(alpha) < Constants::Mate-Constants::MaxPly
                 && std::abs(beta) < Constants::Mate-Constants::MaxPly
-                && Evaluation::Evaluate(board) + 650 <= alpha       // NEED to test other values
+                && Evaluation::Evaluate(board) + 500 <= alpha       // NEED to test other values
                 )
         {
             futility = true;
@@ -302,7 +312,7 @@ namespace Napoleon
                 && depth == 1
                 && std::abs(alpha) < Constants::Mate-Constants::MaxPly
                 && std::abs(beta) < Constants::Mate-Constants::MaxPly
-                && Evaluation::Evaluate(board) + 400 <= alpha       // NEED to test other values
+                && Evaluation::Evaluate(board) + 250 <= alpha       // NEED to test other values
                 )
         {
             futility = true;
