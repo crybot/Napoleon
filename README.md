@@ -5,7 +5,7 @@ Cross-platform/cross-compiler chess engine written in C++.
 
 More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
-Current Version: 1.2.1
+Current Version: 1.3.1
 
 Features:
 - Cross platform (Windows, Unix, Mac)
@@ -30,7 +30,7 @@ Features:
 - Killer moves heuristic
 - History moves heuristic
 - Enhanced selective move ordering
-- Deep razoring
+- Limited razoring
 - Extended futility pruning
 - Adaptive null move pruning
 - Transposition table best-move probing
