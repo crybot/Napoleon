@@ -74,6 +74,7 @@ namespace Napoleon
         int HalfMoveClock() const;
         int CurrentPly() const;
         bool AllowNullMove() const;
+        void ToggleNullMove();
         bool IsCheck() const;
 
         int PstValue(Color) const;
@@ -315,6 +316,11 @@ namespace Napoleon
     inline bool Board::AllowNullMove() const
     {
         return allowNullMove;
+    }
+
+    inline void Board::ToggleNullMove()
+    {
+        allowNullMove = !allowNullMove;
     }
 
     inline bool Board::IsCheck() const

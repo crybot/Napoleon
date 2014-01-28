@@ -31,7 +31,7 @@ namespace Napoleon
         std::vector<std::string> strings;
         std::vector<std::string> fields;
         std::string buff;
-        int nodesVisited = 0;
+        unsigned long nodesVisited = 0;
         int correct = 0;
 
         while (getline(fstream, buff))
@@ -64,7 +64,7 @@ namespace Napoleon
         std::cout << "correct: " << correct << "/" << strings.size() << std::endl;
         std::cout << "rate: " << ((float)correct/(float)strings.size())*100 << std::endl;
         std::cout << "nodes visited: " << nodesVisited << std::endl;
-        std::cout << "elapsed time(ms): " << watch.ElapsedMilliseconds() << std::endl;
+        std::cout << "elapsed time(ms): " << std::fixed << watch.ElapsedMilliseconds() << std::endl;
 
         fstream.close();
     }

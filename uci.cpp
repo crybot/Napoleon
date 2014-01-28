@@ -132,12 +132,7 @@ namespace Napoleon
 
         while(stream >> token)
         {
-            if (token == "test")
-            {
-                san = true;
-            }
-
-            else if (token == "depth")
+            if (token == "depth")
             {
                 int depth;
                 stream >> depth;

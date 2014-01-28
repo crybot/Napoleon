@@ -89,7 +89,7 @@ namespace Napoleon
 
             searchInfo.ResetNodes();
 
-            //            aspiration search
+            // aspiration search
             temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, score + AspirationValue, move, board);
 
             if (temp <= score - AspirationValue)
@@ -100,8 +100,6 @@ namespace Napoleon
             {
                 temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, Constants::Infinity, move, board);
             }
-
-            //            temp = searchRoot(i, -Constants::Infinity, Constants::Infinity, move, board);
 
             score = temp;
 
@@ -120,7 +118,6 @@ namespace Napoleon
     {
         int score;
         int startTime = searchInfo.ElapsedTime();
-        int moveIndex = 0;
 
         MoveSelector moves(board, searchInfo);
         MoveGenerator::GetLegalMoves(moves.moves, moves.count, board);
@@ -132,26 +129,26 @@ namespace Napoleon
             return alpha;
         }
 
-        moves.Sort();
+        moves.Sort<false>();
 
-        for (int i=0; i<moves.count; i++)
+        int i = 0;
+        for (auto move = moves.First(); !move.IsNull(); move = moves.Next(), i++)
         {
             if ((searchInfo.TimeOver() || StopSignal))
                 return Constants::Unknown;
 
-            auto move = moves.Next();
-
             board.MakeMove(move);
-            score = -Search::search(depth-1, -beta, -alpha, 1, board);
+            if (i == 0) // leftmost node
+                score = -Search::search<true>(depth-1, -beta, -alpha, 1, board); // pv node
+            else
+                score = -Search::search<false>(depth-1, -beta, -alpha, 1, board); // cut node
             board.UndoMove(move);
 
             if (score > alpha)
             {
-                moveIndex = i;
+                moveToMake = move;
                 if (score >= beta)
                 {
-                    moveToMake = move;
-
                     if (sendOutput)
                         Uci::SendCommand<Command::Info>(GetInfo(board, moveToMake, beta, depth, startTime)); // sends info to the gui
 
@@ -162,14 +159,13 @@ namespace Napoleon
             }
         }
 
-        moveToMake = moves[moveIndex];
-
         if (sendOutput)
             Uci::SendCommand<Command::Info>(GetInfo(board, moveToMake, alpha, depth, startTime)); // sends info to the gui
 
         return alpha;
     }
 
+    template<bool pv>
     int Search::search(int depth, int alpha, int beta, int ply, Board& board)
     {
         searchInfo.VisitNode();
@@ -199,11 +195,9 @@ namespace Napoleon
 
         if( (score = hashHit.first) != TranspositionTable::Unknown)
             return score;
-
         best = hashHit.second;
 
         BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove());
-
         if(attackers)
         {
             extension = true;
@@ -216,35 +210,19 @@ namespace Napoleon
 
         BitBoard pinned = board.PinnedPieces();
 
-        //		// enhanced deep razoring
-        //		if (depth < 4
-        //			&& !attackers
-        //			&& board.Material(board.SideToMove()) > Constants::Eval::EndGameMat
-        //			&& best.IsNull()
-        //			&& !board.IsPromotingPawn())
-        //		{
-        //			score = Evaluation::Evaluate(board);
-
-        //			int margin = razorMargin(depth);
-
-        //			if (score + margin <= alpha)
-        //			{
-        //				int s = quiescence(alpha-margin, beta-margin, board);
-        //				if (s <= alpha - margin)
-        //					return s;
-        //			}
-        //		}
-
         // adaptive null move pruning
+        // we skip this inside PV nodes
         if(board.AllowNullMove()
+                //&& !pv
                 && depth >= 3
                 && !attackers
                 && board.Material(board.SideToMove()) > Constants::Eval::EndGameMat)
         {
             int R = depth > 6 ? 3 : 2; // dynamic depth-based reduction
 
+            // cut node
             board.MakeNullMove();
-            score = -search(depth - R - 1 , -beta, -beta+1, ply+1, board); // make a null-window search (we don't care by how much it fails high, if it does)
+            score = -search<false>(depth - R - 1 , -beta, -beta+1, ply, board); // make a null-window search (we don't care by how much it fails high, if it does)
             board.UndoNullMove();
 
             if(score >= beta)
@@ -252,11 +230,17 @@ namespace Napoleon
         }
 
         //        // internal iterative deepening (IID)
-        //        if (depth > 5 && best.IsNull())
+        //        if (depth >= 5 && best.IsNull() && pv)
         //        {
         //            int R = 2;
 
-        //            search(depth - R - 1, -Constants::Infinity, Constants::Infinity, ply, board); // make a full width search to find a new bestmove
+        //            if (board.AllowNullMove())
+        //                board.ToggleNullMove();
+
+        //            search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
+
+        //            if (!board.AllowNullMove())
+        //                board.ToggleNullMove();
 
         //            //Transposition table lookup
         //            auto hashHit = board.Table.Probe(board.zobrist, depth, alpha, beta);
@@ -264,33 +248,17 @@ namespace Napoleon
         //            best = hashHit.second;
         //        }
 
-        // make best move (hash move)
-        if(!best.IsNull())
-        {
-            assert(board.IsMoveLegal(best, pinned));
-            legal++;
-            board.MakeMove(best);
-            score = -search(depth - 1, -beta, -alpha, ply + 1, board);
-            board.UndoMove(best);
-
-            if(score >= beta)
-                return beta;
-
-            if(score > alpha)
-            {
-                bound = ScoreType::Exact;
-                alpha = score;
-            }
-        }
-
         if (board.IsRepetition())
             return 0;
 
+        int eval = Evaluation::Evaluate(board);
+
         //limited razoring
         if (!attackers
+                //                && !pv
                 && depth == 3
                 && !extension
-                && Evaluation::Evaluate(board) + 900 <= alpha
+                && eval + 900 <= alpha
                 )
         {
             depth=2;
@@ -298,11 +266,12 @@ namespace Napoleon
 
         //extended futility pruning condition
         if (!attackers
+                //                && !pv
                 && depth == 2
                 && !extension
                 && std::abs(alpha) < Constants::Mate-Constants::MaxPly
                 && std::abs(beta) < Constants::Mate-Constants::MaxPly
-                && Evaluation::Evaluate(board) + 500 <= alpha       // NEED to test other values
+                && eval + 500 <= alpha       // NEED to test other values
                 )
         {
             futility = true;
@@ -310,10 +279,11 @@ namespace Napoleon
 
         //normal futility pruning condition
         if (!attackers
+                //                && !pv
                 && depth == 1
                 && std::abs(alpha) < Constants::Mate-Constants::MaxPly
                 && std::abs(beta) < Constants::Mate-Constants::MaxPly
-                && Evaluation::Evaluate(board) + 250 <= alpha       // NEED to test other values
+                && eval + 250 <= alpha       // NEED to test other values
                 )
         {
             futility = true;
@@ -330,16 +300,16 @@ namespace Napoleon
 
         MoveGenerator::GetPseudoLegalMoves<false>(moves.moves, moves.count, attackers, board); // get captures and non-captures
 
-        moves.Sort(ply);
+        moves.Sort<false>(ply);
+        moves.hashMove = best;
 
         // principal variation search
-        bool PVS = true;
         bool capture;
+        bool pruned = false;
 
-        for(int i=0; i<moves.count; i++)
+        int moveNumber = 0;
+        for(auto move = moves.First(); !move.IsNull(); move = moves.Next())
         {
-            auto move = moves.Next();
-
             if(board.IsMoveLegal(move, pinned))
             {
                 legal++;
@@ -349,30 +319,62 @@ namespace Napoleon
 
                 // futility pruning application
                 if (futility
+                        && moveNumber > 0
                         && !capture
                         && !move.IsPromotion()
                         && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
                         )
                 {
+                    pruned = true;
                     board.UndoMove(move);
                     continue;
                 }
 
-                if (PVS)
+                if (moveNumber == 0)
                 {
-                    score = -search(depth-1, -beta, -alpha, ply+1, board);
+                    score = -search<pv>(depth-1, -beta, -alpha, ply+1, board);
                 }
                 else
                 {
-                    score = -search(depth-1, -alpha-1, -alpha, ply+1, board);
+                    register int R = 0;
+                    register int N = depth >= 5 ? 4 : 2; // TO TEST
+
+                    // late move reduction
+                    if (moveNumber >= N
+                            && depth >= 3
+                            && !extension
+                            && !capture
+                            && !move.IsPromotion()
+                            && !attackers
+                            && move != searchInfo.FirstKiller(ply)
+                            && move != searchInfo.SecondKiller(ply)
+                            && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
+                            )
+                    {
+                        R = 1;
+
+                        if (eval + board.MaterialBalance(Utils::Piece::GetOpposite(board.SideToMove())) + depth*250 <= alpha)
+                        {
+                            R = 2;
+                        }
+                    }
+
+                    score = -search<false>(depth-1-R, -alpha-1, -alpha, ply+1, board);
+
+                    //                    if (score > alpha)
+                    //                        score = -search<false>(depth-1, -alpha-1, -alpha, ply+1, board);
+
                     if (score > alpha)
-                        score = -search(depth-1, -beta, -alpha, ply+1, board);
+                        score = -search<true>(depth-1, -beta, -alpha, ply+1, board);
                 }
 
                 board.UndoMove(move);
 
                 if( score >= beta )
                 {
+                    if (move == best) // we don't want to save our hash move also as a killer move
+                        return beta;
+
                     //killer moves and history heuristic
                     if(!board.IsCapture(move))
                     {
@@ -380,17 +382,20 @@ namespace Napoleon
                         searchInfo.SetHistory(move, board.SideToMove(), depth);
                     }
 
-                    board.Table.Save(board.zobrist, depth, beta, best, ScoreType::Beta);
+                    // for safety, we don't save forward pruned nodes inside transposition table
+                    if (!pruned)
+                        board.Table.Save(board.zobrist, depth, beta, best, ScoreType::Beta);
 
                     return beta;   //  fail hard beta-cutoff
                 }
                 if(score > alpha)
                 {
-                    PVS = false;
                     bound = ScoreType::Exact;
                     alpha = score; // alpha acts like max in MiniMax
                     best = move;
                 }
+
+                moveNumber++;
             }
         }
 
@@ -407,7 +412,10 @@ namespace Napoleon
         if (board.HalfMoveClock() >= 100)
             alpha = 0;
 
-        board.Table.Save(board.zobrist, depth, alpha, best, bound);
+        // for safety, we don't save forward pruned nodes inside transposition table
+        if (!pruned)
+            board.Table.Save(board.zobrist, depth, alpha, best, bound);
+
         return alpha;
     }
 
@@ -432,7 +440,7 @@ namespace Napoleon
             if (board.IsPromotingPawn())
                 Delta += Constants::Piece::PieceValue[PieceType::Queen] - Constants::Piece::PieceValue[PieceType::Pawn];
 
-            //        big delta futility pruning
+            // big delta futility pruning
             if ( stand_pat < alpha - Delta)
                 return alpha;
 
@@ -453,12 +461,10 @@ namespace Napoleon
         else
             MoveGenerator::GetPseudoLegalMoves<false>(moves.moves, moves.count, attackers, board); // get all evading moves
 
-        moves.Sort();
+        moves.Sort<true>();
 
-        for(int i=0; i<moves.count; i++)
+        for(auto move = moves.First(); !move.IsNull(); move = moves.Next())
         {
-            auto move = moves.Next();
-
             // delta futility pruning
             if(!inCheck)
             {

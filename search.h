@@ -13,7 +13,7 @@
 
 namespace Napoleon
 {
-    static const int rMargin[] = { 0, Constants::Piece::PieceValue[PieceType::Knight],  Constants::Piece::PieceValue[PieceType::Rook] };
+    //    static const int rMargin[] = { 0, Constants::Piece::PieceValue[PieceType::Knight],  Constants::Piece::PieceValue[PieceType::Rook] };
 
     enum class SearchType
     {
@@ -38,6 +38,7 @@ namespace Napoleon
         Move iterativeSearch(Board&);
         int searchRoot(int, int, int, Move&, Board&);
 
+        template<bool>
         int search(int, int, int, int, Board&);
         int quiescence(int, int, Board&);
 
