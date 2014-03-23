@@ -1,34 +1,43 @@
 #ifndef EVALUATION_H
 #define EVALUATION_H
 #include "defines.h"
+#include "constants.h"
+#include "utils.h"
+#include "piecesquaretables.h"
+#include <cassert>
+
 namespace Napoleon
 {
-    class Board;
     class Piece;
-    class Evaluation
+    namespace Evaluation
     {
-    public:
-        static int Evaluate(Board&);
-        static int EvaluatePiece(Piece, Square, Board&);
-        static int CalculatePST(Piece, Square, Board&);
+        int Evaluate(Board&);
+        int EvaluatePiece(Piece, Square, Board&);
+        Score PieceSquareValue(Piece, Square);
+        inline void updateScore(Score&, int, int);
+        inline void updateScore(Score&, int);
 
-    private:
-        template<Byte>
-        static int evaluateMobility(Board&, BitBoard);
+        extern int multiPawnP[8]; // penalization for doubled, tripled... pawns
+        extern int mobilityBonus[][Constants::QueenMaxMoves + 1];
+    }
 
-        static int pawnSquareValue[64];
-        static int knightSquareValue[64];
-        static int bishopSquareValue[64];
-        static int rookSquareValue[64];
-        static int queenSquareValue[64];
-        static int kingMiddleGame[64];
-		static int kingEndGame[64];
+    INLINE void Evaluation::updateScore(std::pair<int, int>& scores, int openingBonus, int endBonus)
+    {
+        scores.first += openingBonus;
+        scores.second += endBonus;
+    }
+    INLINE void Evaluation::updateScore(std::pair<int, int>& scores, int openingBonus)
+    {
+        scores.first += openingBonus;
+        scores.second += openingBonus;
+    }
 
-        static int multiPawnP[8]; // penalization for doubled, tripled... pawns
+    inline Score Evaluation::PieceSquareValue(Piece piece, Square square)
+    {
+        square = piece.Color == PieceColor::White ? square : Utils::Square::MirrorSquare(square);
 
-
-    };
-
+        return std::make_pair(PieceSquareTable[piece.Type][Opening][square], PieceSquareTable[piece.Type][EndGame][square]);
+    }
 }
 
 #endif // EVALUATION_H

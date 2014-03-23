@@ -8,6 +8,7 @@
 #include "zobrist.h"
 #include "uci.h"
 #include "pawn.h"
+#include "evaluation.h"
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -22,8 +23,6 @@ namespace Napoleon
     public:
         unsigned long FirstMoveCutoff;
         unsigned long TotalCutoffs;
-
-        //        int NumOfPieces[2][6]; // color, type
 
         BitBoard OccupiedSquares;
         BitBoard EmptySquares;
@@ -50,6 +49,7 @@ namespace Napoleon
         int See(Move) const;
 
         Piece PieceOnSquare(Square) const;
+        const Piece* PieceList() const;
 
         void MakeMove(Move);
         void UndoMove(Move);
@@ -77,10 +77,20 @@ namespace Napoleon
         void ToggleNullMove();
         bool IsCheck() const;
 
-        int PstValue(Color) const;
+        Score PstValue(Color) const;
+        int NumOfPieces(Color, Type) const;
+		int NumOfPieces(Type) const;
         int Material(Color) const;
+        int Material() const;
         int MaterialBalance(Color) const;
         int PawnsOnFile(Color, File) const;
+
+        GameStage Stage() const;
+        bool Opening() const;
+        bool MiddleGame() const;
+        bool EndGame() const;
+
+        int Phase() const;
 
         bool PosIsOk() const;
 
@@ -88,7 +98,6 @@ namespace Napoleon
         Move ParseMove(std::string) const;
 
     private:
-
         // used to restore previous board state after MakeMove()
         Byte castlingStatusHistory[Constants::MaxPly];
         Type capturedPieceHistory[Constants::MaxPly];
@@ -111,9 +120,14 @@ namespace Napoleon
         bool allowNullMove;
         bool isCheck;
 
+        int numOfPieces[2][6]; // color, type
         int pawnsOnFile[2][8]; // color, file
-        int pstValue[2]; // color
+
+        Score pstValue[2]; // color
         int material[2]; // color
+
+        template<Operation>
+        void updatePstvalue(Color, Score);
 
         void clearPieceSet();
         void updateGenericBitBoards();
@@ -125,6 +139,7 @@ namespace Napoleon
         void initializePieceSet(const FenString&);
         void makeCastle(Square, Square);
         void undoCastle(Square, Square);
+        Score calculatePST(Color) const;
     };
 
     INLINE BitBoard Board::PinnedPieces() const
@@ -135,7 +150,7 @@ namespace Napoleon
         BitBoard playerPieces = PlayerPieces();
         BitBoard b;
         BitBoard pinned = 0;
-        BitBoard pinners = ((bitBoardSet[enemy][PieceType::Rook] | bitBoardSet[enemy][PieceType::Queen] ) & MoveDatabase::PseudoRookAttacks[kingSq])
+        BitBoard pinners = ((bitBoardSet[enemy][PieceType::Rook] | bitBoardSet[enemy][PieceType::Queen]) & MoveDatabase::PseudoRookAttacks[kingSq])
                 | ((bitBoardSet[enemy][PieceType::Bishop] | bitBoardSet[enemy][PieceType::Queen]) & MoveDatabase::PseudoBishopAttacks[kingSq]);
 
         while (pinners)
@@ -143,7 +158,7 @@ namespace Napoleon
             int sq = Utils::BitBoard::BitScanForwardReset(pinners);
             b = MoveDatabase::ObstructedTable[sq][kingSq] & OccupiedSquares;
 
-            if ((b != 0) && ((b & (b-1))==0) && ((b & playerPieces) != 0))
+            if ((b != 0) && ((b & (b - 1)) == 0) && ((b & playerPieces) != 0))
             {
                 pinned |= b;
             }
@@ -167,7 +182,7 @@ namespace Napoleon
         }
 
         return (pinned == 0) || ((pinned & Constants::Masks::SquareMask[move.FromSquare()]) == 0)
-                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(),  kingSquare[sideToMove]);
+                || MoveDatabase::AreSquareAligned(move.FromSquare(), move.ToSquare(), kingSquare[sideToMove]);
     }
 
     INLINE BitBoard Board::KingAttackers(Square square, Byte color) const
@@ -175,7 +190,7 @@ namespace Napoleon
         Byte opp = Utils::Piece::GetOpposite(color);
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
                 | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square);
-        BitBoard rookAttacks =MoveDatabase::GetFileAttacks(OccupiedSquares, square)
+        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(OccupiedSquares, square)
                 | MoveDatabase::GetRankAttacks(OccupiedSquares, square);
 
         return (MoveDatabase::PawnAttacks[color][square] & bitBoardSet[opp][PieceType::Pawn])
@@ -188,7 +203,7 @@ namespace Napoleon
     {
         Byte opp = Utils::Piece::GetOpposite(color);
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(occ, square) | MoveDatabase::GetH1A8DiagonalAttacks(occ, square);
-        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(occ, square)| MoveDatabase::GetRankAttacks(occ, square);
+        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(occ, square) | MoveDatabase::GetRankAttacks(occ, square);
 
         return
                 (MoveDatabase::KingAttacks[square] & bitBoardSet[color][PieceType::King])
@@ -201,7 +216,7 @@ namespace Napoleon
     INLINE BitBoard Board::MovesTo(Square square, Color color, BitBoard occ) const
     {
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(occ, square) | MoveDatabase::GetH1A8DiagonalAttacks(occ, square);
-        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(occ, square)| MoveDatabase::GetRankAttacks(occ, square);
+        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(occ, square) | MoveDatabase::GetRankAttacks(occ, square);
 
         Square pawnSquare;
         BitBoard pawn = 0;
@@ -243,8 +258,8 @@ namespace Napoleon
                 (MoveDatabase::KingAttacks[square] & bitBoardSet[color][PieceType::King])
                 |
 
-                ( Constants::Masks::SquareMask[square] & Pieces(enemy) ?
-                      (MoveDatabase::PawnAttacks[enemy][square] & bitBoardSet[color][PieceType::Pawn])  : 0)
+                (Constants::Masks::SquareMask[square] & Pieces(enemy) ?
+                     (MoveDatabase::PawnAttacks[enemy][square] & bitBoardSet[color][PieceType::Pawn]) : 0)
 
             | (pawn)
 
@@ -253,7 +268,6 @@ namespace Napoleon
                     | (rookAttacks   & (bitBoardSet[color][PieceType::Rook] | bitBoardSet[color][PieceType::Queen]));
 
         }
-
 
         inline void Board::MakeNullMove()
         {
@@ -358,6 +372,11 @@ namespace Napoleon
         return pieceSet[square];
     }
 
+    inline const Piece* Board::PieceList() const
+    {
+        return pieceSet;
+    }
+
     inline bool Board::IsPromotingPawn() const
     {
         const BitBoard rank = (sideToMove == PieceColor::White ? Constants::Ranks::Seven : Constants::Ranks::Two);
@@ -384,14 +403,27 @@ namespace Napoleon
         return kingSquare[color];
     }
 
-    inline int Board::PstValue(Color color) const
+    inline Score Board::PstValue(Color color) const
     {
         return pstValue[color];
     }
 
+    inline int Board::NumOfPieces(Color color, Type type) const
+    {
+        return numOfPieces[color][type];
+    }
+	inline int Board::NumOfPieces(Type type) const
+	{
+		return numOfPieces[PieceColor::White][type] + numOfPieces[PieceColor::Black][type];
+	}
+
     inline int Board::Material(Color color) const
     {
         return material[color];
+    }
+    inline int Board::Material() const
+    {
+        return material[PieceColor::White] + material[PieceColor::Black];
     }
 
     inline int Board::MaterialBalance(Color color) const
@@ -401,13 +433,27 @@ namespace Napoleon
 
     inline std::pair<BitBoard, Type> Board::LeastValuableAttacker(Color color, BitBoard attackers) const
     {
-        for(Type type = PieceType::Pawn; type < PieceType::None; type++)
+        for (Type type = PieceType::Pawn; type < PieceType::None; type++)
         {
             BitBoard set = Pieces(color, type) & attackers;
             if (set)
                 return std::make_pair(set & -set, type);
         }
         return std::make_pair(Constants::Empty, PieceType::None);
+    }
+
+    template<>
+    inline void Board::updatePstvalue<Operation::Add>(Color color, Score values)
+    {
+        pstValue[color].first += values.first;
+        pstValue[color].second += values.second;
+    }
+
+    template<>
+    inline void Board::updatePstvalue<Operation::Sub>(Color color, Score values)
+    {
+        pstValue[color].first -= values.first;
+        pstValue[color].second -= values.second;
     }
 
     inline int Board::See(Move move) const
@@ -440,7 +486,7 @@ namespace Napoleon
 
         attackers = AttacksTo(to, side, occ) & occ;
 
-        while(attackers)
+        while (attackers)
         {
             gain[depth] = PieceValue[attackingPiece] - gain[depth - 1];
 
@@ -456,7 +502,7 @@ namespace Napoleon
 
         while (--depth)
         {
-            gain[depth-1] = -std::max(-gain[depth-1], gain[depth]);
+            gain[depth - 1] = -std::max(-gain[depth - 1], gain[depth]);
         }
 
         return gain[0];
@@ -467,13 +513,74 @@ namespace Napoleon
         if (halfMoveClock >= 4)
         {
             int start = SideToMove() == PieceColor::White ? 0 : 1;
-            for (int i = start; i<currentPly; i+=2)
+            for (int i = start; i < currentPly; i += 2)
             {
                 if (hashHistory[i] == zobrist)
                     return true;
             }
         }
         return false;
+    }
+
+    inline GameStage Board::Stage() const
+    {
+        if (Opening())
+            return GameStage::Opening;
+        if (MiddleGame())
+            return GameStage::MiddleGame;
+
+        return GameStage::EndGame;
+    }
+
+    inline bool Board::Opening() const
+    {
+        using namespace PieceColor;
+        return Material() > Constants::Eval::MiddleGameMat;
+    }
+    inline bool Board::MiddleGame() const
+    {
+        using namespace PieceColor;
+        return !Opening() && Material() > Constants::Eval::EndGameMat;
+    }
+    inline bool Board::EndGame() const
+    {
+        using namespace PieceColor;
+        return Material() <= Constants::Eval::EndGameMat;
+    }
+
+    inline int Board::Phase() const
+    {
+        using namespace PieceColor;
+		using namespace Constants::Piece;
+
+        const static int kingMaterial = PieceValue[King]*2;
+        int nonPawnMaterial = (Material() - NumOfPieces(Pawn)*PieceValue[Pawn] - kingMaterial);
+        int openingMaterial = (Constants::Eval::OpeningNonPawnMaterial -  kingMaterial);
+
+        int phase = (nonPawnMaterial*Constants::Eval::MaxPhase + openingMaterial/2) / openingMaterial;
+
+        return Constants::Eval::MaxPhase - phase; // (256-0) to (0-256)
+    }
+
+    inline Score Board::calculatePST(Color color) const
+    {
+        using namespace Constants::Squares;
+
+        Piece piece;
+        int pst[2][2] = {{0}};
+
+        for (Napoleon::Square sq = IntA1; sq <= IntH8; sq++)
+        {
+            piece = PieceOnSquare(sq);
+            if (piece.Type != PieceType::None)
+            {
+                Score scores = Evaluation::PieceSquareValue(piece, sq);
+                pst[piece.Color][0] += scores.first;
+                pst[piece.Color][1] += scores.second;
+            }
+        }
+
+        return std::make_pair(pst[color][0], pst[color][1]);
     }
 
     // used for debug
@@ -483,7 +590,7 @@ namespace Napoleon
         BitBoard enemyPieces = 0;
         Color enemy = Utils::Piece::GetOpposite(sideToMove);
 
-        for (int i=0; i<PieceType::None; i++)
+        for (int i = 0; i < PieceType::None; i++)
         {
             playerPieces |= bitBoardSet[sideToMove][i];
             enemyPieces |= bitBoardSet[enemy][i];
@@ -512,6 +619,21 @@ namespace Napoleon
 
         if (pieceSet[kingSquare[PieceColor::Black]].Color != PieceColor::Black)
             return false;
+
+//        if (pstValue[PieceColor::White] != CalculatePST(PieceColor::White))
+//            return false;
+
+//        if (pstValue[PieceColor::Black] != CalculatePST(PieceColor::Black))
+//            return false;
+
+        //for (Color c = PieceColor::White; c < PieceColor::None; c++)
+        //{
+        //    for (Type t = PieceType::Pawn; t < PieceType::None; t++)
+        //    {
+        //        if (NumOfPieces(c, t) != Utils::BitBoard::PopCount(Pieces(c, t)))
+        //            return false;
+        //    }
+        //}
 
         return true;
     }

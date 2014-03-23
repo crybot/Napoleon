@@ -22,6 +22,7 @@ namespace Napoleon
 
         Move First();
         Move Next();
+        void Reset();
         Move& operator[](int);
 
     private:
@@ -44,9 +45,18 @@ namespace Napoleon
             return Next();
     }
 
+    inline void MoveSelector::Reset()
+    {
+        first = -1;
+    }
+
     // make a selection sort on the move array for picking the best untried move
     inline Move MoveSelector::Next()
     {
+
+        if (first == -1)
+            return First();
+
         int max = first;
 
         if (max >= count)

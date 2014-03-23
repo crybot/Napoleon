@@ -15,6 +15,10 @@ namespace Napoleon
         return (GetEastAttacks(board.SideToMove(), pawns) | GetWestAttacks(board.SideToMove(), pawns)) & board.EnemyPieces();
     }
 
+	BitBoard Pawn::GetAnyAttack(BitBoard pawns, Color color, BitBoard squares)
+	{
+		return (GetEastAttacks(color, pawns) | GetWestAttacks(color, pawns)) & squares;
+	}
 
     BitBoard Pawn::GetPawnsAbleToSinglePush(Color color, BitBoard pawns, BitBoard empty)
     {

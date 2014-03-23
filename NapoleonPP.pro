@@ -54,4 +54,5 @@ HEADERS += \
     hashentry.h \
     uci.h \
     searchinfo.h \
-    moveselector.h
+    moveselector.h \
+    piecesquaretables.h

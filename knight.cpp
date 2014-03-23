@@ -12,6 +12,12 @@ namespace Napoleon
         return targets & ~board.PlayerPieces();
     }
 
+    BitBoard Knight::TargetsFrom(Square square, Color color, Board& board)
+    {
+        BitBoard targets = MoveDatabase::KnightAttacks[square];
+        return targets & ~board.Pieces(color);
+    }
+
     BitBoard Knight::GetKnightAttacks(BitBoard knights)
     {
         BitBoard west, east, attacks;

@@ -44,7 +44,6 @@ namespace Napoleon
             stream >> fullMove;
         }
 
-
         parsePiecePlacement(piecePlacement);
         parsesideToMove(sideToMove);
         parseCastling(castling);
@@ -55,8 +54,6 @@ namespace Napoleon
 
         if (!bestMove.empty())
             parseBestMove(bestMove);
-
-
     }
 
     void FenString::parsePiecePlacement(std::string field)

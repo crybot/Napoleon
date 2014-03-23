@@ -37,7 +37,8 @@ namespace Napoleon
 
         namespace Squares
         {
-            enum Square {
+            enum Square : Napoleon::Square
+            {
                 IntA1, IntB1, IntC1, IntD1, IntE1, IntF1, IntG1, IntH1,
                 IntA2, IntB2, IntC2, IntD2, IntE2, IntF2, IntG2, IntH2,
                 IntA3, IntB3, IntC3, IntD3, IntE3, IntF3, IntG3, IntH3,
@@ -197,19 +198,19 @@ namespace Napoleon
                 0x0040404040404000, 0x0080808080808000
             };
 
-//            const BitBoard RankMask[] =
-//            {
-//                0x000000000000007E, 0x0000000000007E00, 0x00000000007E0000,
-//                0x000000007E000000, 0x0000007E00000000, 0x00007E0000000000,
-//                0x007E000000000000, 0x7E00000000000000
-//            };
+            //            const BitBoard RankMask[] =
+            //            {
+            //                0x000000000000007E, 0x0000000000007E00, 0x00000000007E0000,
+            //                0x000000007E000000, 0x0000007E00000000, 0x00007E0000000000,
+            //                0x007E000000000000, 0x7E00000000000000
+            //            };
 
-//            const BitBoard FileMask[] =
-//            {
-//                0x101010101010101, 0x202020202020202, 0x404040404040404,
-//                0x808080808080808, 0x1010101010101010, 0x2020202020202020,
-//                0x4040404040404040, 0x8080808080808080
-//            };
+            const BitBoard FileMask[] =
+            {
+                0x101010101010101, 0x202020202020202, 0x404040404040404,
+                0x808080808080808, 0x1010101010101010, 0x2020202020202020,
+                0x4040404040404040, 0x8080808080808080
+            };
 
             const BitBoard A1H8DiagonalMask[] =
             {
@@ -251,15 +252,28 @@ namespace Napoleon
         namespace Piece
         {
             const Napoleon::Piece Null = Napoleon::Piece(PieceColor::None, PieceType::None);
-			const int PieceValue[] = { 100, 320, 330, 500, 1000, 2000, 99999 }; // Null-Piece = +Inf
+            const int PieceValue[] = { 100, 330, 330, 500, 1000, 2000, 99999 }; // Null-Piece = +Inf
         }
 
         namespace Eval
         {
+            using namespace Constants::Piece;
             // Side to move relative
-            const int OpeningGameMat = 6100;
-            const int MiddleGameMat = OpeningGameMat - 600;
-            const int EndGameMat = MiddleGameMat - 1500;
+            const int OpeningGameMat = PieceValue[PieceType::Pawn]*16
+                    + PieceValue[PieceType::Knight]*4
+                    + PieceValue[PieceType::Bishop]*4
+                    + PieceValue[PieceType::Rook]*4
+                    + PieceValue[PieceType::Queen]*2
+                    + PieceValue[PieceType::King]*2;
+
+            const int MiddleGameMat = OpeningGameMat - 1200;
+            const int EndGameMat = MiddleGameMat - 3000;
+
+            const int OpeningNonPawnMaterial = OpeningGameMat -  PieceValue[PieceType::Pawn]*16;
+
+            const int BishopPair[3] = { 30, 50, 50 };
+            const int MaxPhase = 256;
+//            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;
         }
 
         const std::string StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -287,9 +301,10 @@ namespace Napoleon
 
         const int Infinity = 200000;
         const int Unknown = 2*Infinity;
-		const int Mate = std::numeric_limits<short>::max();
+        const int Mate = std::numeric_limits<short>::max();
         const int MaxMoves = 192;
         const int MaxPly = 1024;
+        const int QueenMaxMoves = 27;
 
         const BitBoard DeBrujinValue = 0x07EDD5E59A4E28C2;
         const int DeBrujinTable[] =

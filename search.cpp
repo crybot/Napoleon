@@ -87,6 +87,8 @@ namespace Napoleon
             if (StopSignal)
                 break;
 
+            searchInfo.MaxPly = 0;
+
             searchInfo.ResetNodes();
 
             // aspiration search
@@ -166,7 +168,7 @@ namespace Napoleon
     }
 
     template<bool pv>
-    int Search::search(int depth, int alpha, int beta, int ply, Board& board)
+    int Search::search(int depth, int alpha, int beta, int ply, Board& board, Move excluded)
     {
         searchInfo.VisitNode();
 
@@ -176,6 +178,9 @@ namespace Napoleon
         int score;
         int legal = 0;
         Move best = Constants::NullMove;
+
+        if (ply > searchInfo.MaxPly)
+            searchInfo.MaxPly = ply;
 
         if (searchInfo.Nodes() % 10000 == 0) // every 10000 nodes visited we check for time expired
             if(searchInfo.TimeOver())
@@ -211,12 +216,11 @@ namespace Napoleon
         BitBoard pinned = board.PinnedPieces();
 
         // adaptive null move pruning
-        // we skip this inside PV nodes
         if(board.AllowNullMove()
                 //&& !pv
                 && depth >= 3
                 && !attackers
-                && board.Material(board.SideToMove()) > Constants::Eval::EndGameMat)
+                && !board.EndGame())
         {
             int R = depth > 6 ? 3 : 2; // dynamic depth-based reduction
 
@@ -229,24 +233,24 @@ namespace Napoleon
                 return beta;
         }
 
-        //        // internal iterative deepening (IID)
-        //        if (depth >= 5 && best.IsNull() && pv)
-        //        {
-        //            int R = 2;
+        // internal iterative deepening (IID)
+        if (depth >= 5 && best.IsNull() && pv)
+        {
+            int R = 3;
 
-        //            if (board.AllowNullMove())
-        //                board.ToggleNullMove();
+            if (board.AllowNullMove())
+                board.ToggleNullMove();
 
-        //            search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
+            search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
 
-        //            if (!board.AllowNullMove())
-        //                board.ToggleNullMove();
+            if (!board.AllowNullMove())
+                board.ToggleNullMove();
 
-        //            //Transposition table lookup
-        //            auto hashHit = board.Table.Probe(board.zobrist, depth, alpha, beta);
+            //Transposition table lookup
+            auto hashHit = board.Table.Probe(board.zobrist, depth, alpha, beta);
 
-        //            best = hashHit.second;
-        //        }
+            best = hashHit.second;
+        }
 
         if (board.IsRepetition())
             return 0;
@@ -308,13 +312,40 @@ namespace Napoleon
         bool pruned = false;
 
         int moveNumber = 0;
+        int newDepth = depth;
+
         for(auto move = moves.First(); !move.IsNull(); move = moves.Next())
         {
             if(board.IsMoveLegal(move, pinned))
             {
                 legal++;
-                capture = board.IsCapture(move);
 
+                int E = 0;
+
+                // singular extension (TO TEST)
+                //                if (move == excluded)
+                //                    continue;
+
+                //                if (pv
+                //                        && depth >= 8
+                //                        && excluded.IsNull()
+                //                        && !extension
+                //                        && !moves.hashMove.IsNull()
+                //                        && move == moves.hashMove)
+                //                {
+
+                //                    int value = search<false>(depth/2, alpha-1, alpha, ply, board, moves.hashMove);
+
+                //                    if (value < alpha)
+                //                    {
+                //                        extension = true;
+                //                        E = 1;
+                //                    }
+                //                }
+
+                newDepth = depth + E;
+
+                capture = board.IsCapture(move);
                 board.MakeMove(move);
 
                 // futility pruning application
@@ -332,16 +363,16 @@ namespace Napoleon
 
                 if (moveNumber == 0)
                 {
-                    score = -search<pv>(depth-1, -beta, -alpha, ply+1, board);
+                    score = -search<pv>(newDepth-1, -beta, -alpha, ply+1, board);
                 }
                 else
                 {
                     register int R = 0;
-                    register int N = depth >= 5 ? 4 : 2; // TO TEST
+                    register int N = newDepth >= 5 ? 4 : 2; // TO TEST
 
                     // late move reduction
                     if (moveNumber >= N
-                            && depth >= 3
+                            && newDepth >= 3
                             && !extension
                             && !capture
                             && !move.IsPromotion()
@@ -353,19 +384,24 @@ namespace Napoleon
                     {
                         R = 1;
 
-                        if (eval + board.MaterialBalance(Utils::Piece::GetOpposite(board.SideToMove())) + depth*250 <= alpha)
+                        if (eval + board.MaterialBalance(Utils::Piece::GetOpposite(board.SideToMove())) + newDepth*250 <= alpha)
                         {
                             R = 2;
                         }
                     }
 
-                    score = -search<false>(depth-1-R, -alpha-1, -alpha, ply+1, board);
+                    newDepth = depth - R;
+
+                    score = -search<false>(newDepth - 1, -alpha-1, -alpha, ply+1, board);
 
                     //                    if (score > alpha)
-                    //                        score = -search<false>(depth-1, -alpha-1, -alpha, ply+1, board);
+                    //                        score = -search<false>(newdepth-1, -alpha-1, -alpha, ply+1, board);
 
                     if (score > alpha)
-                        score = -search<true>(depth-1, -beta, -alpha, ply+1, board);
+                    {
+                        newDepth = depth;
+                        score = -search<true>(newDepth - 1, -beta, -alpha, ply+1, board);
+                    }
                 }
 
                 board.UndoMove(move);
@@ -379,12 +415,12 @@ namespace Napoleon
                     if(!board.IsCapture(move))
                     {
                         searchInfo.SetKillers(move, ply);
-                        searchInfo.SetHistory(move, board.SideToMove(), depth);
+                        searchInfo.SetHistory(move, board.SideToMove(), newDepth);
                     }
 
                     // for safety, we don't save forward pruned nodes inside transposition table
-                    if (!pruned)
-                        board.Table.Save(board.zobrist, depth, beta, best, ScoreType::Beta);
+                    if (!pruned && excluded.IsNull())
+                        board.Table.Save(board.zobrist, newDepth, beta, best, ScoreType::Beta);
 
                     return beta;   //  fail hard beta-cutoff
                 }
@@ -413,8 +449,8 @@ namespace Napoleon
             alpha = 0;
 
         // for safety, we don't save forward pruned nodes inside transposition table
-        if (!pruned)
-            board.Table.Save(board.zobrist, depth, alpha, best, bound);
+        if (!pruned && excluded.IsNull())
+            board.Table.Save(board.zobrist, newDepth, alpha, best, bound);
 
         return alpha;
     }
@@ -514,7 +550,7 @@ namespace Napoleon
         double delta = searchInfo.ElapsedTime() - lastTime;
         double nps = (delta > 0 ? searchInfo.Nodes() / delta : searchInfo.Nodes() / 1)*1000;
 
-        info << "depth " << depth;
+        info << "depth " << depth << " seldepth " << searchInfo.MaxPly;
 
         if (std::abs(score) >= Constants::Mate - Constants::MaxPly)
         {

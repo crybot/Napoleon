@@ -164,5 +164,8 @@
     <ClInclude Include="..\searchinfo.h">
       <Filter>File di intestazione</Filter>
     </ClInclude>
+    <ClInclude Include="piecesquaretables.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

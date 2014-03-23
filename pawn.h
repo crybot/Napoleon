@@ -12,6 +12,7 @@ namespace Napoleon
 
         static BitBoard GetAllTargets(BitBoard pawns, Board& board);
         INLINE static BitBoard GetAnyAttack(BitBoard pawns, Board& board);
+		static BitBoard GetAnyAttack(BitBoard pawns, Color color, BitBoard squares);
         static BitBoard GetQuietTargets(Color color, BitBoard pawns, BitBoard empty);
 
     private:
@@ -23,8 +24,6 @@ namespace Napoleon
         INLINE static BitBoard GetWestAttacks(Color color, BitBoard pawns);
 
     };
-
-
 
     INLINE BitBoard Pawn::GetQuietTargets(Color color, BitBoard pawns, BitBoard empty)
     {

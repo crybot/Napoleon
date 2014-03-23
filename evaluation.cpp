@@ -1,243 +1,135 @@
-#include "evaluation.h"
-#include "utils.h"
-#include "board.h"
+﻿#include "evaluation.h"
 #include "piece.h"
 #include "rook.h"
 #include "bishop.h"
+#include "knight.h"
+#include "queen.h"
+#include "board.h"
 
 namespace Napoleon
 {
-	int Evaluation::pawnSquareValue[64] =
-	{
-		0,  0,  0,  0,  0,  0,  0,  0,
-		5, 10, 15,-20,-20, 15, 10,  5,
-		5, -5,-10,  0, 0,-10, -5,  5,
-		0,  0,  0, 20, 21,  0,  0,  0,
-		5,  5, 10, 25, 25, 10,  5,  5,
-		10, 10, 20, 30, 30, 20, 10, 10,
-		50, 50, 50, 50, 50, 50, 50, 50,
-		0,  0,  0,  0,  0,  0,  0,  0
-	};
+    int Evaluation::multiPawnP[8] = { 0, 0, 22, 50, 100, 100, 100, 100 };
 
-	int Evaluation::knightSquareValue[64] =
-	{
-		-50,-20,-30,-30,-30,-30,-20,-50,
-		-40,-20,  0,  0,  0,  0,-20,-40,
-		-30,  0, 10, 15, 15, 10,  0,-30,
-		-30,  5, 15, 20, 20, 15,  5,-30,
-		-30,  0, 15, 20, 20, 15,  0,-30,
-		-30,  5, 10, 15, 15, 10,  5,-30,
-		-40,-20,  0,  5,  5,  0,-20,-40,
-		-50,-40,-30,-30,-30,-30,-40,-50,
-	};
+    int Evaluation::mobilityBonus[][Constants::QueenMaxMoves + 1] =
+    {
+        {}, // PAWNS
+        {-30, -16, -5, 1, 12, 18, 23, 26, 28}, // KNIGHTS
+        {-25, -15, 0, 10, 25, 37, 47, 57, 65, 70, 74, 76, 78, 80}, // BISHOPS
+        {-15, 0, 15, 30, 42, 52, 60, 68, 74, 80, 86, 91, 95, 99, 101}, // ROOKS
+        {-10, -9, -7, -5, -2, 1, 7, 10,
+         13, 16, 18, 20, 22, 24, 26, 28,
+         29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30}, // QUEENS
+        {}, // KING
+        {}, // NONE
+    };
+    
+    int Evaluation::Evaluate(Board& board)
+    {
+        using namespace PieceColor;
+        using namespace Constants::Squares;
+        using namespace Constants::Eval;
 
-	int Evaluation::bishopSquareValue[64] =
-	{
+        Score scores(0, 0);
+        Score wPstValues, bPstValues;
+        
+        // material evaluation
+        int material = board.MaterialBalance(White);
+        
+        // Piece Square Value evaluation
+        wPstValues = board.PstValue(White);
+        bPstValues = board.PstValue(Black);
+        
+        updateScore(scores, material + (wPstValues.first - bPstValues.first), material + (wPstValues.second - bPstValues.second));
+        
+        // premature queen development
+        if (!board.IsOnSquare(White, PieceType::Queen, IntD1))
+            updateScore(scores, 15, 0);
+        
+        if (!board.IsOnSquare(Black, PieceType::Queen, IntD8))
+            updateScore(scores, -15, 0);
+        
+        // tempo bonus
+        if (board.SideToMove() == White)
+            updateScore(scores, 5);
+        else
+            updateScore(scores, -5);
 
-		-20,-10,-10,-10,-10,-10,-10,-20,
-		-10,  5,  0,  0,  0,  0,  5,-10,
-		-10, 10, 10, 10, 10, 10, 10,-10,
-		-10,  0, 20, 10, 10, 20,  0,-10,
-		-10,  5,  5, 10, 10,  5,  5,-10,
-		-10,  0,  5, 10, 10,  5,  0,-10,
-		-10,  0,  0,  0,  0,  0,  0,-10,
-		-20,-10,-10,-10,-10,-10,-10,-20,
-	};
+        // bishop pair bonus
+        if (board.NumOfPieces(White, PieceType::Bishop) == 2)
+            updateScore(scores, BishopPair[Opening], BishopPair[EndGame]);
 
-	int Evaluation::rookSquareValue[64] =
-	{
-		0,  0,  0,  5,  5,  0,  0,  0,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		-5,  0,  0,  0,  0,  0,  0, -5,
-		5,  10, 20, 20, 20, 20, 10, 5,
-		0,   0,  0,  0,  0,  0,  0, 0
-	};
+        if (board.NumOfPieces(Black, PieceType::Bishop) == 2)
+            updateScore(scores, -BishopPair[Opening], -BishopPair[EndGame]);
 
-	int Evaluation::queenSquareValue[64] =
-	{
-		-20, -5, -5,  0,  0, -5, -5, -20,
-		-10,  0,  0,  0,  0,  0,  0, -10,
-		-5,   0,  5,  5,  5,  5,  0,  -5,
-		-5,   0,  5,  5,  5,  5,  0,  -5,
-		-5,   0,  5,  5,  5,  5,  0,  -5,
-		-5,   0,  0,  0,  0,  0,  0,  -5,
-		0,   5, 10, 10, 10, 10,  5,   0,
-		0,   0,  0,  0,  0,  0,  0,   0
-	};
+        
+        /* PAWN STRUCTURE */
+        
+        // doubled/tripled pawns evaluation
+        for (File f = 0; f<8; f++)
+        {
+            updateScore(scores, -multiPawnP[board.PawnsOnFile(White, f)]);
+            updateScore(scores, multiPawnP[board.PawnsOnFile(Black, f)]);
+        }
 
-	int Evaluation::kingMiddleGame[64] =
-	{
-		20, 30, 10,  0,  0, 10, 35, 20,
-		20, 10,  0,  0,  0,  0, 10, 20,
-		-10,-20,-20,-20,-20,-20,-20,-10,
-		-20,-30,-30,-40,-40,-30,-30,-20,
-		-30,-40,-40,-50,-50,-40,-40,-30,
-		-30,-40,-40,-50,-50,-40,-40,-30,
-		-30,-40,-40,-50,-50,-40,-40,-30,
-		-30,-40,-40,-50,-50,-40,-40,-30
-	};
+        // mobility evaluation
+        Piece piece;
+        auto pieceList = board.PieceList();
 
-	int Evaluation::kingEndGame[64] =
-	{
-		-50,-30,-30,-30,-30,-30,-30,-50
-		-30,-30,  0,  0,  0,  0,-30,-30,
-		-30,-10, 20, 30, 30, 20,-10,-30,
-		-30,-10, 30, 40, 40, 30,-10,-30,
-		-30,-10, 30, 40, 40, 30,-10,-30,
-		-30,-10, 20, 30, 30, 20,-10,-30,
-		-30,-20,-10,  0,  0,-10,-20,-30,
-		-50,-40,-30,-20,-20,-30,-40,-50
-	};
+        for (Napoleon::Square sq = IntA1; sq <= IntH8; sq++)
+        {
+            piece = pieceList[sq];
 
-	int Evaluation::multiPawnP[8] = { 0, 0, 22, 50, 100, 100, 100, 100 };
+            if (piece.Type != PieceType::None)
+            {
+                if (piece.Color == White)
+                    updateScore(scores, EvaluatePiece(piece, sq, board));
+                else
+                    updateScore(scores, -EvaluatePiece(piece, sq, board));
+            }
+        }
 
-	int Evaluation::Evaluate(Board & board)
-	{
-		using namespace Utils::BitBoard;
-		using namespace PieceColor;
-		using namespace Constants::Squares;
+        int opening = scores.first; // opening score
+        int endgame = scores.second; // endgame score
+        int phase = board.Phase(); // game phase (0-256)
 
-		int score = 0;
+        int score = ((opening * (Constants::Eval::MaxPhase - phase)) + (endgame * phase)) / Constants::Eval::MaxPhase; // linear-interpolated score
 
-		// material evaluation
-		int material = board.Material(White) - board.Material(Black);
+        return score * (1-(board.SideToMove()*2)); // score relative to side to move
+    }
+    
+    int Evaluation::EvaluatePiece(Piece piece, Square square, Board& board)
+    {
+        using namespace Utils::BitBoard;
+        using namespace Utils::Piece;
 
-		// Piece Square Value evaluation
-		int wPST = board.PstValue(White);
-		int bPST = board.PstValue(Black);
+        Color us = piece.Color;
+        Color enemy = GetOpposite(us);
+        BitBoard b = 0;
+        
+        switch(piece.Type)
+        {
+        case PieceType::Knight:
+            b = Knight::TargetsFrom(square, us, board) &
+                    ~Pawn::GetAnyAttack(board.Pieces(enemy, PieceType::Pawn), enemy, Constants::Universe); // exclude squares controlled by enemy pawns
+            break;
+            
+        case PieceType::Bishop:
+            b = Bishop::TargetsFrom(square, us, board);
+            break;
+            
+        case PieceType::Rook:
+            b = Rook::TargetsFrom(square, us, board);
+            break;
 
-		score += material + (wPST - bPST);
+        case PieceType::Queen:
+            b = Queen::TargetsFrom(square, us, board);
+            break;
+        }
 
-		// premature queen development
-		if (!board.IsOnSquare(White, PieceType::Queen, IntD1))
-			if (board.Material(White) > Constants::Eval::MiddleGameMat)
-				score -= 15;
+        int count = PopCount(b);
+        assert(count <= Constants::QueenMaxMoves);
 
-		if (!board.IsOnSquare(Black, PieceType::Queen, IntD8))
-			if (board.Material(Black) > Constants::Eval::MiddleGameMat)
-				score += 15;
-
-		// tempo bonus
-		if (board.SideToMove() == White)
-			score += 5;
-		else
-			score -= 5;
-
-		/* PAWN STRUCTURE */
-
-		// doubled/tripled pawns evaluation
-		for (File f = 0; f<8; f++)
-		{
-			score -= multiPawnP[board.PawnsOnFile(White, f)];
-			score += multiPawnP[board.PawnsOnFile(Black, f)];
-		}
-
-		// mobility evaluation
-		Piece piece;
-		for (Napoleon::Square sq = 0; sq<64; sq++)
-		{
-			piece = board.PieceOnSquare(sq);
-			if (piece.Type != PieceType::None)
-			{
-				if (piece.Color == White)
-					score += EvaluatePiece(piece, sq, board);
-				else
-					score -= EvaluatePiece(piece, sq, board);
-			}
-		}
-
-		// king safety
-
-		BitBoard occupiedSquares = board.OccupiedSquares;
-		BitBoard targets = Constants::Empty;
-		Color opposite = Utils::Piece::GetOpposite(board.SideToMove());
-
-		int kingSquare = board.KingSquare(board.SideToMove());
-
-		targets |= MoveDatabase::GetRankAttacks(occupiedSquares, kingSquare);
-		targets |= MoveDatabase::GetFileAttacks(occupiedSquares, kingSquare);
-		targets |= MoveDatabase::GetA1H8DiagonalAttacks(occupiedSquares, kingSquare);
-		targets |= MoveDatabase::GetH1A8DiagonalAttacks(occupiedSquares, kingSquare);
-
-		score -= Utils::BitBoard::PopCount(targets & ~board.Pieces(board.SideToMove()))/4;
-
-		targets = Constants::Empty;
-		kingSquare = board.KingSquare(Utils::Piece::GetOpposite(board.SideToMove()));
-
-		targets |= MoveDatabase::GetRankAttacks(occupiedSquares, kingSquare);
-		targets |= MoveDatabase::GetFileAttacks(occupiedSquares, kingSquare);
-		targets |= MoveDatabase::GetA1H8DiagonalAttacks(occupiedSquares, kingSquare);
-		targets |= MoveDatabase::GetH1A8DiagonalAttacks(occupiedSquares, kingSquare);
-
-		score += Utils::BitBoard::PopCount(targets & ~board.Pieces(opposite))/4;
-
-		return score * (1-(board.SideToMove()*2)); // score relative to side to move
-	}
-
-	int Evaluation::EvaluatePiece(Piece piece, Square square, Board& board)
-	{
-		using namespace Utils::BitBoard;
-		BitBoard b = 0;
-
-		switch(piece.Type)
-		{
-		case PieceType::Knight:
-			b = MoveDatabase::KnightAttacks[square] & ~board.Pieces(piece.Color);
-			return 0.3*PopCount(b);
-
-		case PieceType::Bishop:
-			b = (MoveDatabase::GetA1H8DiagonalAttacks(board.OccupiedSquares, square)
-				| MoveDatabase::GetH1A8DiagonalAttacks(board.OccupiedSquares, square))
-				& ~board.Pieces(piece.Color);
-
-			return 0.5*PopCount(b);
-
-		case PieceType::Rook:
-			b = (MoveDatabase::GetFileAttacks(board.OccupiedSquares, square)
-				| MoveDatabase::GetRankAttacks(board.OccupiedSquares, square))
-				& ~board.Pieces(piece.Color);
-
-			return 0.1*PopCount(b);
-
-		default:
-			return 0;
-		}
-	}
-
-	int Evaluation::CalculatePST(Piece piece, Square square, Board& board)
-	{
-		using namespace Utils::Square;
-		using namespace PieceColor;
-		using namespace Constants::Squares;
-
-		switch(piece.Type)
-		{
-		case PieceType::Pawn:
-			return piece.Color ==  White ? pawnSquareValue[square] : pawnSquareValue[GetSquareIndex(square % 8, 7 - (square/8))];
-
-		case PieceType::Knight:
-			return piece.Color == White ? knightSquareValue[square] : knightSquareValue[GetSquareIndex(square % 8, 7 - (square/8))];
-
-		case PieceType::Bishop:
-			return piece.Color == White ? bishopSquareValue[square] : bishopSquareValue[GetSquareIndex(square % 8, 7 - (square/8))];
-
-		case PieceType::Rook:
-			return piece.Color == White ? rookSquareValue[square] : rookSquareValue[GetSquareIndex(square % 8, 7 - (square/8))];
-
-		case PieceType::Queen:
-			return piece.Color == White ? queenSquareValue[square] : queenSquareValue[GetSquareIndex(square % 8, 7 - (square/8))];
-
-		case PieceType::King:
-			if (board.Material(piece.Color) > Constants::Eval::EndGameMat)
-				return piece.Color == White ? kingMiddleGame[square] : kingMiddleGame[GetSquareIndex(square % 8, 7 - (square/8))];
-			else
-				return piece.Color == White ? kingEndGame[square] : kingEndGame[GetSquareIndex(square % 8, 7 - (square/8))];
-		}
-
-		return 0;
-	}
-
+        return mobilityBonus[piece.Type][count];
+    }
+    
 }

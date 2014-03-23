@@ -18,6 +18,7 @@ namespace Napoleon
 			int GetFileIndex(int);
 			int GetRankIndex(int);
 			int GetSquareIndex(int, int);
+            int MirrorSquare(int);
 			int Parse(std::string);
 			std::string ToAlgebraic(Napoleon::Square);
 		}
@@ -158,6 +159,11 @@ namespace Napoleon
 		{
 			return file + 8 * rank;
 		}
+
+        inline int Square::MirrorSquare(int square)
+        {
+            return square ^ 56;
+        }
 
 		inline Color Piece::GetOpposite(Color color)
 		{

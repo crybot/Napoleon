@@ -10,7 +10,8 @@ namespace Napoleon
     class Rook
     {
     public:
-        static BitBoard GetAllTargets(BitBoard, Board& board);
+        static BitBoard GetAllTargets(BitBoard, Board&);
+        static BitBoard TargetsFrom(Square, Color, Board&);
 
     };
 
@@ -25,6 +26,17 @@ namespace Napoleon
         targets |= MoveDatabase::GetFileAttacks(occupiedSquares, square);
 
         return targets & ~board.PlayerPieces();
+    }
+
+    INLINE BitBoard Rook::TargetsFrom(Square square, Color color, Board& board)
+    {
+        BitBoard occupiedSquares = board.OccupiedSquares;
+        BitBoard targets = Constants::Empty;
+
+        targets |= MoveDatabase::GetRankAttacks(occupiedSquares, square);
+        targets |= MoveDatabase::GetFileAttacks(occupiedSquares, square);
+
+        return targets & ~board.Pieces(color);
     }
 }
 

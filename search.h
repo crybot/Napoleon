@@ -39,7 +39,7 @@ namespace Napoleon
         int searchRoot(int, int, int, Move&, Board&);
 
         template<bool>
-        int search(int, int, int, int, Board&);
+        int search(int, int, int, int, Board&, Move = Constants::NullMove);
         int quiescence(int, int, Board&);
 
         //        int futilityMargin(int);

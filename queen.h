@@ -8,11 +8,9 @@ namespace Napoleon
     class Queen
     {
     public:
-        static BitBoard GetAllTargets(BitBoard queens, Board& board);
+        static BitBoard GetAllTargets(BitBoard, Board&);
+        static BitBoard TargetsFrom(Square, Color, Board&);
     };
-
-
-
 }
 
 #endif // QUEEN_H

@@ -10,6 +10,7 @@ namespace Napoleon
     public:
         static BitBoard GetAllTargets(BitBoard, Board&);
         static BitBoard GetKnightAttacks(BitBoard);
+        static BitBoard TargetsFrom(Square, Color, Board&);
     };
 }
 

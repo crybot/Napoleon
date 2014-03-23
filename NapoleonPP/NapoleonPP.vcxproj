@@ -166,6 +166,7 @@
     <ClInclude Include="..\uci.h" />
     <ClInclude Include="..\utils.h" />
     <ClInclude Include="..\zobrist.h" />
+    <ClInclude Include="piecesquaretables.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

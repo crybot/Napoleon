@@ -25,6 +25,10 @@ namespace Napoleon
     typedef unsigned int Square;
     typedef unsigned int File;
     typedef unsigned int Rank;
+    typedef std::pair<int,int> Score;
+
+    enum GameStage { Opening = 0, MiddleGame = 1, EndGame = 2 };
+    enum Operation { Add, Sub };
 }
 
 #endif // DEFINES_H

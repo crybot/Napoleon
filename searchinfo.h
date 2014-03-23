@@ -35,11 +35,12 @@ namespace Napoleon
 
         double ElapsedTime();
 
+        int MaxPly;
+
     private:
         int depthLimit;
         int maxDepth;
         int nodes;
-        int maxPly;
         int history[2][64*64];
         int allocatedTime; // milliseconds
         Move killers[Constants::MaxPly][2];

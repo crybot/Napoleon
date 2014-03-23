@@ -6,6 +6,7 @@ namespace Napoleon
 {
     SearchInfo::SearchInfo(int time, int maxDepth, int nodes) :maxDepth(maxDepth), nodes(nodes)
     {
+        MaxPly = 0;
         allocatedTime = time;
         SetDepthLimit(100);
     }
