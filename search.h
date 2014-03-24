@@ -1,20 +1,13 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 #include "defines.h"
-#include "board.h"
 #include "move.h"
 #include "constants.h"
-#include "movegenerator.h"
-#include "constants.h"
-#include "stopwatch.h"
-#include "console.h"
 #include "searchinfo.h"
 #include <cstring>
 
 namespace Napoleon
 {
-    //    static const int rMargin[] = { 0, Constants::Piece::PieceValue[PieceType::Knight],  Constants::Piece::PieceValue[PieceType::Rook] };
-
     enum class SearchType
     {
         Infinite, TimePerGame, TimePerMove
@@ -42,18 +35,13 @@ namespace Napoleon
         int search(int, int, int, int, Board&, Move = Constants::NullMove);
         int quiescence(int, int, Board&);
 
-        //        int futilityMargin(int);
-        //        int razorMargin(int);
+        int razorMargin(int);
     }
 
-    //    inline int Search::futilityMargin(int depth)
-    //    {
-    //        return rMargin[depth];
-    //    }
-    //    inline int Search::razorMargin(int depth)
-    //    {
-    //        return (50 + 25*(depth-1));
-    //    }
+    inline int Search::razorMargin(int depth)
+    {
+        return (25*(depth-1) + 150);
+    }
 }
 
 #endif // SEARCH_H

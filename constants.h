@@ -272,6 +272,10 @@ namespace Napoleon
             const int OpeningNonPawnMaterial = OpeningGameMat -  PieceValue[PieceType::Pawn]*16;
 
             const int BishopPair[3] = { 30, 50, 50 };
+            const int PawnBonus[3] = { 0, 10, 30 };
+            const int KnightBonus[3] = { 3, -5, -12 };
+            const int RookBonus[3] = { 0, 5, 15 };
+
             const int MaxPhase = 256;
 //            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;
         }

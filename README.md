@@ -1,11 +1,12 @@
-NapoleonPP
+Napoleon
 ==========
 
 Cross-platform/cross-compiler chess engine written in C++.
 
 More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
-Current Version: 1.4.0
+Current Version: 1.5.0
+
 Features:
 - Cross platform (Windows, Unix, Mac)
 - Cross compiler (GCC, Clang, Visual C++, others)
@@ -29,7 +30,7 @@ Features:
 - Killer moves heuristic
 - History moves heuristic
 - Enhanced selective move ordering
-- Limited razoring
+- Enhanced razoring
 - Extended futility pruning
 - Adaptive null move pruning
 - Adaptive Late move reduction

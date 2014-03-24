@@ -9,6 +9,7 @@
 namespace Napoleon
 {
     int Evaluation::multiPawnP[8] = { 0, 0, 22, 50, 100, 100, 100, 100 };
+    int Evaluation::isolatedPawnP[8] = { 5, 8, 12, 17, 17, 12, 8, 5 };
 
     int Evaluation::mobilityBonus[][Constants::QueenMaxMoves + 1] =
     {
@@ -41,6 +42,23 @@ namespace Napoleon
         
         updateScore(scores, material + (wPstValues.first - bPstValues.first), material + (wPstValues.second - bPstValues.second));
         
+        /* PHASE-DEPENDENT piece bonus*/
+        int wPawns = board.NumOfPieces(White, Pawn);
+        int bPawns = board.NumOfPieces(Black, Pawn);
+        updateScore(scores, PawnBonus[Opening]*wPawns, PawnBonus[EndGame]*wPawns);
+        updateScore(scores, -PawnBonus[Opening]*bPawns, -PawnBonus[EndGame]*bPawns);
+
+        int wKnights = board.NumOfPieces(White, Knight);
+        int bKnights = board.NumOfPieces(Black, Knight);
+        updateScore(scores, KnightBonus[Opening]*wKnights, KnightBonus[EndGame]*wKnights);
+        updateScore(scores, -KnightBonus[Opening]*bKnights, -KnightBonus[EndGame]*bKnights);
+
+        int wRooks = board.NumOfPieces(White, Rook);
+        int bRooks = board.NumOfPieces(Black, Rook);
+        updateScore(scores, RookBonus[Opening]*wRooks, RookBonus[EndGame]*wRooks);
+        updateScore(scores, -RookBonus[Opening]*bRooks, -RookBonus[EndGame]*bRooks);
+
+
         // premature queen development
         if (!board.IsOnSquare(White, PieceType::Queen, IntD1))
             updateScore(scores, 15, 0);
@@ -62,13 +80,39 @@ namespace Napoleon
             updateScore(scores, -BishopPair[Opening], -BishopPair[EndGame]);
 
         
-        /* PAWN STRUCTURE */
-        
-        // doubled/tripled pawns evaluation
+        /* PAWN STRUCTURE */    
+        // doubled/isolated pawns evaluation
+
+        int pawnsOnLeftFile[2] = {0};
+        int pawnsOnFile[2] = {0};
+
         for (File f = 0; f<8; f++)
         {
-            updateScore(scores, -multiPawnP[board.PawnsOnFile(White, f)]);
-            updateScore(scores, multiPawnP[board.PawnsOnFile(Black, f)]);
+            pawnsOnFile[White] = board.PawnsOnFile(White, f);
+            pawnsOnFile[Black] = board.PawnsOnFile(Black, f);
+
+            if (f < 7)
+            {
+                if (board.PawnsOnFile(White, f+1) == 0 && pawnsOnLeftFile[White] == 0)
+                    updateScore(scores, -isolatedPawnP[f]);
+
+                if (board.PawnsOnFile(Black, f+1) == 0 && pawnsOnLeftFile[Black] == 0)
+                    updateScore(scores, isolatedPawnP[f]);
+            }
+            else
+            {
+                if (pawnsOnLeftFile[White] == 0)
+                    updateScore(scores, -isolatedPawnP[f]);
+
+                if (pawnsOnLeftFile[Black] == 0)
+                    updateScore(scores, isolatedPawnP[f]);
+            }
+
+            pawnsOnLeftFile[White] = pawnsOnFile[White];
+            pawnsOnLeftFile[Black] = pawnsOnFile[Black];
+
+            updateScore(scores, -multiPawnP[pawnsOnFile[White]]);
+            updateScore(scores, multiPawnP[pawnsOnFile[Black]]);
         }
 
         // mobility evaluation

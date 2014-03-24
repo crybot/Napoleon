@@ -18,6 +18,7 @@ namespace Napoleon
         inline void updateScore(Score&, int);
 
         extern int multiPawnP[8]; // penalization for doubled, tripled... pawns
+        extern int isolatedPawnP[8];
         extern int mobilityBonus[][Constants::QueenMaxMoves + 1];
     }
 

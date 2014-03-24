@@ -116,6 +116,10 @@ namespace Napoleon
             {
                 board.Display();
             }
+            else if (cmd == "eval")
+            {
+                std::cout << Evaluation::Evaluate(board) << std::endl;
+            }
             else if (cmd == "go")
             {
                 if (Search::StopSignal)
