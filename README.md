@@ -7,6 +7,8 @@ More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
 Current Version: 1.5.0
 
+The use of the book "MiniGames by Fauzi.abk" by Fauzi Dabat is recommended
+
 Features:
 - Cross platform (Windows, Unix, Mac)
 - Cross compiler (GCC, Clang, Visual C++, others)
