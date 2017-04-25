@@ -5,9 +5,9 @@ Cross-platform/cross-compiler chess engine written in C++.
 
 More info: http://sdrv.ms/14KHXQV (ITALIAN)
 
-Current Version: 1.5.0
+Current Version: 1.7.0
 
-The use of the book "MiniGames by Fauzi.abk" by Fauzi Dabat is recommended
+The use of the book "Fauzi Aggressive 2.5" by Fauzi Dabat is recommended
 
 Features:
 - Cross platform (Windows, Unix, Mac)
@@ -20,7 +20,7 @@ Features:
 - Object-oriented code
 - Enhanced readability
 - Well commented
-- Alpha beta search
+- Parallel Alpha beta search
 - Principal variation search
 - Iterative deepening (ID)
 - Internal iterative deepening (IID)
