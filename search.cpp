@@ -91,7 +91,7 @@ namespace Napoleon
     {
         //std::cout << "CORES: " << std::thread::hardware_concurrency() << std::endl;
         parallelInfo.SetReady(false);
-        for (int i=1; i<4; i++)
+        for (int i=1; i<cores; i++)
         {
             threads.push_back(std::async(std::launch::async, parallelSearch));
         }
@@ -159,7 +159,7 @@ namespace Napoleon
             searchInfo.MaxPly = 0;
             searchInfo.ResetNodes();
 
-            if (searchInfo.MaxDepth() > 5)
+            if (searchInfo.MaxDepth() > 5 && cores > 1)
                 signalThreads(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, board, true);
 
             // aspiration search
