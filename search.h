@@ -4,7 +4,12 @@
 #include "move.h"
 #include "constants.h"
 #include "searchinfo.h"
+#include "parallelinfo.h"
 #include <cstring>
+#include <condition_variable>
+#include <vector>
+#include <thread>
+#include <future>
 
 namespace Napoleon
 {
@@ -14,14 +19,25 @@ namespace Napoleon
     };
 
     class Board;
+    class TranspositionTable;
     namespace Search
     {
         extern const int AspirationValue;
         extern bool StopSignal;
         extern int MoveTime;
         extern int GameTime[2]; // by color
-        extern SearchInfo searchInfo;
-        extern bool sendOutput;
+        extern thread_local SearchInfo searchInfo;
+        extern thread_local bool sendOutput;
+        extern TranspositionTable Table;
+        extern std::condition_variable parallel;
+        extern ParallelInfo parallelInfo;
+        extern std::vector<std::future<void>> threads;
+        extern int depth_limit;
+        extern int cores;
+
+        void InitializeThreads();
+        void signalThreads(int, int, int, const Board&, bool);
+        void parallelSearch();
 
         std::string GetInfo(Board&, Move, int, int, int);
         std::string GetPv(Board&, Move, int);

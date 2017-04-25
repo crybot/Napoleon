@@ -9,27 +9,42 @@
 #include <cstdio>
 #include <sstream>
 #include <algorithm>
+#include <functional>
+#include <random>
+
+//TODO templatize random generator
 
 namespace Napoleon
 {
     const int Search::AspirationValue = 50;
-    bool Search::StopSignal = true;
+    bool Search::StopSignal = true; //USE std::atomic<bool> instead
     int Search::GameTime[2];
     int Search::MoveTime;
-    bool Search::sendOutput;
+    TranspositionTable Search::Table;
 
-    SearchInfo Search::searchInfo;
+    static std::thread::id main_thread_id;
+    thread_local bool Search::sendOutput = false;
+    thread_local SearchInfo Search::searchInfo;
+    std::vector<std::future<void>> Search::threads;
+    ParallelInfo Search::parallelInfo;
+    std::condition_variable Search::parallel;
+    std::mutex mux;
+
+    int Search::depth_limit = 100;
+    int Search::cores = 4;
 
     // direct interface to the client.
     // it sends the move to the uci gui
     Move Search::StartThinking(SearchType type, Board& board, bool verbose, bool san)
     {
+        main_thread_id = std::this_thread::get_id();
         // NEED to test if it's better to clear the transposition table every time a new search starts.
-        // empirical data suggests that it is better.
-        board.Table.Clear();
+        // empirical data suggest that it is better.
+        Table.Clear();
 
         sendOutput = verbose;
         StopSignal = false;
+        searchInfo.SetDepthLimit(depth_limit);
 
         if (type == SearchType::Infinite)
         {
@@ -69,6 +84,60 @@ namespace Napoleon
     void Search::StopThinking()
     {
         StopSignal = true;
+        parallelInfo.SetReady(false);
+    }
+
+    void Search::InitializeThreads()
+    {
+        //std::cout << "CORES: " << std::thread::hardware_concurrency() << std::endl;
+        parallelInfo.SetReady(false);
+        for (int i=1; i<4; i++)
+        {
+            threads.push_back(std::async(std::launch::async, parallelSearch));
+        }
+    }
+
+    void Search::signalThreads(int depth, int alpha, int beta, const Board& board, bool ready)
+    {
+        std::unique_lock<std::mutex> lock(mux);
+        parallelInfo.UpdateInfo(depth, alpha, beta, board, ready);
+        lock.unlock();
+        parallel.notify_all();
+    }
+
+    void Search::parallelSearch()
+    {
+        std::default_random_engine eng;
+        std::uniform_int_distribution<int> score_dist(0, 25); // to tune
+        std::uniform_int_distribution<int> depth_dist(0, 0); // to tune
+
+        /* thread local information */
+        sendOutput = false;
+        searchInfo.NewSearch();
+
+        Move* move = new Move();
+        Board* board = new Board();
+        while(true)
+        {
+            std::unique_lock<std::mutex> lock(mux);
+            parallel.wait(lock, []{return parallelInfo.Ready();});
+            auto info = parallelInfo;
+            lock.unlock();
+
+            //int rand_depth = depth_dist(eng);
+            int rand_window = score_dist(eng);
+            auto fen = info.Position().GetFen();
+            if(board->GetFen() != fen)
+            {
+                searchInfo.NewSearch();
+                *board = info.Position();
+            }
+
+            searchRoot(info.Depth(), 
+                    info.Alpha() - rand_window, info.Beta() + rand_window, 
+                    std::ref(*move), std::ref(*board));
+
+        }
     }
 
     // iterative deepening
@@ -88,8 +157,10 @@ namespace Napoleon
                 break;
 
             searchInfo.MaxPly = 0;
-
             searchInfo.ResetNodes();
+
+            if (searchInfo.MaxDepth() > 5)
+                signalThreads(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, board, true);
 
             // aspiration search
             temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, score + AspirationValue, move, board);
@@ -168,297 +239,297 @@ namespace Napoleon
     }
 
     template<bool pv>
-    int Search::search(int depth, int alpha, int beta, int ply, Board& board, Move excluded)
-    {
-        searchInfo.VisitNode();
-
-        ScoreType bound = ScoreType::Alpha;
-        bool futility = false;
-        bool extension = false;
-        int score;
-        int legal = 0;
-        Move best = Constants::NullMove;
-
-        if (ply > searchInfo.MaxPly)
-            searchInfo.MaxPly = ply;
-
-        if (searchInfo.Nodes() % 10000 == 0) // every 10000 nodes visited we check for time expired
-            if (searchInfo.TimeOver())
-                StopSignal = true;
-
-        if (StopSignal)
-            return alpha;
-
-        // Mate distance pruning
-        alpha = std::max(alpha, -Constants::Mate + ply);
-        beta = std::min(beta, Constants::Mate - ply - 1);
-        if (alpha >= beta)
-            return alpha;
-
-        // Transposition table lookup
-        auto hashHit = board.Table.Probe(board.zobrist, depth, alpha, beta);
-
-        if ((score = hashHit.first) != TranspositionTable::Unknown)
-            return score;
-        best = hashHit.second;
-
-        BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove());
-        if (attackers)
+        int Search::search(int depth, int alpha, int beta, int ply, Board& board, Move excluded)
         {
-            extension = true;
-            ++depth;
-        }
+            searchInfo.VisitNode();
 
-        // call to quiescence search
-        if (depth == 0)
-            return quiescence(alpha, beta, board);
+            ScoreType bound = ScoreType::Alpha;
+            bool futility = false;
+            bool extension = false;
+            int score;
+            int legal = 0;
+            Move best = Constants::NullMove;
 
-        BitBoard pinned = board.PinnedPieces();
+            if (ply > searchInfo.MaxPly)
+                searchInfo.MaxPly = ply;
 
-        // adaptive null move pruning
-        if (board.AllowNullMove()
-                //&& !pv
-                && depth >= 3
-                && !attackers
-                && !board.EndGame())
-        {
-            int R = depth > 6 ? 3 : 2; // dynamic depth-based reduction
+            if (searchInfo.Nodes() % 10000 == 0 && sendOutput) // every 10000 nodes visited we check for time expired
+                if (searchInfo.TimeOver())
+                    StopSignal = true;
 
-            // cut node
-            board.MakeNullMove();
-            score = -search<false>(depth - R - 1, -beta, -beta + 1, ply, board); // make a null-window search (we don't care by how much it fails high, if it does)
-            board.UndoNullMove();
-
-            if (score >= beta)
-                return beta;
-        }
-
-        // internal iterative deepening (IID)
-        if (depth >= 5 && best.IsNull() && pv)
-        {
-            int R = 3;
-
-            if (board.AllowNullMove())
-                board.ToggleNullMove();
-
-            search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
-
-            if (!board.AllowNullMove())
-                board.ToggleNullMove();
-
-            //Transposition table lookup
-            auto hashHit = board.Table.Probe(board.zobrist, depth, alpha, beta);
-
-            best = hashHit.second;
-        }
-
-        if (board.IsRepetition())
-            return 0;
-
-        int eval = Evaluation::Evaluate(board);
-
-        // enhanced razoring
-        if (!attackers
-                && !pv
-                && depth <= 3
-                && !extension
-                && eval + razorMargin(depth) <= alpha // likely to be a fail low node
-                )
-        {
-            int res = quiescence(alpha - razorMargin(depth), beta - razorMargin(depth), board);
-            if (res + razorMargin(depth) <= alpha)
-                depth--;
-
-            if (depth <= 0)
+            if (StopSignal)
                 return alpha;
-        }
 
-        // extended futility pruning condition
-        if (!attackers
-                //                && !pv
-                && depth == 2
-                && !extension
-                && std::abs(alpha) < Constants::Mate - Constants::MaxPly
-                && std::abs(beta) < Constants::Mate - Constants::MaxPly
-                && eval + 500 <= alpha       // NEED to test other values
-                )
-        {
-            futility = true;
-        }
+            // Mate distance pruning
+            alpha = std::max(alpha, -Constants::Mate + ply);
+            beta = std::min(beta, Constants::Mate - ply - 1);
+            if (alpha >= beta)
+                return alpha;
 
-        // normal futility pruning condition
-        if (!attackers
-                //                && !pv
-                && depth == 1
-                && std::abs(alpha) < Constants::Mate - Constants::MaxPly
-                && std::abs(beta) < Constants::Mate - Constants::MaxPly
-                && eval + 250 <= alpha       // NEED to test other values
-                )
-        {
-            futility = true;
-        }
+            // Transposition table lookup
+            auto hashHit = Table.Probe(board.zobrist, depth, alpha, beta);
 
+            if ((score = hashHit.first) != TranspositionTable::Unknown)
+                return score;
+            best = hashHit.second;
 
-        MoveSelector moves(board, searchInfo);
-
-        if (moves.count == 1) // forced move extension
-        {
-            extension = true;
-            ++depth;
-        }
-
-        MoveGenerator::GetPseudoLegalMoves<false>(moves.moves, moves.count, attackers, board); // get captures and non-captures
-
-        moves.Sort<false>(ply);
-        moves.hashMove = best;
-
-        // principal variation search
-        bool capture;
-        bool pruned = false;
-
-        int moveNumber = 0;
-        int newDepth = depth;
-
-        for (auto move = moves.First(); !move.IsNull(); move = moves.Next())
-        {
-            if (board.IsMoveLegal(move, pinned))
+            BitBoard attackers = board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove());
+            if (attackers)
             {
-                legal++;
+                extension = true;
+                ++depth;
+            }
 
-                int E = 0;
+            // call to quiescence search
+            if (depth == 0)
+                return quiescence(alpha, beta, board);
 
-                // singular extension (TO TEST)
-                //                if (move == excluded)
-                //                    continue;
+            BitBoard pinned = board.PinnedPieces();
 
-                //                if (pv
-                //                        && depth >= 8
-                //                        && excluded.IsNull()
-                //                        && !extension
-                //                        && !moves.hashMove.IsNull()
-                //                        && move == moves.hashMove)
-                //                {
+            // adaptive null move pruning
+            if (board.AllowNullMove()
+                    //&& !pv
+                    && depth >= 3
+                    && !attackers
+                    && !board.EndGame())
+            {
+                int R = depth > 6 ? 3 : 2; // dynamic depth-based reduction
 
-                //                    int value = search<false>(depth/2, alpha-1, alpha, ply, board, moves.hashMove);
+                // cut node
+                board.MakeNullMove();
+                score = -search<false>(depth - R - 1, -beta, -beta + 1, ply, board); // make a null-window search (we don't care by how much it fails high, if it does)
+                board.UndoNullMove();
 
-                //                    if (value < alpha)
-                //                    {
-                //                        extension = true;
-                //                        E = 1;
-                //                    }
-                //                }
+                if (score >= beta)
+                    return beta;
+            }
 
-                newDepth = depth + E;
+            // internal iterative deepening (IID)
+            if (depth >= 5 && best.IsNull() && pv)
+            {
+                int R = 3;
 
-                capture = board.IsCapture(move);
-                board.MakeMove(move);
+                if (board.AllowNullMove())
+                    board.ToggleNullMove();
 
-                // futility pruning application
-                if (futility
-                        && moveNumber > 0
-                        && !capture
-                        && !move.IsPromotion()
-                        && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
-                        )
+                search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
+
+                if (!board.AllowNullMove())
+                    board.ToggleNullMove();
+
+                //Transposition table lookup
+                auto hashHit = Table.Probe(board.zobrist, depth, alpha, beta);
+
+                best = hashHit.second;
+            }
+
+            if (board.IsRepetition())
+                return 0;
+
+            int eval = Evaluation::Evaluate(board);
+
+            // enhanced razoring
+            if (!attackers
+                    && !pv
+                    && depth <= 3
+                    && !extension
+                    && eval + razorMargin(depth) <= alpha // likely to be a fail low node
+               )
+            {
+                int res = quiescence(alpha - razorMargin(depth), beta - razorMargin(depth), board);
+                if (res + razorMargin(depth) <= alpha)
+                    depth--;
+
+                if (depth <= 0)
+                    return alpha;
+            }
+
+            // extended futility pruning condition
+            if (!attackers
+                    //                && !pv
+                    && depth == 2
+                    && !extension
+                    && std::abs(alpha) < Constants::Mate - Constants::MaxPly
+                    && std::abs(beta) < Constants::Mate - Constants::MaxPly
+                    && eval + 500 <= alpha       // NEED to test other values
+               )
+            {
+                futility = true;
+            }
+
+            // normal futility pruning condition
+            if (!attackers
+                    //                && !pv
+                    && depth == 1
+                    && std::abs(alpha) < Constants::Mate - Constants::MaxPly
+                    && std::abs(beta) < Constants::Mate - Constants::MaxPly
+                    && eval + 250 <= alpha       // NEED to test other values
+               )
+            {
+                futility = true;
+            }
+
+
+            MoveSelector moves(board, searchInfo);
+
+            if (moves.count == 1) // forced move extension
+            {
+                extension = true;
+                ++depth;
+            }
+
+            MoveGenerator::GetPseudoLegalMoves<false>(moves.moves, moves.count, attackers, board); // get captures and non-captures
+
+            moves.Sort<false>(ply);
+            moves.hashMove = best;
+
+            // principal variation search
+            bool capture;
+            bool pruned = false;
+
+            int moveNumber = 0;
+            int newDepth = depth;
+
+            for (auto move = moves.First(); !move.IsNull(); move = moves.Next())
+            {
+                if (board.IsMoveLegal(move, pinned))
                 {
-                    pruned = true;
-                    board.UndoMove(move);
-                    continue;
-                }
+                    legal++;
 
-                if (moveNumber == 0)
-                {
-                    score = -search<pv>(newDepth - 1, -beta, -alpha, ply + 1, board);
-                }
-                else
-                {
-                    register int R = 0;
-                    register int N = newDepth >= 5 ? 4 : 2; // TO TEST
+                    int E = 0;
 
-                    // late move reduction
-                    if (moveNumber >= N
-                            && newDepth >= 3
-                            && !extension
+                    // singular extension (TO TEST)
+                    //                if (move == excluded)
+                    //                    continue;
+
+                    //                if (pv
+                    //                        && depth >= 8
+                    //                        && excluded.IsNull()
+                    //                        && !extension
+                    //                        && !moves.hashMove.IsNull()
+                    //                        && move == moves.hashMove)
+                    //                {
+
+                    //                    int value = search<false>(depth/2, alpha-1, alpha, ply, board, moves.hashMove);
+
+                    //                    if (value < alpha)
+                    //                    {
+                    //                        extension = true;
+                    //                        E = 1;
+                    //                    }
+                    //                }
+
+                    newDepth = depth + E;
+
+                    capture = board.IsCapture(move);
+                    board.MakeMove(move);
+
+                    // futility pruning application
+                    if (futility
+                            && moveNumber > 0
                             && !capture
                             && !move.IsPromotion()
-                            && !attackers
-                            && move != searchInfo.FirstKiller(ply)
-                            && move != searchInfo.SecondKiller(ply)
                             && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
-                            )
+                       )
                     {
-                        R = 1;
+                        pruned = true;
+                        board.UndoMove(move);
+                        continue;
+                    }
 
-                        if (eval + board.MaterialBalance(Utils::Piece::GetOpposite(board.SideToMove())) + newDepth * 250 <= alpha)
+                    if (moveNumber == 0)
+                    {
+                        score = -search<pv>(newDepth - 1, -beta, -alpha, ply + 1, board);
+                    }
+                    else
+                    {
+                        register int R = 0;
+                        register int N = newDepth >= 5 ? 4 : 2; // TO TEST
+
+                        // late move reduction
+                        if (moveNumber >= N
+                                && newDepth >= 3
+                                && !extension
+                                && !capture
+                                && !move.IsPromotion()
+                                && !attackers
+                                && move != searchInfo.FirstKiller(ply)
+                                && move != searchInfo.SecondKiller(ply)
+                                && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
+                           )
                         {
-                            R = 2;
+                            R = 1;
+
+                            if (eval + board.MaterialBalance(Utils::Piece::GetOpposite(board.SideToMove())) + newDepth * 250 <= alpha)
+                            {
+                                R = 2;
+                            }
+                        }
+
+                        newDepth = depth - R;
+
+                        score = -search<false>(newDepth - 1, -alpha - 1, -alpha, ply + 1, board);
+
+                        //                    if (score > alpha)
+                        //                        score = -search<false>(newdepth-1, -alpha-1, -alpha, ply+1, board);
+
+                        if (score > alpha)
+                        {
+                            newDepth = depth;
+                            score = -search<true>(newDepth - 1, -beta, -alpha, ply + 1, board);
                         }
                     }
 
-                    newDepth = depth - R;
+                    board.UndoMove(move);
 
-                    score = -search<false>(newDepth - 1, -alpha - 1, -alpha, ply + 1, board);
+                    if (score >= beta)
+                    {
+                        if (move == best) // we don't want to save our hash move also as a killer move
+                            return beta;
 
-                    //                    if (score > alpha)
-                    //                        score = -search<false>(newdepth-1, -alpha-1, -alpha, ply+1, board);
+                        //killer moves and history heuristic
+                        if (!board.IsCapture(move))
+                        {
+                            searchInfo.SetKillers(move, ply);
+                            searchInfo.SetHistory(move, board.SideToMove(), newDepth);
+                        }
 
+                        // for safety, we don't save forward pruned nodes inside transposition table
+                        if (!pruned && excluded.IsNull())
+                            Table.Save(board.zobrist, newDepth, beta, best, ScoreType::Beta);
+
+                        return beta;   //  fail hard beta-cutoff
+                    }
                     if (score > alpha)
                     {
-                        newDepth = depth;
-                        score = -search<true>(newDepth - 1, -beta, -alpha, ply + 1, board);
-                    }
-                }
-
-                board.UndoMove(move);
-
-                if (score >= beta)
-                {
-                    if (move == best) // we don't want to save our hash move also as a killer move
-                        return beta;
-
-                    //killer moves and history heuristic
-                    if (!board.IsCapture(move))
-                    {
-                        searchInfo.SetKillers(move, ply);
-                        searchInfo.SetHistory(move, board.SideToMove(), newDepth);
+                        bound = ScoreType::Exact;
+                        alpha = score; // alpha acts like max in MiniMax
+                        best = move;
                     }
 
-                    // for safety, we don't save forward pruned nodes inside transposition table
-                    if (!pruned && excluded.IsNull())
-                        board.Table.Save(board.zobrist, newDepth, beta, best, ScoreType::Beta);
-
-                    return beta;   //  fail hard beta-cutoff
+                    moveNumber++;
                 }
-                if (score > alpha)
-                {
-                    bound = ScoreType::Exact;
-                    alpha = score; // alpha acts like max in MiniMax
-                    best = move;
-                }
-
-                moveNumber++;
             }
+
+            // check for stalemate and checkmate
+            if (legal == 0)
+            {
+                if (board.IsCheck())
+                    alpha = -Constants::Mate + ply; // return best score for the deepest mate
+                else
+                    alpha = 0; // return draw score (TODO contempt factor)
+            }
+
+            // check for fifty moves rule
+            if (board.HalfMoveClock() >= 100)
+                alpha = 0;
+
+            // for safety, we don't save forward pruned nodes inside transposition table
+            if (!pruned && excluded.IsNull())
+                Table.Save(board.zobrist, newDepth, alpha, best, bound);
+
+            return alpha;
         }
-
-        // check for stalemate and checkmate
-        if (legal == 0)
-        {
-            if (board.IsCheck())
-                alpha = -Constants::Mate + ply; // return best score for the deepest mate
-            else
-                alpha = 0; // return draw score (TODO contempt factor)
-        }
-
-        // check for fifty moves rule
-        if (board.HalfMoveClock() >= 100)
-            alpha = 0;
-
-        // for safety, we don't save forward pruned nodes inside transposition table
-        if (!pruned && excluded.IsNull())
-            board.Table.Save(board.zobrist, newDepth, alpha, best, bound);
-
-        return alpha;
-    }
 
     // quiescence is called at horizon nodes (depth = 0)
     int Search::quiescence(int alpha, int beta, Board& board)
@@ -541,7 +612,7 @@ namespace Napoleon
             pv = toMake.ToAlgebraic() + " ";
 
             board.MakeMove(toMake);
-            pv += GetPv(board, board.Table.GetPv(board.zobrist), depth - 1);
+            pv += GetPv(board, Table.GetPv(board.zobrist), depth - 1);
             board.UndoMove(toMake);
 
             return pv;
@@ -569,7 +640,7 @@ namespace Napoleon
             info << " score cp " << score;
 
         info << " time " << searchInfo.ElapsedTime() << " nodes "
-             << searchInfo.Nodes() << " nps " << static_cast<int>(nps) << " pv " << GetPv(board, toMake, depth);
+            << searchInfo.Nodes() << " nps " << static_cast<int>(nps) << " pv " << GetPv(board, toMake, depth);
 
         return info.str();
     }

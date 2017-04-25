@@ -28,7 +28,6 @@ namespace Napoleon
         BitBoard EmptySquares;
 
         ZobristKey zobrist;
-        TranspositionTable Table;
 
         Board();
 

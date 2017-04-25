@@ -1,3 +1,4 @@
+
 #include "uci.h"
 #include <iostream>
 #include <string>
@@ -21,6 +22,9 @@ namespace Napoleon
 
         string line;
         string cmd;
+        Search::Table.SetSize(512);
+        Search::InitializeThreads();
+
         while(getline(cin, line))
         {
             istringstream stream(line);
@@ -29,10 +33,9 @@ namespace Napoleon
             if (cmd == "uci")
             {
                 SendCommand<Command::Generic>("id name Napoleon");
-                SendCommand<Command::Generic>("id author Marco \"Crybot\" Pampaloni");
-
+                SendCommand<Command::Generic>("id author Marco Pampaloni");
                 SendCommand<Command::Generic>("option name Hash type spin default 1 min 1 max 1024");
-
+                SendCommand<Command::Generic>("option name Threads type spin default 2 min 1 max 8");
                 SendCommand<Command::Generic>("uciok");
             }
             else if (cmd == "setoption")
@@ -45,7 +48,12 @@ namespace Napoleon
                 {
                     stream >> token; // "value"
                     stream >> token;
-                    board.Table.SetSize(std::stoi(token));
+                    Search::Table.SetSize(std::stoi(token));
+                }
+                else if (token == "Cores")
+                {
+                    stream >> token; // "value"
+                    stream >> Search::cores;
                 }
 
             }
@@ -60,7 +68,7 @@ namespace Napoleon
             }
             else if (cmd == "ucinewgame")
             {
-                board.Table.Clear();
+                Search::Table.Clear();
             }
             else if (cmd == "stop")
             {
@@ -138,10 +146,7 @@ namespace Napoleon
         {
             if (token == "depth")
             {
-                int depth;
-                stream >> depth;
-
-                Search::searchInfo.SetDepthLimit(depth);
+                stream >> Search::depth_limit;
                 type = SearchType::Infinite;
             }
             else if (token == "movetime")

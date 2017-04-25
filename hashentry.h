@@ -2,6 +2,8 @@
 #define HASHENTRY_H
 #include "defines.h"
 #include "move.h"
+#include <mutex>
+#include <atomic>
 
 namespace Napoleon
 {

@@ -16,6 +16,7 @@ namespace Napoleon
 
     void FenString::Parse()
     {
+
         std::istringstream stream(FullString);
 
         std::string piecePlacement;
@@ -73,47 +74,47 @@ namespace Napoleon
             {
                 switch (ranks[i][l])
                 {
-                case 'P':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Pawn);
-                    break;
-                case 'p':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Pawn);
-                    break;
-                case 'N':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Knight);
-                    break;
-                case 'n':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Knight);
-                    break;
-                case 'B':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Bishop);
-                    break;
-                case 'b':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Bishop);
-                    break;
-                case 'R':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Rook);
-                    break;
-                case 'r':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Rook);
-                    break;
-                case 'Q':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Queen);
-                    break;
-                case 'q':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Queen);
-                    break;
-                case 'K':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::King);
-                    break;
-                case 'k':
-                    PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::King);
-                    break;
-                default:
-                    empty += std::stoi(std::string(&ranks[i][l]))-1; // TO TEST
+                    case 'P':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Pawn);
+                        break;
+                    case 'p':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Pawn);
+                        break;
+                    case 'N':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Knight);
+                        break;
+                    case 'n':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Knight);
+                        break;
+                    case 'B':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Bishop);
+                        break;
+                    case 'b':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Bishop);
+                        break;
+                    case 'R':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Rook);
+                        break;
+                    case 'r':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Rook);
+                        break;
+                    case 'Q':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::Queen);
+                        break;
+                    case 'q':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::Queen);
+                        break;
+                    case 'K':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::White, PieceType::King);
+                        break;
+                    case 'k':
+                        PiecePlacement[Utils::Square::GetSquareIndex(l + empty, 7 - i)] = Piece(PieceColor::Black, PieceType::King);
+                        break;
+                    default:
+                        empty += std::stoi(std::string(&ranks[i][l]))-1; // TO TEST
 
-                    //                    empty += (boost::lexical_cast<int>(ranks[i][l]) - 1);
-                    break;
+                        //                    empty += (boost::lexical_cast<int>(ranks[i][l]) - 1);
+                        break;
                 }
             }
         }
@@ -125,12 +126,12 @@ namespace Napoleon
     {
         switch (field[0])
         {
-        case 'w':
-            sideToMove = PieceColor::White;
-            break;
-        case 'b':
-            sideToMove = PieceColor::Black;
-            break;
+            case 'w':
+                sideToMove = PieceColor::White;
+                break;
+            case 'b':
+                sideToMove = PieceColor::Black;
+                break;
         }
     }
 
@@ -145,18 +146,18 @@ namespace Napoleon
         {
             switch (field[i])
             {
-            case 'K':
-                CanWhiteShortCastle = true;
-                break;
-            case 'k':
-                CanBlackShortCastle = true;
-                break;
-            case 'Q':
-                CanWhiteLongCastle = true;
-                break;
-            case 'q':
-                CanBlackLongCastle = true;
-                break;
+                case 'K':
+                    CanWhiteShortCastle = true;
+                    break;
+                case 'k':
+                    CanBlackShortCastle = true;
+                    break;
+                case 'Q':
+                    CanWhiteLongCastle = true;
+                    break;
+                case 'q':
+                    CanBlackLongCastle = true;
+                    break;
             }
         }
     }

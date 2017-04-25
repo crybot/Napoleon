@@ -3,6 +3,7 @@
 #include "utils.h"
 #include <cmath>
 #include <cstring>
+#include <iostream>
 
 namespace Napoleon
 {
@@ -18,19 +19,25 @@ namespace Napoleon
 
         // mb * 2^x = mb << x   <==>   mb = 2^k
         entries = ( (mb*std::pow(2, 20)) / sizeof(HashEntry)); // number of bytes * size of HashEntry = number of entries
+        lock_entries = (entries / BucketSize);
 
         free(table);
+        free(locks);
         table = (HashEntry*) std::calloc(entries * sizeof(HashEntry), 1);
+        locks = new SpinLock[lock_entries];
 
         mask = entries - BucketSize;
     }
 
     void TranspositionTable::Save(ZobristKey key, Byte depth, int score, Move move, ScoreType bound)
     {
+        auto mux = locks + (key & mask)/BucketSize;
+        std::lock_guard<SpinLock> lock(*mux);
+
         int min = Constants::MaxPly;
         int index = 0;
         auto hash = at(key);
-
+        
         for (auto i=0; i<BucketSize; i++, hash++)
         {
             if (hash->Depth < min)
@@ -54,6 +61,9 @@ namespace Napoleon
 
     std::pair<int, Move> TranspositionTable::Probe(ZobristKey key, Byte depth, int alpha, int beta)
     {
+        auto mux = locks + (key & mask)/BucketSize;
+        std::lock_guard<SpinLock> lock(*mux);
+
         auto hash = at(key);
         auto move = Constants::NullMove;
 
