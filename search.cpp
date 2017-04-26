@@ -16,13 +16,13 @@
 
 namespace Napoleon
 {
-    const int Search::AspirationValue = 50;
-    bool Search::StopSignal = true; //USE std::atomic<bool> instead
+    TranspositionTable Search::Table;
+    std::atomic<bool> Search::StopSignal(true);
+    std::atomic<bool> Search::quit(false);
     int Search::GameTime[2];
     int Search::MoveTime;
-    TranspositionTable Search::Table;
+    const int Search::AspirationValue = 50;
 
-    static std::thread::id main_thread_id;
     thread_local bool Search::sendOutput = false;
     thread_local SearchInfo Search::searchInfo;
     std::vector<std::thread> Search::threads;
@@ -31,14 +31,13 @@ namespace Napoleon
     std::mutex mux;
 
     int Search::depth_limit = 100;
-    int Search::cores = 1;
-    std::atomic<bool> Search::quit(false);
+    int Search::cores;
+    const int Search::default_cores = 1;
 
     // direct interface to the client.
     // it sends the move to the uci gui
     Move Search::StartThinking(SearchType type, Board& board, bool verbose, bool san)
     {
-        main_thread_id = std::this_thread::get_id();
         // NEED to test if it's better to clear the transposition table every time a new search starts.
         // empirical data suggest that it is better.
         Table.Clear();
@@ -95,12 +94,19 @@ namespace Napoleon
         for (auto& t: threads)
             t.join();
         threads.clear();
+        quit = false;
     }
 
-    void Search::InitializeThreads()
+    void Search::InitializeThreads(int threads_number)
     {
-        //std::cout << "CORES: " << std::thread::hardware_concurrency() << std::endl;
-        parallelInfo.SetReady(false);
+        if (threads_number == cores) return; // nothing to do 
+
+        KillThreads();
+        {
+            std::lock_guard<std::mutex> lock(mux);
+            parallelInfo.SetReady(false);
+        }
+        cores=threads_number;
         for (int i=1; i<cores; i++)
             threads.push_back(std::thread(parallelSearch));
     }

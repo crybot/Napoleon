@@ -23,7 +23,7 @@ namespace Napoleon
     namespace Search
     {
         extern const int AspirationValue;
-        extern bool StopSignal;
+        extern std::atomic<bool> StopSignal;
         extern int MoveTime;
         extern int GameTime[2]; // by color
         extern thread_local SearchInfo searchInfo;
@@ -35,8 +35,9 @@ namespace Napoleon
         extern int depth_limit;
         extern int cores;
         extern std::atomic<bool> quit;
+        extern const int default_cores;
 
-        void InitializeThreads();
+        void InitializeThreads(int = default_cores);
         void KillThreads();
         void signalThreads(int, int, int, const Board&, bool);
         void parallelSearch();
