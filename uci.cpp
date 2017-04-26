@@ -25,7 +25,7 @@ namespace Napoleon
         Search::Table.SetSize(512);
         Search::InitializeThreads();
 
-        while(getline(cin, line))
+        while(!Search::quit && getline(cin, line))
         {
             istringstream stream(line);
             stream >> cmd;
@@ -50,17 +50,28 @@ namespace Napoleon
                     stream >> token;
                     Search::Table.SetSize(std::stoi(token));
                 }
-                else if (token == "Cores")
+                else if (token == "Threads") //TODO: make code more elegant by moving it into InitializeThreads()
                 {
+                    int parallel_threads;
                     stream >> token; // "value"
-                    stream >> Search::cores;
+                    stream >> parallel_threads;
+                    if (parallel_threads != Search::cores)
+                    {
+                        // first kill running threads
+                        Search::KillThreads(); // quit = true; ... ;
+                        Search::quit = false;
+                        // then allocate new ones
+                        Search::cores = parallel_threads;
+                        Search::InitializeThreads();
+                    }
+
                 }
 
             }
             else if (cmd == "quit")
             {
                 SendCommand<Command::Generic>("Bye Bye");
-                break;
+                Search::KillThreads();
             }
             else if (cmd == "isready")
             {

@@ -25,13 +25,14 @@ namespace Napoleon
     static std::thread::id main_thread_id;
     thread_local bool Search::sendOutput = false;
     thread_local SearchInfo Search::searchInfo;
-    std::vector<std::future<void>> Search::threads;
+    std::vector<std::thread> Search::threads;
     ParallelInfo Search::parallelInfo;
     std::condition_variable Search::parallel;
     std::mutex mux;
 
     int Search::depth_limit = 100;
-    int Search::cores = 4;
+    int Search::cores = 1;
+    std::atomic<bool> Search::quit(false);
 
     // direct interface to the client.
     // it sends the move to the uci gui
@@ -87,14 +88,21 @@ namespace Napoleon
         parallelInfo.SetReady(false);
     }
 
+    void Search::KillThreads()
+    {
+        quit = true;
+        parallel.notify_all();
+        for (auto& t: threads)
+            t.join();
+        threads.clear();
+    }
+
     void Search::InitializeThreads()
     {
         //std::cout << "CORES: " << std::thread::hardware_concurrency() << std::endl;
         parallelInfo.SetReady(false);
         for (int i=1; i<cores; i++)
-        {
-            threads.push_back(std::async(std::launch::async, parallelSearch));
-        }
+            threads.push_back(std::thread(parallelSearch));
     }
 
     void Search::signalThreads(int depth, int alpha, int beta, const Board& board, bool ready)
@@ -117,12 +125,13 @@ namespace Napoleon
 
         Move* move = new Move();
         Board* board = new Board();
-        while(true)
+        while(!quit)
         {
             std::unique_lock<std::mutex> lock(mux);
-            parallel.wait(lock, []{return parallelInfo.Ready();});
+            parallel.wait(lock, []{return quit || parallelInfo.Ready();});
             auto info = parallelInfo;
             lock.unlock();
+            if(quit) break;
 
             //int rand_depth = depth_dist(eng);
             int rand_window = score_dist(eng);

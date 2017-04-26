@@ -9,7 +9,7 @@
 #include <condition_variable>
 #include <vector>
 #include <thread>
-#include <future>
+#include <atomic>
 
 namespace Napoleon
 {
@@ -31,11 +31,13 @@ namespace Napoleon
         extern TranspositionTable Table;
         extern std::condition_variable parallel;
         extern ParallelInfo parallelInfo;
-        extern std::vector<std::future<void>> threads;
+        extern std::vector<std::thread> threads;
         extern int depth_limit;
         extern int cores;
+        extern std::atomic<bool> quit;
 
         void InitializeThreads();
+        void KillThreads();
         void signalThreads(int, int, int, const Board&, bool);
         void parallelSearch();
 
