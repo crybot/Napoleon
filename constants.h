@@ -220,12 +220,27 @@ namespace Napoleon
                 0x0402010000000000, 0x0201000000000000, 0x0100000000000000
             };
 
+            const BitBoard SixBitA1H8DiagonalMask[] =
+            {
+                0x0, 0x0, 0x4000, 0x402000,
+                0x40201000, 0x4020100800, 0x402010080400, 0x40201008040200,
+                0x20100804020000, 0x10080402000000, 0x8040200000000,
+                0x4020000000000, 0x2000000000000, 0x0, 0x0
+            };
+
             const BitBoard H1A8DiagonalMask[] =
             {
                 0x0000000000000001, 0x0000000000000102, 0x0000000000010204, 0x0000000001020408,
                 0x0000000102040810, 0x0000010204081020, 0x0001020408102040, 0x0102040810204080,
                 0x0204081020408000, 0x0408102040800000, 0x0810204080000000, 0x1020408000000000,
                 0x2040800000000000, 0x4080000000000000, 0x8000000000000000
+            };
+
+            const BitBoard SixBitH1A8DiagonalMask[] = 
+            {
+                0x0, 0x0, 0x200, 0x20400, 0x2040800, 0x204081000, 0x20408102000, 
+                0x2040810204000, 0x4081020400000, 0x8102040000000, 0x10204000000000,
+                0x20400000000000, 0x40000000000000, 0x0, 0x0
             };
         }
 
@@ -260,11 +275,11 @@ namespace Napoleon
             using namespace Constants::Piece;
             // Side to move relative
             const int OpeningGameMat = PieceValue[PieceType::Pawn]*16
-                    + PieceValue[PieceType::Knight]*4
-                    + PieceValue[PieceType::Bishop]*4
-                    + PieceValue[PieceType::Rook]*4
-                    + PieceValue[PieceType::Queen]*2
-                    + PieceValue[PieceType::King]*2;
+                + PieceValue[PieceType::Knight]*4
+                + PieceValue[PieceType::Bishop]*4
+                + PieceValue[PieceType::Rook]*4
+                + PieceValue[PieceType::Queen]*2
+                + PieceValue[PieceType::King]*2;
 
             const int MiddleGameMat = OpeningGameMat - 1200;
             const int EndGameMat = MiddleGameMat - 3000;
@@ -277,7 +292,7 @@ namespace Napoleon
             const int RookBonus[3] = { 0, 5, 15 };
 
             const int MaxPhase = 256;
-//            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;
+            //            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;
         }
 
         const std::string StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

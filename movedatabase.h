@@ -1,8 +1,10 @@
 #ifndef MOVEDATABASE_H
 #define MOVEDATABASE_H
+#include <immintrin.h>
 #include "defines.h"
 #include "utils.h"
 #include "constants.h"
+#include <iostream>
 
 namespace Napoleon
 {
@@ -44,35 +46,40 @@ namespace Napoleon
     INLINE BitBoard MoveDatabase::GetRankAttacks(BitBoard occupiedSquares, Square square)
     {
         int rank = Utils::Square::GetRankIndex(square);
-        int occupancy = (int)((occupiedSquares & Constants::Masks::SixBitRankMask[rank]) >> (8 * rank));
-        return RankAttacks[square][(occupancy >> 1) & 63];
+        //int occupancy = (int)((occupiedSquares & Constants::Masks::SixBitRankMask[rank]) >> (8 * rank));
+        auto pext = _pext_u64(occupiedSquares, Constants::Masks::SixBitRankMask[rank]);
+        return RankAttacks[square][pext];
     }
 
     INLINE BitBoard MoveDatabase::GetFileAttacks(BitBoard occupiedSquares, Square square)
     {
         int file = Utils::Square::GetFileIndex(square);
-        int occupancy = (int)((occupiedSquares & Constants::Masks::SixBitFileMask[file]) * Constants::Magics::FileMagic[file] >> 56);
-        return FileAttacks[square][(occupancy >> 1) & 63];
+        //int occupancy = (int)((occupiedSquares & Constants::Masks::SixBitFileMask[file]) * Constants::Magics::FileMagic[file] >> 56);
+        auto pext = _pext_u64(occupiedSquares, Constants::Masks::SixBitFileMask[file]);
+
+        return FileAttacks[square][pext];
     }
 
     INLINE BitBoard MoveDatabase::GetA1H8DiagonalAttacks(BitBoard occupiedSquares, Square square)
     {
         int diag = Utils::Square::GetA1H8DiagonalIndex(square);
-        int occupancy = (int)((occupiedSquares & Constants::Masks::A1H8DiagonalMask[diag]) * Constants::Magics::A1H8DiagonalMagic[diag] >> 56);
-        return A1H8DiagonalAttacks[square][(occupancy >> 1) & 63];
+        //int occupancy = (int)((occupiedSquares & Constants::Masks::A1H8DiagonalMask[diag]) * Constants::Magics::A1H8DiagonalMagic[diag] >> 56);
+        auto pext = _pext_u64(occupiedSquares, Constants::Masks::SixBitA1H8DiagonalMask[diag]);
+        return A1H8DiagonalAttacks[square][pext];
     }
 
     INLINE BitBoard MoveDatabase::GetH1A8DiagonalAttacks(BitBoard occupiedSquares, Square square)
     {
         int diag = Utils::Square::GetH1A8AntiDiagonalIndex(square);
-        int occupancy = (int)((occupiedSquares & Constants::Masks::H1A8DiagonalMask[diag]) * Constants::Magics::H1A8DiagonalMagic[diag] >> 56);
-        return H1A8DiagonalAttacks[square][(occupancy >> 1) & 63];
+        //int occupancy = (int)((occupiedSquares & Constants::Masks::H1A8DiagonalMask[diag]) * Constants::Magics::H1A8DiagonalMagic[diag] >> 56);
+        auto pext = _pext_u64(occupiedSquares, Constants::Masks::SixBitH1A8DiagonalMask[diag]);
+        return H1A8DiagonalAttacks[square][pext];
     }
 
     INLINE bool MoveDatabase::AreSquareAligned(Square s1, Square s2, Square s3)
     {
         return (ObstructedTable[s1][s2] | ObstructedTable[s1][s3] | ObstructedTable[s2][s3])
-                & (Constants::Masks::SquareMask[s1] | Constants::Masks::SquareMask[s2] | Constants::Masks::SquareMask[s3]);
+            & (Constants::Masks::SquareMask[s1] | Constants::Masks::SquareMask[s2] | Constants::Masks::SquareMask[s3]);
     }
 }
 

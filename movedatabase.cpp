@@ -102,11 +102,11 @@ namespace Napoleon
             for (int occ = 0; occ < 64; occ++)
             {
                 BitBoard targets = Constants::Empty;
-                BitBoard rankTargets = RankAttacks[7 - (sq / 8)][occ]; // converte la posizione reale in quella scalare RANK
+                BitBoard rankTargets = RankAttacks[(sq / 8)][occ]; // converte la posizione reale in quella scalare RANK
 
                 for (int bit = 0; bit < 8; bit++) // accede ai singoli bit della traversa (RANK)
                 {
-                    int rank = 7 - bit;
+                    int rank = bit;
                     int file = Utils::Square::GetFileIndex(sq);
 
                     if (Utils::BitBoard::IsBitSet(rankTargets, bit))
@@ -169,7 +169,7 @@ namespace Napoleon
                 int diag = Utils::Square::GetH1A8AntiDiagonalIndex(sq);
 
                 BitBoard targets = Constants::Empty;
-                BitBoard rankTargets = diag > 7 ? RankAttacks[7 - sq / 8][occ] : RankAttacks[sq % 8][occ];
+                BitBoard rankTargets = diag > 7 ? RankAttacks[7 - (sq % 8)][occ] : RankAttacks[sq / 8][occ];
                 // converte la posizione reale in quella scalare RANK //
 
                 for (int bit = 0; bit < 8; bit++) // accede ai singoli bit della traversa (RANK)
@@ -181,13 +181,13 @@ namespace Napoleon
                     {
                         if (diag >= 7)
                         {
-                            rank = 7 - bit;
-                            file = (diag - 7) + bit;
+                            rank = (diag-7) + bit;
+                            file = 7 - bit;
                         }
                         else
                         {
-                            rank = diag - bit;
-                            file = bit;
+                            rank = bit;
+                            file = diag - bit;
                         }
                         if ((file >= 0) && (file <= 7) && (rank >= 0) && (rank <= 7))
                         {
