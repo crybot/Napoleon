@@ -20,6 +20,10 @@ namespace Napoleon
     BitBoard MoveDatabase::ObstructedTable[64][64];
 
 
+    BitBoard MoveDatabase::RookAttacks[64][64*64]; // square, occupancy (12 bits)
+
+    BitBoard MoveDatabase::RookMask[64]; // square
+
     /* all this operation will be executed before the engine gets active, so it is not needed optimization */
 
     void MoveDatabase::InitAttacks()
@@ -33,6 +37,16 @@ namespace Napoleon
         initAntiDiagonalAttacks();
         initPseudoAttacks();
         initObstructedTable();
+
+        for(auto sq=0; sq<64; sq++)
+        {
+            auto f = Utils::Square::GetFileIndex(sq);
+            auto r = Utils::Square::GetRankIndex(sq);
+            RookMask[sq] = Constants::Masks::SixBitRankMask[r]
+                | Constants::Masks::SixBitFileMask[f];
+        }
+
+        initRookAttacks();
     }
 
     void MoveDatabase::initPawnAttacks()
@@ -227,6 +241,79 @@ namespace Napoleon
                     for (int s = s1 + delta; s != s2; s += delta)
                         ObstructedTable[s1][s2] |= Constants::Masks::SquareMask[s];
                 }
+            }
+        }
+    }
+
+
+    void MoveDatabase::initRookAttacks()
+    {
+        for (auto sq = 0; sq<64; sq++)
+        {
+            auto f = Utils::Square::GetFileIndex(sq);
+            auto r = Utils::Square::GetRankIndex(sq);
+            for (auto occ = 0; occ<64*64; occ++)
+            {
+                int f_occ = 0, r_occ = 0;
+                int word = occ;
+                int f_bits = 0;
+
+                // trivial case: inner squares
+                if (r >= 1 && r <= 6 && f >= 1 && f <= 6)
+                {
+                    f_occ = word & ((1 << (r-1))-1); // lower r-1 bits
+                    word >>= r-1;
+                    f_bits += r-1;
+                    f_bits++; // shared square default to zero (no difference)
+                    r_occ = word & ((1 << 6)-1); // next 6 bits;
+                    word >>= 6;
+                    f_occ |= word << f_bits; // remaining bits
+                }
+
+                //lower outer squares 
+                else if (r == 0)
+                {
+                    r_occ = word & ((1 << 6)-1); // first 6 bits;
+                    word >>= 6; //consume 6 bits;
+                    /* NO SHARED SQUARE */
+                    f_occ = word;
+                }
+
+                //upper outer squares
+                else if (r == 7)
+                {
+                    f_occ = word & ((1 << 6)-1); // first 6 bits;
+                    word >>= 6;
+                    /* NO SHARED SQUARE */
+                    r_occ = word;
+                }
+
+                // left outer squares
+                else if (f == 0)
+                {
+                    f_occ = word & ((1 << r)-1); // lower r bits
+                    word >>= r; // consume r bits
+                    f_bits += r; // increment file bits counter
+                    /* NO SHARED SQUARE */
+                    r_occ = word & ((1 << 6)-1); // next 6 bits;
+                    word >>= 6; // consume 6 bits
+                    f_occ |= word << f_bits; // remaining bits
+                }
+ 
+                // right outer squares
+                else if (f == 7)
+                {
+                    f_occ = word & ((1 << (r-1))-1); // lower r-1 bits
+                    word >>= r-1;
+                    f_bits += r-1;
+                    /* NO SHARED SQUARE */
+                    r_occ = word & ((1 << 6)-1); // next 6 bits;
+                    word >>= 6;
+                    f_occ |= word << f_bits; // remaining bits
+                }
+
+                RookAttacks[sq][occ] = RankAttacks[sq][r_occ] | FileAttacks[sq][f_occ];
+
             }
         }
     }

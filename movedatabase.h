@@ -19,18 +19,22 @@ namespace Napoleon
         static BitBoard PseudoBishopAttacks[64]; // square
         static BitBoard ObstructedTable[64][64]; // square, square
 
-        static BitBoard GetRankAttacks(BitBoard, Square);
-        static BitBoard GetFileAttacks(BitBoard, Square);
         static BitBoard GetA1H8DiagonalAttacks(BitBoard, Square);
         static BitBoard GetH1A8DiagonalAttacks(BitBoard, Square);
         static bool AreSquareAligned(Square, Square, Square);
         static void InitAttacks();
+
+        static BitBoard RookAttacks[64][64*64]; // square, occupancy (12 bits)
+
+        static BitBoard GetRookAttacks(BitBoard, Square);
 
     private:
         static BitBoard RankAttacks[64][64]; // square , occupancy
         static BitBoard FileAttacks[64][64]; // square , occupancy
         static BitBoard A1H8DiagonalAttacks[64][64]; // square , occupancy
         static BitBoard H1A8DiagonalAttacks[64][64]; // square , occupancy
+
+        static BitBoard RookMask[64];
 
         static void initPawnAttacks();
         static void initKnightAttacks();
@@ -41,23 +45,14 @@ namespace Napoleon
         static void initAntiDiagonalAttacks();
         static void initPseudoAttacks();
         static void initObstructedTable();
+
+        static void initRookAttacks();
     };
 
-    INLINE BitBoard MoveDatabase::GetRankAttacks(BitBoard occupiedSquares, Square square)
+    INLINE BitBoard MoveDatabase::GetRookAttacks(BitBoard occupiedSquares, Square square)
     {
-        int rank = Utils::Square::GetRankIndex(square);
-        //int occupancy = (int)((occupiedSquares & Constants::Masks::SixBitRankMask[rank]) >> (8 * rank));
-        auto pext = _pext_u64(occupiedSquares, Constants::Masks::SixBitRankMask[rank]);
-        return RankAttacks[square][pext];
-    }
-
-    INLINE BitBoard MoveDatabase::GetFileAttacks(BitBoard occupiedSquares, Square square)
-    {
-        int file = Utils::Square::GetFileIndex(square);
-        //int occupancy = (int)((occupiedSquares & Constants::Masks::SixBitFileMask[file]) * Constants::Magics::FileMagic[file] >> 56);
-        auto pext = _pext_u64(occupiedSquares, Constants::Masks::SixBitFileMask[file]);
-
-        return FileAttacks[square][pext];
+        auto pext = _pext_u64(occupiedSquares, MoveDatabase::RookMask[square]);
+        return MoveDatabase::RookAttacks[square][pext];
     }
 
     INLINE BitBoard MoveDatabase::GetA1H8DiagonalAttacks(BitBoard occupiedSquares, Square square)

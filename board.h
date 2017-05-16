@@ -189,8 +189,7 @@ namespace Napoleon
         Byte opp = Utils::Piece::GetOpposite(color);
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(OccupiedSquares, square)
                 | MoveDatabase::GetH1A8DiagonalAttacks(OccupiedSquares, square);
-        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(OccupiedSquares, square)
-                | MoveDatabase::GetRankAttacks(OccupiedSquares, square);
+        BitBoard rookAttacks = MoveDatabase::GetRookAttacks(OccupiedSquares, square);
 
         return (MoveDatabase::PawnAttacks[color][square] & bitBoardSet[opp][PieceType::Pawn])
                 | (MoveDatabase::KnightAttacks[square] & bitBoardSet[opp][PieceType::Knight])
@@ -202,7 +201,7 @@ namespace Napoleon
     {
         Byte opp = Utils::Piece::GetOpposite(color);
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(occ, square) | MoveDatabase::GetH1A8DiagonalAttacks(occ, square);
-        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(occ, square) | MoveDatabase::GetRankAttacks(occ, square);
+        BitBoard rookAttacks = MoveDatabase::GetRookAttacks(occ, square);
 
         return
                 (MoveDatabase::KingAttacks[square] & bitBoardSet[color][PieceType::King])
@@ -215,7 +214,7 @@ namespace Napoleon
     INLINE BitBoard Board::MovesTo(Square square, Color color, BitBoard occ) const
     {
         BitBoard bishopAttacks = MoveDatabase::GetA1H8DiagonalAttacks(occ, square) | MoveDatabase::GetH1A8DiagonalAttacks(occ, square);
-        BitBoard rookAttacks = MoveDatabase::GetFileAttacks(occ, square) | MoveDatabase::GetRankAttacks(occ, square);
+        BitBoard rookAttacks = MoveDatabase::GetRookAttacks(occ, square);
 
         Square pawnSquare;
         BitBoard pawn = 0;

@@ -18,12 +18,10 @@ namespace Napoleon
     INLINE BitBoard Rook::GetAllTargets(BitBoard rooks, Board& board)
     {
         BitBoard occupiedSquares = board.OccupiedSquares;
-        BitBoard targets = Constants::Empty;
+        BitBoard targets;
 
         Square  square = Utils::BitBoard::BitScanForward(rooks);
-
-        targets |= MoveDatabase::GetRankAttacks(occupiedSquares, square);
-        targets |= MoveDatabase::GetFileAttacks(occupiedSquares, square);
+        targets = MoveDatabase::GetRookAttacks(occupiedSquares, square);
 
         return targets & ~board.PlayerPieces();
     }
@@ -31,10 +29,9 @@ namespace Napoleon
     INLINE BitBoard Rook::TargetsFrom(Square square, Color color, Board& board)
     {
         BitBoard occupiedSquares = board.OccupiedSquares;
-        BitBoard targets = Constants::Empty;
+        BitBoard targets;
 
-        targets |= MoveDatabase::GetRankAttacks(occupiedSquares, square);
-        targets |= MoveDatabase::GetFileAttacks(occupiedSquares, square);
+        targets = MoveDatabase::GetRookAttacks(occupiedSquares, square);
 
         return targets & ~board.Pieces(color);
     }

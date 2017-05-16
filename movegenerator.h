@@ -295,8 +295,7 @@ namespace Napoleon
                 // to move in the other direction. For example: king in B2, queen in A1
                 // a knight in B1, and we can safely move to C1.
                 else
-                    sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq] | (MoveDatabase::GetRankAttacks(board.OccupiedSquares, checksq)
-                                                                                   | MoveDatabase::GetFileAttacks(board.OccupiedSquares, checksq));
+                    sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq] | MoveDatabase::GetRookAttacks(board.OccupiedSquares, checksq);
                 break;
 
             default:

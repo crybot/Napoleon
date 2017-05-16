@@ -774,8 +774,7 @@ namespace Napoleon
 
             if (slidingAttackers != 0)
             {
-                if ((MoveDatabase::GetRankAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
-                if ((MoveDatabase::GetFileAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
+                if ((MoveDatabase::GetRookAttacks(OccupiedSquares, to) & slidingAttackers) != 0) return true;
             }
 
             // diagonals
