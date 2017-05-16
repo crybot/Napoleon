@@ -6,7 +6,10 @@
 #include <iostream>
 
 namespace Napoleon
-{
+{    
+    const int TranspositionTable::BucketSize = 4;
+    const int TranspositionTable::Unknown = -999999;
+
     TranspositionTable::TranspositionTable(int mb)
     {
         SetSize(mb);
@@ -37,7 +40,7 @@ namespace Napoleon
         int min = Constants::MaxPly;
         int index = 0;
         auto hash = at(key);
-        
+
         for (auto i=0; i<BucketSize; i++, hash++)
         {
             if (hash->Depth < min)

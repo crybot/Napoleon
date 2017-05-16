@@ -29,8 +29,8 @@ namespace Napoleon
     class TranspositionTable
     {
         public:
-            static const int Unknown = -999999;
-            static const int BucketSize = 4;
+            static const int Unknown;
+            static const int BucketSize;
 
             TranspositionTable(int size = 1);
 
@@ -53,6 +53,7 @@ namespace Napoleon
     {
         return table + (key & mask) + index;
     }
+
 }
 
 #endif // TRANSPOSITIONTABLE_H
