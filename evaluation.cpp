@@ -40,7 +40,7 @@ namespace Napoleon
         wPstValues = board.PstValue(White);
         bPstValues = board.PstValue(Black);
         
-        updateScore(scores, material + (wPstValues.first - bPstValues.first), material + (wPstValues.second - bPstValues.second));
+        updateScore(scores, material + (wPstValues.first - bPstValues.first)/3, material + (wPstValues.second - bPstValues.second)/3);
         
         /* PHASE-DEPENDENT piece bonus*/
         int wPawns = board.NumOfPieces(White, Pawn);
@@ -61,10 +61,10 @@ namespace Napoleon
 
         // premature queen development
         if (!board.IsOnSquare(White, PieceType::Queen, IntD1))
-            updateScore(scores, 15, 0);
+            updateScore(scores, -15, 0);
         
         if (!board.IsOnSquare(Black, PieceType::Queen, IntD8))
-            updateScore(scores, -15, 0);
+            updateScore(scores, 15, 0);
         
         // tempo bonus
         if (board.SideToMove() == White)
