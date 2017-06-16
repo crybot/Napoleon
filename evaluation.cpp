@@ -40,7 +40,7 @@ namespace Napoleon
         wPstValues = board.PstValue(White);
         bPstValues = board.PstValue(Black);
         
-        updateScore(scores, material + (wPstValues.first - bPstValues.first)/3, material + (wPstValues.second - bPstValues.second)/3);
+        updateScore(scores, material + (wPstValues.first - bPstValues.first)/2, material + (wPstValues.second - bPstValues.second)/2);
         
         /* PHASE-DEPENDENT piece bonus*/
         int wPawns = board.NumOfPieces(White, Pawn);
