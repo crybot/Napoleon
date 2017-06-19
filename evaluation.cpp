@@ -5,6 +5,7 @@
 #include "knight.h"
 #include "queen.h"
 #include "board.h"
+//#include "utils.h"
 
 namespace Napoleon
 {
@@ -29,19 +30,27 @@ namespace Napoleon
         using namespace PieceColor;
         using namespace Constants::Squares;
         using namespace Constants::Eval;
+        using namespace Constants::Castle;
+        using namespace Constants::Masks;
+        using namespace Utils::BitBoard;
+        using namespace CompassRose;
 
         Score scores(0, 0);
         Score wPstValues, bPstValues;
-        
+        BitBoard king_proximity[2] = { // color
+            MoveDatabase::KingProximity[White][board.KingSquare(White)],
+            MoveDatabase::KingProximity[Black][board.KingSquare(Black)]
+        };
+
         // material evaluation
         int material = board.MaterialBalance(White);
-        
+
         // Piece Square Value evaluation
         wPstValues = board.PstValue(White);
         bPstValues = board.PstValue(Black);
-        
+
         updateScore(scores, material + (wPstValues.first - bPstValues.first)/2, material + (wPstValues.second - bPstValues.second)/2);
-        
+
         /* PHASE-DEPENDENT piece bonus*/
         int wPawns = board.NumOfPieces(White, Pawn);
         int bPawns = board.NumOfPieces(Black, Pawn);
@@ -62,10 +71,10 @@ namespace Napoleon
         // premature queen development
         if (!board.IsOnSquare(White, PieceType::Queen, IntD1))
             updateScore(scores, -15, 0);
-        
+
         if (!board.IsOnSquare(Black, PieceType::Queen, IntD8))
             updateScore(scores, 15, 0);
-        
+
         // tempo bonus
         if (board.SideToMove() == White)
             updateScore(scores, 5);
@@ -79,7 +88,7 @@ namespace Napoleon
         if (board.NumOfPieces(Black, PieceType::Bishop) == 2)
             updateScore(scores, -BishopPair[Opening], -BishopPair[EndGame]);
 
-        
+
         /* PAWN STRUCTURE */    
         // doubled/isolated pawns evaluation
 
@@ -126,11 +135,74 @@ namespace Napoleon
             if (piece.Type != PieceType::None)
             {
                 if (piece.Color == White)
-                    updateScore(scores, EvaluatePiece(piece, sq, board));
+                    updateScore(scores, EvaluatePiece(piece, sq, king_proximity[Black], board)); // opponent's king's proximity
                 else
-                    updateScore(scores, -EvaluatePiece(piece, sq, board));
+                    updateScore(scores, -EvaluatePiece(piece, sq, king_proximity[White], board)); // opponent's king's proximity
             }
         }
+
+        //KING SAFETY
+
+        /*
+           int shelter1 = 0, shelter2 = 0;
+           auto wking_square = board.KingSquare(White);
+           auto bking_square = board.KingSquare(Black);
+
+        //pawn shelter
+        if (board.HasCastled(White))
+        {
+        BitBoard pawns = board.Pieces(White, Pawn);
+        if (SquareMask[wking_square] & WhiteKingSide)
+        {
+        shelter1 = PopCount(pawns & WhiteKingShield);
+        shelter2 = PopCount(pawns & OneStepNorth(WhiteKingShield));
+        }
+        else if (SquareMask[wking_square] & WhiteQueenSide)
+        {
+        shelter1 = PopCount(pawns & WhiteQueenShield);
+        shelter2 = PopCount(pawns & OneStepNorth(WhiteQueenShield));
+        }
+        // else apply penalty
+
+        updateScore(scores, shelter1 * 5 + shelter2 * 3, shelter1 * 2 + shelter2 * 3); // shielding bonus
+        }
+        else // inability to castle penalties
+        {
+        if (!(board.CastlingStatus() & WhiteCastleOO))
+        updateScore(scores, -5, 0);
+        if (!(board.CastlingStatus() & WhiteCastleOOO))
+        updateScore(scores, -5, 0);
+        }
+
+        //pawn shelter
+        if (board.HasCastled(Black))
+        {
+        BitBoard pawns = board.Pieces(Black, Pawn);
+        if (SquareMask[bking_square] & BlackKingSide)
+        {
+        shelter1 = PopCount(pawns & BlackKingShield);
+        shelter2 = PopCount(pawns & OneStepSouth(BlackKingShield));
+        }
+        else if (SquareMask[bking_square] & BlackQueenSide)
+        {
+        shelter1 = PopCount(pawns & BlackQueenShield);
+        shelter2 = PopCount(pawns & OneStepSouth(BlackQueenShield));
+        }
+        // else apply penalty
+
+        updateScore(scores, -(shelter1 * 5 + shelter2 * 3), -(shelter1 * 2 + shelter2 * 3)); // shielding bonus
+        }
+        else // inability to castle penalties
+        {    
+        if (!(board.CastlingStatus() & BlackCastleOO))
+        updateScore(scores, 5, 0);
+        if (!(board.CastlingStatus() & BlackCastleOOO))
+        updateScore(scores, 5, 0);
+        }
+        */
+
+
+        //TODO: check wheter the king is in castle position
 
         int opening = scores.first; // opening score
         int endgame = scores.second; // endgame score
@@ -140,8 +212,8 @@ namespace Napoleon
 
         return score * (1-(board.SideToMove()*2)); // score relative to side to move
     }
-    
-    int Evaluation::EvaluatePiece(Piece piece, Square square, Board& board)
+
+    int Evaluation::EvaluatePiece(Piece piece, Square square, BitBoard king_proxy, Board& board)
     {
         using namespace Utils::BitBoard;
         using namespace Utils::Piece;
@@ -149,31 +221,120 @@ namespace Napoleon
         Color us = piece.Color;
         Color enemy = GetOpposite(us);
         BitBoard b = 0;
-        
+        int tropism = 0;
+        int distance = 7; // longest distance
+        Square ksq = board.KingSquare(enemy); // enemy king
+
         switch(piece.Type)
         {
-        case PieceType::Knight:
-            b = Knight::TargetsFrom(square, us, board) &
+            case PieceType::Knight:
+                b = Knight::TargetsFrom(square, us, board) &
                     ~Pawn::GetAnyAttack(board.Pieces(enemy, PieceType::Pawn), enemy, Constants::Universe); // exclude squares controlled by enemy pawns
-            break;
-            
-        case PieceType::Bishop:
-            b = Bishop::TargetsFrom(square, us, board);
-            break;
-            
-        case PieceType::Rook:
-            b = Rook::TargetsFrom(square, us, board);
-            break;
+                tropism = 5; 
+                distance = MoveDatabase::Distance[square][ksq];
+                break;
 
-        case PieceType::Queen:
-            b = Queen::TargetsFrom(square, us, board);
-            break;
+            case PieceType::Bishop:
+                b = Bishop::TargetsFrom(square, us, board);
+                tropism = 10; // TO TEST: divide by distance to king
+                distance = MoveDatabase::Distance[square][ksq]*2;
+                break;
+
+            case PieceType::Rook:
+                b = Rook::TargetsFrom(square, us, board);
+                tropism = 10;
+                distance = MoveDatabase::Distance[square][ksq]*2;
+                break;
+
+            case PieceType::Queen:
+                b = Queen::TargetsFrom(square, us, board);
+                tropism = 3;
+                distance = MoveDatabase::Distance[square][ksq]/2;
+               break;
         }
 
         int count = PopCount(b);
         assert(count <= Constants::QueenMaxMoves);
 
-        return mobilityBonus[piece.Type][count];
+        tropism = tropism*PopCount(king_proxy & b) + (7 - distance);
+        tropism = ((float)tropism*board.Material(us))/(float)Constants::Eval::MaxPlayerMat; // tropism scaling
+
+        return mobilityBonus[piece.Type][count] + tropism;
     }
-    
+
+    int Evaluation::interpolate(Score score, int phase)
+    {
+        return ((score.first * (Constants::Eval::MaxPhase - phase)) + (score.second * phase)) / Constants::Eval::MaxPhase; // linear-interpolated score
+    }
+    void Evaluation::formatParam(std::string name, int wvalue, int bvalue)
+    {
+        std::cout << name << ":\t\t " << wvalue << " \t\t " << bvalue << std::endl;
+    }
+
+    void Evaluation::formatParam(std::string name, Score wvalue, Score bvalue, int phase)
+    {
+        int w = interpolate(wvalue, phase), b = interpolate(bvalue, phase);
+        formatParam(name, w, b);
+    }
+
+    void Evaluation::PrintEval(Board& board)
+    {
+        using namespace PieceColor;
+        using namespace Constants::Squares;
+        using namespace Constants::Eval;
+        using namespace Constants::Castle;
+        using namespace Constants::Masks;
+        using namespace Utils::BitBoard;
+        using namespace CompassRose;
+        using namespace std;
+
+        int phase = board.Phase();
+        Score scores(0, 0);
+        Score wPstValues, bPstValues;
+
+        cout << "\t EVALUATION " << endl;
+        cout << "\t\t WHITE \t\t BLACK" << endl;
+
+        formatParam("material", board.Material(White), board.Material(Black));
+        formatParam("mat_balance", 
+                board.MaterialBalance(White), 
+                board.MaterialBalance(Black));
+        formatParam("pst", 
+                interpolate(board.PstValue(White), phase), 
+                -interpolate(board.PstValue(Black), phase));
+
+        Score pawn_bonus = Score(PawnBonus[Opening], PawnBonus[EndGame]);
+        Score knight_bonus = Score(KnightBonus[Opening], KnightBonus[EndGame]);
+        Score rook_bonus = Score(RookBonus[Opening], RookBonus[EndGame]);
+        Score w_pqueen = Score(0, 0), b_pqueen = Score(0, 0); // premature queen development
+
+        if (!board.IsOnSquare(White, PieceType::Queen, IntD1))
+            w_pqueen = Score(-15, 0);
+
+        if (!board.IsOnSquare(Black, PieceType::Queen, IntD8))
+            b_pqueen = Score(15, 0);
+
+        Score w_bishop_pair = Score(BishopPair[Opening], BishopPair[EndGame]);
+        Score b_bishop_pair = Score(-BishopPair[Opening], -BishopPair[EndGame]);
+
+        BitBoard king_proximity[2] = { // color
+            MoveDatabase::KingProximity[White][board.KingSquare(White)],
+            MoveDatabase::KingProximity[Black][board.KingSquare(Black)]
+        };
+
+        formatParam("pawn-bonus", interpolate(pawn_bonus, phase), -interpolate(pawn_bonus, phase));
+        formatParam("knight-bonus", interpolate(knight_bonus, phase), -interpolate(knight_bonus, phase));
+        formatParam("rook-bonus", interpolate(rook_bonus, phase), -interpolate(rook_bonus, phase));
+        formatParam("prem. queen", w_pqueen, b_pqueen, phase);
+        formatParam("tempo", board.SideToMove() == White ? 5 : -5, board.SideToMove() == White ? 0 : -5);
+        formatParam("bish. pair", w_bishop_pair, b_bishop_pair, phase);
+        cout << endl;
+
+        Display(king_proximity[White]);
+        cout << endl;
+        Display(king_proximity[Black]);
+        cout << endl << endl;
+    }
+
+
 }

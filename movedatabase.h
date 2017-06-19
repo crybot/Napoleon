@@ -18,6 +18,8 @@ namespace Napoleon
         static BitBoard PseudoRookAttacks[64]; // square
         static BitBoard PseudoBishopAttacks[64]; // square
         static BitBoard ObstructedTable[64][64]; // square, square
+        static int Distance[64][64]; // square, square
+        static BitBoard KingProximity[2][64]; // color, square
 
         static BitBoard GetA1H8DiagonalAttacks(BitBoard, Square);
         static BitBoard GetH1A8DiagonalAttacks(BitBoard, Square);

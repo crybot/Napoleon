@@ -323,17 +323,13 @@ namespace Napoleon
             if (depth >= 5 && best.IsNull() && pv)
             {
                 int R = 3;
-                bool toggled = false;
 
                 if (board.AllowNullMove())
-                {
                     board.ToggleNullMove();
-                    toggled = true;
-                }
 
                 search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
 
-                if (toggled)
+                if (!board.AllowNullMove())
                     board.ToggleNullMove();
 
                 //Transposition table lookup

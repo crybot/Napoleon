@@ -23,6 +23,8 @@ namespace Napoleon
     BitBoard MoveDatabase::RookAttacks[64][64*64]; // square, occupancy (12 bits)
 
     BitBoard MoveDatabase::RookMask[64]; // square
+    BitBoard MoveDatabase::KingProximity[2][64]; // color, square
+    int MoveDatabase::Distance[64][64]; // square, square
 
     /* all this operation will be executed before the engine gets active, so it is not needed optimization */
 
@@ -47,6 +49,17 @@ namespace Napoleon
         }
 
         initRookAttacks();
+
+        for (auto sq1=0; sq1<64; sq1++)
+            for (auto sq2=0; sq2<64; sq2++)
+                Distance[sq1][sq2] = Utils::Square::Distance(sq1, sq2);
+
+        for (auto sq=0; sq<64; sq++)
+        {
+            BitBoard king_ring = King::GetKingAttacks(Constants::Masks::SquareMask[sq]);
+            KingProximity[PieceColor::White][sq] = king_ring | CompassRose::OneStepNorth(king_ring);
+            KingProximity[PieceColor::Black][sq] = king_ring | CompassRose::OneStepSouth(king_ring);
+        }
     }
 
     void MoveDatabase::initPawnAttacks()

@@ -129,6 +129,7 @@ namespace Napoleon
             }
             else if (cmd == "eval")
             {
+                Evaluation::PrintEval(board);
                 std::cout << Evaluation::Evaluate(board) << std::endl;
             }
             else if (cmd == "go")

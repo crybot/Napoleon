@@ -701,6 +701,7 @@ namespace Napoleon
 
         zobrist ^= Zobrist::Piece[sideToMove][PieceType::Rook][fromR];
         zobrist ^= Zobrist::Piece[sideToMove][PieceType::Rook][toR];
+        castled[sideToMove] = true;
     }
 
     void Board::undoCastle(Square from, Square to)
@@ -751,6 +752,7 @@ namespace Napoleon
 
         zobrist ^= Zobrist::Piece[sideToMove][PieceType::Rook][fromR];
         zobrist ^= Zobrist::Piece[sideToMove][PieceType::Rook][toR];
+        castled[sideToMove] = false;
     }
 
     bool Board::IsAttacked(BitBoard target, Color side) const

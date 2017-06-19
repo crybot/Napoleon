@@ -3,7 +3,9 @@
 #include "defines.h"
 #include "constants.h"
 #include "utils.h"
+#include "king.h"
 #include "piecesquaretables.h"
+#include "compassrose.h"
 #include <cassert>
 
 namespace Napoleon
@@ -12,10 +14,17 @@ namespace Napoleon
     namespace Evaluation
     {
         int Evaluate(Board&);
-        int EvaluatePiece(Piece, Square, Board&);
+        int EvaluatePiece(Piece, Square, BitBoard, Board&);
         Score PieceSquareValue(Piece, Square);
+
+        void PrintEval(Board&);
+
+        int interpolate(Score, int);
+        void formatParam(std::string, int, int);
+        void formatParam(std::string, Score, Score, int);
         inline void updateScore(Score&, int, int);
         inline void updateScore(Score&, int);
+
 
         extern int multiPawnP[8]; // penalization for doubled, tripled... pawns
         extern int isolatedPawnP[8];

@@ -251,11 +251,21 @@ namespace Napoleon
             const Byte BlackCastleOO = 0x4;
             const Byte BlackCastleOOO = 0x8;
             const Byte FullCastlingRights = 0xF;
+
             const BitBoard WhiteCastleMaskOO = 0x0000000000000060;
             const BitBoard WhiteCastleMaskOOO = 0x000000000000000E;
-
             const BitBoard BlackCastleMaskOO = 0x6000000000000000;
             const BitBoard BlackCastleMaskOOO = 0x0E00000000000000;
+
+            const BitBoard WhiteKingShield = 0xe000; // 3-pawn shield (f-g-h)
+            const BitBoard WhiteQueenShield = 0x700; // 3-pawn shield (a-b-c)
+            const BitBoard BlackKingShield = 0xe0000000000000; 
+            const BitBoard BlackQueenShield = 0x7000000000000;
+
+            const BitBoard WhiteKingSide = 0xe0;
+            const BitBoard WhiteQueenSide = 0x7;
+            const BitBoard BlackKingSide = 0xe000000000000000;
+            const BitBoard BlackQueenSide = 0x700000000000000;
 
             const Move WhiteCastlingOO(Squares::IntE1, Squares::IntG1, KingCastle);
             const Move WhiteCastlingOOO(Squares::IntE1, Squares::IntC1, QueenCastle);
@@ -280,6 +290,8 @@ namespace Napoleon
                 + PieceValue[PieceType::Rook]*4
                 + PieceValue[PieceType::Queen]*2
                 + PieceValue[PieceType::King]*2;
+
+            const int MaxPlayerMat = OpeningGameMat/2;
 
             const int MiddleGameMat = OpeningGameMat - 1200;
             const int EndGameMat = MiddleGameMat - 3000;
