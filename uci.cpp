@@ -1,12 +1,12 @@
-
-#include "uci.h"
 #include <iostream>
 #include <string>
+#include "uci.h"
 #include "search.h"
 #include "fenstring.h"
 #include "board.h"
 #include "stopwatch.h"
 #include "benchmark.h"
+#include "evaluation.h"
 
 namespace Napoleon
 {

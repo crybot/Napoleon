@@ -16,14 +16,14 @@ namespace Napoleon
     BitBoard MoveDatabase::H1A8DiagonalAttacks[64][64]; // square , occupancy
     BitBoard MoveDatabase::PseudoRookAttacks[64]; // square
     BitBoard MoveDatabase::PseudoBishopAttacks[64]; // square
-
-    BitBoard MoveDatabase::ObstructedTable[64][64];
-
-
     BitBoard MoveDatabase::RookAttacks[64][64*64]; // square, occupancy (12 bits)
-
+    BitBoard MoveDatabase::ObstructedTable[64][64];
     BitBoard MoveDatabase::RookMask[64]; // square
     BitBoard MoveDatabase::KingProximity[2][64]; // color, square
+    BitBoard MoveDatabase::SideFiles[8]; // file
+    BitBoard MoveDatabase::FrontSpan[2][64]; // color, square
+    BitBoard MoveDatabase::PasserSpan[2][64]; //color, square
+
     int MoveDatabase::Distance[64][64]; // square, square
 
     /* all this operation will be executed before the engine gets active, so it is not needed optimization */
@@ -59,6 +59,38 @@ namespace Napoleon
             BitBoard king_ring = King::GetKingAttacks(Constants::Masks::SquareMask[sq]);
             KingProximity[PieceColor::White][sq] = king_ring | CompassRose::OneStepNorth(king_ring);
             KingProximity[PieceColor::Black][sq] = king_ring | CompassRose::OneStepSouth(king_ring);
+        }
+
+        for (File f=0; f<8; f++)
+        {
+            BitBoard file = Constants::Masks::FileMask[f];
+            SideFiles[f] = CompassRose::OneStepWest(file);
+            SideFiles[f] |= CompassRose::OneStepEast(file);
+        }
+        
+        for (auto sq=0; sq<64; sq++)
+        {
+            BitBoard wspan = Constants::Masks::SquareMask[sq];
+            BitBoard bspan = Constants::Masks::SquareMask[sq];
+
+            wspan |= wspan << 8;
+            wspan |= wspan << 16;
+            wspan |= wspan << 32;
+            wspan = CompassRose::OneStepNorth(wspan);
+
+            bspan |= bspan >> 8;
+            bspan |= bspan >> 16;
+            bspan |= bspan >> 32;
+            bspan = CompassRose::OneStepSouth(bspan);
+
+            PasserSpan[PieceColor::White][sq] = FrontSpan[PieceColor::White][sq] = wspan;
+            PasserSpan[PieceColor::Black][sq] = FrontSpan[PieceColor::Black][sq] = bspan;
+
+            PasserSpan[PieceColor::White][sq] |= CompassRose::OneStepWest(wspan);
+            PasserSpan[PieceColor::White][sq] |= CompassRose::OneStepEast(wspan);
+
+            PasserSpan[PieceColor::Black][sq] |= CompassRose::OneStepWest(bspan);
+            PasserSpan[PieceColor::Black][sq] |= CompassRose::OneStepEast(bspan);
         }
     }
 

@@ -304,7 +304,6 @@ namespace Napoleon
             const int RookBonus[3] = { 0, 5, 15 };
 
             const int MaxPhase = 256;
-            //            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;
         }
 
         const std::string StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

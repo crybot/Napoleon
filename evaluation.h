@@ -6,6 +6,7 @@
 #include "king.h"
 #include "piecesquaretables.h"
 #include "compassrose.h"
+#include "board.h"
 #include <cassert>
 
 namespace Napoleon
@@ -16,6 +17,7 @@ namespace Napoleon
         int Evaluate(Board&);
         int EvaluatePiece(Piece, Square, BitBoard, Board&);
         Score PieceSquareValue(Piece, Square);
+        int KingSafety(Board&);
 
         void PrintEval(Board&);
 
@@ -27,7 +29,8 @@ namespace Napoleon
 
 
         extern int multiPawnP[8]; // penalization for doubled, tripled... pawns
-        extern int isolatedPawnP[8];
+        //extern int isolatedPawnP[8];
+        extern int passedPawn[3][8]; // phase, file
         extern int mobilityBonus[][Constants::QueenMaxMoves + 1];
     }
 
@@ -40,6 +43,11 @@ namespace Napoleon
     {
         scores.first += openingBonus;
         scores.second += openingBonus;
+    }
+
+    inline int Evaluation::interpolate(Score score, int phase)
+    {
+        return ((score.first * (Constants::Eval::MaxPhase - phase)) + (score.second * phase)) / Constants::Eval::MaxPhase; // linear-interpolated score
     }
 
     inline Score Evaluation::PieceSquareValue(Piece piece, Square square)

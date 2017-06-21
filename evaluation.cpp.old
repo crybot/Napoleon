@@ -11,9 +11,9 @@ namespace Napoleon
     //int Evaluation::isolatedPawnP[8] = { 7, 10, 15, 27, 27, 15, 10, 7 };
     int Evaluation::passedPawn[3][8] = // phase, rank
     {
-        {0, 0, 10, 15, 25, 30, 30, 0}, // OPENING
+        {0, 0, 10, 15, 25, 35, 55}, // OPENING
         {0},                        // MIDDLEGAME (not used)
-        {0, 0, 10, 20, 40, 60, 125, 0} // ENDGAME
+        {0, 5, 15, 30, 50, 80, 120} // ENDGAME
     };
 
     int Evaluation::mobilityBonus[][Constants::QueenMaxMoves + 1] =
@@ -188,7 +188,7 @@ namespace Napoleon
                         if (piece.Color == White)
                             updateScore(scores, passedPawn[Opening][rank], passedPawn[EndGame][rank]);
                         else
-                            updateScore(scores, -passedPawn[Opening][7 - rank], -passedPawn[EndGame][7 - rank]);
+                            updateScore(scores, -passedPawn[Opening][rank], -passedPawn[EndGame][rank]);
                     }
                 }
                 else if (piece.Color == White)

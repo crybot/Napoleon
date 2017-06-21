@@ -8,7 +8,6 @@
 #include "zobrist.h"
 #include "uci.h"
 #include "pawn.h"
-#include "evaluation.h"
 #include <cassert>
 #include <iostream>
 #include <string>
@@ -562,27 +561,7 @@ namespace Napoleon
         return Constants::Eval::MaxPhase - phase; // (256-0) to (0-256)
     }
 
-    inline Score Board::calculatePST(Color color) const
-    {
-        using namespace Constants::Squares;
-
-        Piece piece;
-        int pst[2][2] = {{0}};
-
-        for (Napoleon::Square sq = IntA1; sq <= IntH8; sq++)
-        {
-            piece = PieceOnSquare(sq);
-            if (piece.Type != PieceType::None)
-            {
-                Score scores = Evaluation::PieceSquareValue(piece, sq);
-                pst[piece.Color][0] += scores.first;
-                pst[piece.Color][1] += scores.second;
-            }
-        }
-
-        return std::make_pair(pst[color][0], pst[color][1]);
-    }
-
+    
     // used for debug
     inline bool Board::PosIsOk() const
     {
