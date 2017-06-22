@@ -8,7 +8,7 @@
 namespace Napoleon
 {
     int Evaluation::multiPawnP[8] = { 0, 0, 10, 20, 35, 50, 75, 100 };
-    //int Evaluation::isolatedPawnP[8] = { 7, 10, 15, 27, 27, 15, 10, 7 };
+    int Evaluation::isolatedPawnP[8] = { 5, 7, 10, 18, 18, 10, 7, 5 };
     int Evaluation::passedPawn[3][8] = // phase, rank
     {
         {0, 0, 10, 15, 25, 30, 30, 0}, // OPENING
@@ -42,9 +42,12 @@ namespace Napoleon
 
         Score scores(0, 0);
         Score wPstValues, bPstValues;
+        auto wking_square = board.KingSquare(White);
+        auto bking_square = board.KingSquare(Black);
+
         BitBoard king_proximity[2] = { // color
-            MoveDatabase::KingProximity[White][board.KingSquare(White)],
-            MoveDatabase::KingProximity[Black][board.KingSquare(Black)]
+            MoveDatabase::KingProximity[White][wking_square],
+            MoveDatabase::KingProximity[Black][bking_square]
         };
 
         // material evaluation
@@ -97,30 +100,24 @@ namespace Napoleon
         /* PAWN STRUCTURE */    
         // doubled/isolated pawns evaluation
 
-        //BitBoard wpawns = board.Pieces(White, Pawn);
-        //BitBoard bpawns = board.Pieces(Black, Pawn);
+        BitBoard wpawns = board.Pieces(White, Pawn);
+        BitBoard bpawns = board.Pieces(Black, Pawn);
 
         for (File f = 0; f<8; f++)
         {
-            updateScore(scores, -multiPawnP[board.PawnsOnFile(White, f)]);
-            updateScore(scores, multiPawnP[board.PawnsOnFile(Black, f)]);
-            /*
             int pawns;
             if ((pawns = board.PawnsOnFile(White, f)))
             {
                 if (!(wpawns & MoveDatabase::SideFiles[f]))
                     updateScore(scores, -isolatedPawnP[f]);
-                
+
                 updateScore(scores, -multiPawnP[pawns]);
 
                 if (f < 7)
                     updateScore(scores, -multiPawnP[board.PawnsOnFile(White, ++f)]);
                 // since there's a pawn on this file, the next pawn (if present) would not be isolated
             }
-            */
         }
-
-        /*
         for (File f = 0; f<8; f++)
         {
             int pawns;
@@ -136,39 +133,6 @@ namespace Napoleon
                 // since there's a pawn on this file, the next pawn (if present) would not be isolated
             }
         }
-        */
-
-        /*
-        for (File f = 0; f<8; f++)
-        {
-            pawnsOnFile[White] = board.PawnsOnFile(White, f);
-            pawnsOnFile[Black] = board.PawnsOnFile(Black, f);
-
-            if (f < 7)
-            {
-                if (pawnsOnFile[White] && board.PawnsOnFile(White, f+1) == 0 && pawnsOnLeftFile[White] == 0)
-                    updateScore(scores, -isolatedPawnP[f]);
-
-                if (pawnsOnFile[Black] && board.PawnsOnFile(Black, f+1) == 0 && pawnsOnLeftFile[Black] == 0)
-                    updateScore(scores, isolatedPawnP[f]);
-            }
-            else
-            {
-                if (pawnsOnFile[White] && pawnsOnLeftFile[White] == 0)
-                    updateScore(scores, -isolatedPawnP[f]);
-
-                if (pawnsOnFile[Black] && pawnsOnLeftFile[Black] == 0)
-                    updateScore(scores, isolatedPawnP[f]);
-            }
-
-            pawnsOnLeftFile[White] = pawnsOnFile[White];
-            pawnsOnLeftFile[Black] = pawnsOnFile[Black];
-
-            updateScore(scores, -multiPawnP[pawnsOnFile[White]]);
-            updateScore(scores, multiPawnP[pawnsOnFile[Black]]);
-        }
-
-        */
 
         // mobility evaluation
         Piece piece;
@@ -200,63 +164,38 @@ namespace Napoleon
 
         //KING SAFETY
 
-        /*
-           int shelter1 = 0, shelter2 = 0;
-           auto wking_square = board.KingSquare(White);
-           auto bking_square = board.KingSquare(Black);
+        int shelter1 = 0, shelter2 = 0;
 
         //pawn shelter
-        if (board.HasCastled(White))
-        {
         BitBoard pawns = board.Pieces(White, Pawn);
         if (SquareMask[wking_square] & WhiteKingSide)
         {
-        shelter1 = PopCount(pawns & WhiteKingShield);
-        shelter2 = PopCount(pawns & OneStepNorth(WhiteKingShield));
+            shelter1 = PopCount(pawns & WhiteKingShield);
+            shelter2 = PopCount(pawns & OneStepNorth(WhiteKingShield));
         }
         else if (SquareMask[wking_square] & WhiteQueenSide)
         {
-        shelter1 = PopCount(pawns & WhiteQueenShield);
-        shelter2 = PopCount(pawns & OneStepNorth(WhiteQueenShield));
+            shelter1 = PopCount(pawns & WhiteQueenShield);
+            shelter2 = PopCount(pawns & OneStepNorth(WhiteQueenShield));
         }
         // else apply penalty
 
-        updateScore(scores, shelter1 * 5 + shelter2 * 3, shelter1 * 2 + shelter2 * 3); // shielding bonus
-        }
-        else // inability to castle penalties
-        {
-        if (!(board.CastlingStatus() & WhiteCastleOO))
-        updateScore(scores, -5, 0);
-        if (!(board.CastlingStatus() & WhiteCastleOOO))
-        updateScore(scores, -5, 0);
-        }
-
-        //pawn shelter
-        if (board.HasCastled(Black))
-        {
-        BitBoard pawns = board.Pieces(Black, Pawn);
+        updateScore(scores, shelter1 * 4 + shelter2 * 3, shelter1 * 2 + shelter2 * 3); // shielding bonus
+        
+        pawns = board.Pieces(Black, Pawn);
         if (SquareMask[bking_square] & BlackKingSide)
         {
-        shelter1 = PopCount(pawns & BlackKingShield);
-        shelter2 = PopCount(pawns & OneStepSouth(BlackKingShield));
+            shelter1 = PopCount(pawns & BlackKingShield);
+            shelter2 = PopCount(pawns & OneStepSouth(BlackKingShield));
         }
         else if (SquareMask[bking_square] & BlackQueenSide)
         {
-        shelter1 = PopCount(pawns & BlackQueenShield);
-        shelter2 = PopCount(pawns & OneStepSouth(BlackQueenShield));
+            shelter1 = PopCount(pawns & BlackQueenShield);
+            shelter2 = PopCount(pawns & OneStepSouth(BlackQueenShield));
         }
         // else apply penalty
 
-        updateScore(scores, -(shelter1 * 5 + shelter2 * 3), -(shelter1 * 2 + shelter2 * 3)); // shielding bonus
-        }
-        else // inability to castle penalties
-        {    
-        if (!(board.CastlingStatus() & BlackCastleOO))
-        updateScore(scores, 5, 0);
-        if (!(board.CastlingStatus() & BlackCastleOOO))
-        updateScore(scores, 5, 0);
-        }
-        */
+        updateScore(scores, -(shelter1 * 4 + shelter2 * 3), -(shelter1 * 2 + shelter2 * 3)); // shielding bonus
 
 
         //TODO: check wheter the king is in castle position
