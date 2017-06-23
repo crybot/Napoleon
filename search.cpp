@@ -319,6 +319,19 @@ namespace Napoleon
                     return beta;
             }
 
+            if (board.IsRepetition())
+                return 0;
+
+            int eval = Evaluation::Evaluate(board);
+            if (!pv
+                    && !attackers
+                    && std::abs(alpha) < Constants::Mate - Constants::MaxPly
+                    && std::abs(beta) < Constants::Mate - Constants::MaxPly
+                    && eval - 300 - 10*depth >= beta)
+            {
+                return beta;
+            }
+
             // internal iterative deepening (IID)
             if (depth >= 5 && best.IsNull() && pv)
             {
@@ -337,11 +350,6 @@ namespace Napoleon
 
                 best = hashHit.second;
             }
-
-            if (board.IsRepetition())
-                return 0;
-
-            int eval = Evaluation::Evaluate(board);
 
             // enhanced razoring
             if (!attackers
