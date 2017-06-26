@@ -47,7 +47,7 @@ namespace Napoleon
 
     inline void MoveSelector::Reset()
     {
-        first = -1;
+        first = 0;
     }
 
     // make a selection sort on the move array for picking the best untried move

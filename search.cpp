@@ -227,9 +227,9 @@ namespace Napoleon
 
             board.MakeMove(move);
             if (i == 0) // leftmost node
-                score = -Search::search<true>(depth - 1, -beta, -alpha, 1, board); // pv node
+                score = -Search::search<NodeType::PV>(depth - 1, -beta, -alpha, 1, board, false); // pv node
             else
-                score = -Search::search<false>(depth - 1, -beta, -alpha, 1, board); // cut node
+                score = -Search::search<NodeType::NONPV>(depth - 1, -beta, -alpha, 1, board, true); // cut node
             board.UndoMove(move);
 
             if (score > alpha)
@@ -253,12 +253,13 @@ namespace Napoleon
         return alpha;
     }
 
-    template<bool pv>
-        int Search::search(int depth, int alpha, int beta, int ply, Board& board, Move excluded)
+    template<NodeType node_type>
+        int Search::search(int depth, int alpha, int beta, int ply, Board& board, bool cut_node)
         {
             searchInfo.VisitNode();
 
             ScoreType bound = ScoreType::Alpha;
+            const bool pv = node_type == NodeType::PV;
             bool futility = false;
             bool extension = false;
             int score;
@@ -299,7 +300,19 @@ namespace Napoleon
             if (depth == 0)
                 return quiescence(alpha, beta, board);
 
-            BitBoard pinned = board.PinnedPieces();
+            if (board.IsRepetition())
+                return 0;
+
+            int eval = Evaluation::Evaluate(board);
+            if (depth <= 3
+                    && !pv
+                    && !attackers
+                    && std::abs(alpha) < Constants::Mate - Constants::MaxPly
+                    && std::abs(beta) < Constants::Mate - Constants::MaxPly
+                    && eval - 250 - 50*depth >= beta)
+            {
+                return beta;
+            }
 
             // adaptive null move pruning
             if (board.AllowNullMove()
@@ -312,24 +325,12 @@ namespace Napoleon
 
                 // cut node
                 board.MakeNullMove();
-                score = -search<false>(depth - R - 1, -beta, -beta + 1, ply, board); // make a null-window search (we don't care by how much it fails high, if it does)
+                // make a null-window search (we don't care by how much it fails high, if it does)
+                score = -search<NodeType::NONPV>(depth - R - 1, -beta, -beta + 1, ply, board, !cut_node); 
                 board.UndoNullMove();
 
                 if (score >= beta)
                     return beta;
-            }
-
-            if (board.IsRepetition())
-                return 0;
-
-            int eval = Evaluation::Evaluate(board);
-            if (!pv
-                    && !attackers
-                    && std::abs(alpha) < Constants::Mate - Constants::MaxPly
-                    && std::abs(beta) < Constants::Mate - Constants::MaxPly
-                    && eval - 300 - 10*depth >= beta)
-            {
-                return beta;
             }
 
             // internal iterative deepening (IID)
@@ -340,7 +341,7 @@ namespace Napoleon
                 if (board.AllowNullMove())
                     board.ToggleNullMove();
 
-                search<pv>(depth - R - 1, alpha, beta, ply, board); // make a full width search to find a new bestmove
+                search<node_type>(depth - R - 1, alpha, beta, ply, board, cut_node); // make a full width search to find a new bestmove
 
                 if (!board.AllowNullMove())
                     board.ToggleNullMove();
@@ -353,8 +354,8 @@ namespace Napoleon
 
             // enhanced razoring
             if (!attackers
-                    && !pv
                     && depth <= 3
+                    && !pv
                     && !extension
                     && eval + razorMargin(depth) <= alpha // likely to be a fail low node
                )
@@ -392,11 +393,11 @@ namespace Napoleon
                 futility = true;
             }
 
-
             MoveSelector moves(board, searchInfo);
 
             if (moves.count == 1) // forced move extension
             {
+                assert(false);
                 extension = true;
                 ++depth;
             }
@@ -406,12 +407,47 @@ namespace Napoleon
             moves.Sort<false>(ply);
             moves.hashMove = best;
 
+            /*
+            // multi-cut search
+            if (!pv
+            && cut_node
+            && !attackers
+            && !extension
+            && moves.count >= 12
+            && depth >= 6
+            && !board.EndGame()
+            )
+            {
+            int c = 0;
+            int m = 8;
+            int R = 2;
+            int C = 3;
+            for (auto move = moves.First(); !move.IsNull(); move = moves.Next())
+            {
+            if (m <= 0) break;
+
+            if (board.IsMoveLegal(move, pinned))
+            {
+            board.MakeMove(move);
+            if(-search<NodeType::NONPV>(depth - 1 - R, -beta, -beta + 1, ply + 1, board, !cut_node) >= beta)
+            c++;
+            board.UndoMove(move);
+            if (c == C) return beta;
+
+            m--;
+            }
+            }
+            }
+            moves.Reset();
+            */
+
             // principal variation search
             bool capture;
             bool pruned = false;
 
             int moveNumber = 0;
             int newDepth = depth;
+            BitBoard pinned = board.PinnedPieces();
 
             for (auto move = moves.First(); !move.IsNull(); move = moves.Next())
             {
@@ -462,7 +498,7 @@ namespace Napoleon
 
                     if (moveNumber == 0)
                     {
-                        score = -search<pv>(newDepth - 1, -beta, -alpha, ply + 1, board);
+                        score = -search<node_type>(newDepth - 1, -beta, -alpha, ply + 1, board, !cut_node);
                     }
                     else
                     {
@@ -491,7 +527,7 @@ namespace Napoleon
 
                         newDepth = depth - R;
 
-                        score = -search<false>(newDepth - 1, -alpha - 1, -alpha, ply + 1, board);
+                        score = -search<NodeType::NONPV>(newDepth - 1, -alpha - 1, -alpha, ply + 1, board, !cut_node);
 
                         //                    if (score > alpha)
                         //                        score = -search<false>(newdepth-1, -alpha-1, -alpha, ply+1, board);
@@ -499,7 +535,7 @@ namespace Napoleon
                         if (score > alpha)
                         {
                             newDepth = depth;
-                            score = -search<true>(newDepth - 1, -beta, -alpha, ply + 1, board);
+                            score = -search<NodeType::PV>(newDepth - 1, -beta, -alpha, ply + 1, board, !cut_node);
                         }
                     }
 
@@ -518,7 +554,7 @@ namespace Napoleon
                         }
 
                         // for safety, we don't save forward pruned nodes inside transposition table
-                        if (!pruned && excluded.IsNull())
+                        if (!pruned) 
                             Table.Save(board.zobrist, newDepth, beta, best, ScoreType::Beta);
 
                         return beta;   //  fail hard beta-cutoff
@@ -548,7 +584,7 @@ namespace Napoleon
                 alpha = 0;
 
             // for safety, we don't save forward pruned nodes inside transposition table
-            if (!pruned && excluded.IsNull())
+            if (!pruned)
                 Table.Save(board.zobrist, newDepth, alpha, best, bound);
 
             return alpha;

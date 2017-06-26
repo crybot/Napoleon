@@ -18,6 +18,11 @@ namespace Napoleon
         Infinite, TimePerGame, TimePerMove
     };
 
+    enum class NodeType
+    {
+        PV, NONPV, CUT, ALL
+    };
+
     class Board;
     class TranspositionTable;
     namespace Search
@@ -50,8 +55,8 @@ namespace Napoleon
         Move iterativeSearch(Board&);
         int searchRoot(int, int, int, Move&, Board&);
 
-        template<bool>
-        int search(int, int, int, int, Board&, Move = Constants::NullMove);
+        template<NodeType>
+        int search(int, int, int, int, Board&, bool);
         int quiescence(int, int, Board&);
 
         int razorMargin(int);
