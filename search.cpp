@@ -53,6 +53,7 @@ namespace Napoleon
         sendOutput = verbose;
         StopSignal = false;
         pondering = false;
+		PonderHit = false;
         searchInfo.SetDepthLimit(depth_limit);
 
         if (type == SearchType::Infinite || type == SearchType::Ponder)

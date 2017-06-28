@@ -140,7 +140,6 @@ namespace Napoleon
             }
             else if (cmd == "ponderhit")
             {
-                assert(false);
                 Search::PonderHit = true;
             }
         }
@@ -149,7 +148,7 @@ namespace Napoleon
     void Uci::go(istringstream& stream)
     {
         string token;
-        SearchType type;
+		SearchType type = SearchType::TimePerGame;
         bool san = false;
 
         while(stream >> token)
@@ -168,12 +167,12 @@ namespace Napoleon
             else if (token == "wtime")
             {
                 stream >> Search::GameTime[PieceColor::White];
-                type = SearchType::TimePerGame;
+                //type = SearchType::TimePerGame;
             }
             else if (token == "btime")
             {
                 stream >> Search::GameTime[PieceColor::Black];
-                type = SearchType::TimePerGame;
+                //type = SearchType::TimePerGame;
             }
             else if (token == "infinite")
             {
