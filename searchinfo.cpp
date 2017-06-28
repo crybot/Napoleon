@@ -49,5 +49,11 @@ namespace Napoleon
         nodes = 0;
     }
 
+    void SearchInfo::SetGameTime(int time)
+    {
+        allocatedTime = time;
+        timer.Restart();
+    }
+
 
 }

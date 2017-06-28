@@ -97,6 +97,7 @@ namespace Napoleon
         std::memset(table, 0, entries*sizeof(HashEntry));
     }
 
+    //TODO return BEST pv move (exact score)
     Move TranspositionTable::GetPv(ZobristKey key)
     {
         auto hash = at(key);

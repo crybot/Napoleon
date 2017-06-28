@@ -92,6 +92,7 @@ namespace Napoleon
             }
             else if (cmd == "position")
             {
+                //Search::StopThinking();
                 Move move;
                 string token;
                 stream >> token;
@@ -137,6 +138,11 @@ namespace Napoleon
                 if (Search::StopSignal)
                     go(stream);
             }
+            else if (cmd == "ponderhit")
+            {
+                assert(false);
+                Search::PonderHit = true;
+            }
         }
     }
 
@@ -172,6 +178,10 @@ namespace Napoleon
             else if (token == "infinite")
             {
                 type = SearchType::Infinite;
+            }
+            else if (token == "ponder")
+            {
+                type = SearchType::Ponder;
             }
 
         }

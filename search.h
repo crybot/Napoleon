@@ -15,7 +15,7 @@ namespace Napoleon
 {
     enum class SearchType
     {
-        Infinite, TimePerGame, TimePerMove
+        Infinite, TimePerGame, TimePerMove, Ponder
     };
 
     enum class NodeType
@@ -28,6 +28,8 @@ namespace Napoleon
     namespace Search
     {
         extern const int AspirationValue;
+        extern bool pondering;
+        extern std::atomic<bool> PonderHit;
         extern std::atomic<bool> StopSignal;
         extern int MoveTime;
         extern int GameTime[2]; // by color
@@ -46,9 +48,11 @@ namespace Napoleon
         void KillThreads();
         void signalThreads(int, int, int, const Board&, bool);
         void parallelSearch();
+        int predictTime(Color);
 
         std::string GetInfo(Board&, Move, int, int, int);
         std::string GetPv(Board&, Move, int);
+        Move getPonderMove(Board&, const Move);
 
         Move StartThinking(SearchType, Board&, bool=true, bool=false);
         void StopThinking();

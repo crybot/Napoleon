@@ -17,6 +17,8 @@
 namespace Napoleon
 {
     TranspositionTable Search::Table;
+    bool Search::pondering = false;
+    std::atomic<bool> Search::PonderHit(false);
     std::atomic<bool> Search::StopSignal(true);
     std::atomic<bool> Search::quit(false);
     int Search::GameTime[2];
@@ -34,6 +36,12 @@ namespace Napoleon
     int Search::cores;
     const int Search::default_cores = 1;
 
+    int Search::predictTime(Color color)
+    {
+        int gameTime = GameTime[color];
+        return gameTime / 30 - (gameTime / (60 * 1000));
+    }
+
     // direct interface to the client.
     // it sends the move to the uci gui
     Move Search::StartThinking(SearchType type, Board& board, bool verbose, bool san)
@@ -44,10 +52,12 @@ namespace Napoleon
 
         sendOutput = verbose;
         StopSignal = false;
+        pondering = false;
         searchInfo.SetDepthLimit(depth_limit);
 
-        if (type == SearchType::Infinite)
+        if (type == SearchType::Infinite || type == SearchType::Ponder)
         {
+            if (type == SearchType::Ponder) pondering = true;
             searchInfo.NewSearch(); // default time = Time::Infinite
         }
         else
@@ -71,10 +81,23 @@ namespace Napoleon
 
         if (sendOutput)
         {
+            Move ponder = getPonderMove(board, move);
             if (san)
-                Uci::SendCommand<Command::Move>(move.ToSan(board));
+            {
+                if (ponder.IsNull())
+                    Uci::SendCommand<Command::Move>(move.ToSan(board));
+                else 
+                    Uci::SendCommand<Command::Move>(move.ToSan(board), ponder.ToSan(board));
+            }
             else
-                Uci::SendCommand<Command::Move>(move.ToAlgebraic());
+            {
+                if (ponder.IsNull())
+                    Uci::SendCommand<Command::Move>(move.ToAlgebraic());
+                else 
+                    Uci::SendCommand<Command::Move>(move.ToAlgebraic(), ponder.ToAlgebraic());
+
+            }
+
         }
 
         searchInfo.StopSearch();
@@ -166,10 +189,16 @@ namespace Napoleon
         score = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, move, board);
         searchInfo.IncrementDepth();
 
-        while ((searchInfo.MaxDepth() < 100 && !searchInfo.TimeOver()))
+        while ((searchInfo.MaxDepth() < 100 && !searchInfo.TimeOver()) || pondering)
         {
             if (StopSignal)
                 break;
+            if(PonderHit)
+            {
+                searchInfo.SetGameTime(predictTime(board.SideToMove()));
+                PonderHit = false;
+                pondering = false;
+            }
 
             searchInfo.MaxPly = 0;
             searchInfo.ResetNodes();
@@ -181,13 +210,10 @@ namespace Napoleon
             temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, score + AspirationValue, move, board);
 
             if (temp <= score - AspirationValue)
-            {
                 temp = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, score + AspirationValue, move, board);
-            }
-            else if (temp >= score + AspirationValue)
-            {
+
+            if (temp >= score + AspirationValue)
                 temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, Constants::Infinity, move, board);
-            }
 
             score = temp;
 
@@ -218,6 +244,7 @@ namespace Napoleon
         }
 
         moves.Sort<false>();
+        moves.hashMove = moveToMake;
 
         int i = 0;
         for (auto move = moves.First(); !move.IsNull(); move = moves.Next(), i++)
@@ -229,7 +256,12 @@ namespace Napoleon
             if (i == 0) // leftmost node
                 score = -Search::search<NodeType::PV>(depth - 1, -beta, -alpha, 1, board, false); // pv node
             else
-                score = -Search::search<NodeType::NONPV>(depth - 1, -beta, -alpha, 1, board, true); // cut node
+            {
+                score = -search<NodeType::NONPV>(depth - 1, -alpha - 1, -alpha, 1, board, true);
+
+                if (score > alpha)
+                    score = -search<NodeType::PV>(depth - 1, -beta, -alpha, 1, board, false);
+            }
             board.UndoMove(move);
 
             if (score > alpha)
@@ -395,14 +427,15 @@ namespace Napoleon
 
             MoveSelector moves(board, searchInfo);
 
-            if (moves.count == 1) // forced move extension
-            {
-                assert(false);
-                extension = true;
-                ++depth;
-            }
-
             MoveGenerator::GetPseudoLegalMoves<false>(moves.moves, moves.count, attackers, board); // get captures and non-captures
+
+            /*
+               if (moves.count == 1) // forced move extension
+               {
+               extension = true;
+               ++depth;
+               }
+               */
 
             moves.Sort<false>(ply);
             moves.hashMove = best;
@@ -519,13 +552,13 @@ namespace Napoleon
                         {
                             R = 1;
 
-                            if (eval + board.MaterialBalance(Utils::Piece::GetOpposite(board.SideToMove())) + newDepth * 250 <= alpha)
+                            if (moveNumber > 9)
                             {
                                 R = 2;
                             }
                         }
 
-                        newDepth = depth - R;
+                        newDepth = std::max(1, depth - R);
 
                         score = -search<NodeType::NONPV>(newDepth - 1, -alpha - 1, -alpha, ply + 1, board, !cut_node);
 
@@ -703,4 +736,15 @@ namespace Napoleon
 
         return info.str();
     }
+
+    Move Search::getPonderMove(Board& board, const Move toMake)
+    {
+        Move move = Constants::NullMove;
+        board.MakeMove(toMake);
+        move = Table.GetPv(board.zobrist);
+        board.UndoMove(toMake);
+
+        return move;
+    }
+
 }

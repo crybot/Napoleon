@@ -17,7 +17,7 @@ namespace Napoleon
         void Start();
 
         template<Command>
-        void SendCommand(std::string);   
+        void SendCommand(std::string, std::string="");   
         void go(std::istringstream&);
 
         extern Board board;
@@ -25,7 +25,7 @@ namespace Napoleon
     }
 
     template<Command cmdType>
-    void Uci::SendCommand(std::string command)
+    void Uci::SendCommand(std::string command, std::string ponder)
     {
         switch(cmdType)
         {
@@ -33,7 +33,9 @@ namespace Napoleon
             std::cout << command << std::endl;
             break;
         case Command::Move:
-            std::cout << "bestmove " << command << std::endl;
+            std::cout << "bestmove " << command;
+            if(!ponder.empty()) std::cout << " ponder " << ponder;
+            std::cout << std::endl;
             break;
         case Command::Info:
             std::cout << "info " << command << std::endl;

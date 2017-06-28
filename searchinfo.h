@@ -27,6 +27,7 @@ namespace Napoleon
         void SetKillers(Move, int);
         void SetHistory(Move, Color, int);
         void SetDepthLimit(int);
+        void SetGameTime(int);
 
         Move FirstKiller(int);
         Move SecondKiller(int);
