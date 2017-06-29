@@ -182,13 +182,14 @@ namespace Napoleon
     // iterative deepening
     Move Search::iterativeSearch(Board& board)
     {
-        Move move;
+        Move move = Constants::NullMove;
         Move toMake = Constants::NullMove;
         int score;
         int temp;
 
         score = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, move, board);
         searchInfo.IncrementDepth();
+        if (score != Constants::Unknown) toMake = move;
 
         while ((searchInfo.MaxDepth() < 100 && !searchInfo.TimeOver()) || pondering)
         {
@@ -208,13 +209,13 @@ namespace Napoleon
                 signalThreads(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, board, true);
 
             // aspiration search
-            temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, score + AspirationValue, move, board);
+            temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, score + AspirationValue, move, board, toMake);
 
             if (temp <= score - AspirationValue)
-                temp = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, score + AspirationValue, move, board);
+                temp = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, score + AspirationValue, move, board, toMake);
 
-            if (temp >= score + AspirationValue)
-                temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, Constants::Infinity, move, board);
+            else if (temp >= score + AspirationValue)
+                temp = searchRoot(searchInfo.MaxDepth(), score - AspirationValue, Constants::Infinity, move, board, toMake);
 
             score = temp;
 
@@ -229,7 +230,7 @@ namespace Napoleon
         return toMake;
     }
 
-    int Search::searchRoot(int depth, int alpha, int beta, Move& moveToMake, Board& board)
+    int Search::searchRoot(int depth, int alpha, int beta, Move& moveToMake, Board& board, const Move candidate)
     {
         int score;
         int startTime = searchInfo.ElapsedTime();
@@ -245,7 +246,7 @@ namespace Napoleon
         }
 
         moves.Sort<false>();
-        moves.hashMove = moveToMake;
+        moves.hashMove = candidate;
 
         int i = 0;
         for (auto move = moves.First(); !move.IsNull(); move = moves.Next(), i++)

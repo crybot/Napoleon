@@ -57,7 +57,7 @@ namespace Napoleon
         Move StartThinking(SearchType, Board&, bool=true, bool=false);
         void StopThinking();
         Move iterativeSearch(Board&);
-        int searchRoot(int, int, int, Move&, Board&);
+        int searchRoot(int, int, int, Move&, Board&, const Move=Constants::NullMove);
 
         template<NodeType>
         int search(int, int, int, int, Board&, bool);
