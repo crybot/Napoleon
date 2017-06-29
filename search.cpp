@@ -53,7 +53,7 @@ namespace Napoleon
         sendOutput = verbose;
         StopSignal = false;
         pondering = false;
-		PonderHit = false;
+        PonderHit = false;
         searchInfo.SetDepthLimit(depth_limit);
 
         if (type == SearchType::Infinite || type == SearchType::Ponder)
@@ -67,8 +67,10 @@ namespace Napoleon
 
             if (type == SearchType::TimePerGame)
             {
+                time = predictTime(board.SideToMove());
                 int gameTime = GameTime[board.SideToMove()];
                 time = gameTime / 30 - (gameTime / (60 * 1000));
+                std::cout << "ALLOCATED: " << time << std::endl;
             }
             else // TimePerMove
             {
@@ -195,13 +197,7 @@ namespace Napoleon
         {
             if (StopSignal)
                 break;
-            if(PonderHit)
-            {
-                searchInfo.SetGameTime(predictTime(board.SideToMove()));
-                PonderHit = false;
-                pondering = false;
-            }
-
+            
             searchInfo.MaxPly = 0;
             searchInfo.ResetNodes();
 
@@ -303,9 +299,19 @@ namespace Napoleon
             if (ply > searchInfo.MaxPly)
                 searchInfo.MaxPly = ply;
 
-            if (searchInfo.Nodes() % 10000 == 0 && sendOutput) // every 10000 nodes visited we check for time expired
+            if (searchInfo.Nodes() % 10000 == 0 && sendOutput) // every 10000 nodes visited we check for time expired and ponderhit
+            {
                 if (searchInfo.TimeOver())
                     StopSignal = true;
+
+                if(PonderHit && pondering)
+                {
+                    searchInfo.SetGameTime(predictTime(board.SideToMove()));
+                    PonderHit = false;
+                    pondering = false;
+                }
+
+            }
 
             if (StopSignal)
                 return alpha;
