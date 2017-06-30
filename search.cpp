@@ -197,7 +197,15 @@ namespace Napoleon
         {
             if (StopSignal)
                 break;
-            
+
+            if(PonderHit && pondering)
+            {
+                searchInfo.SetGameTime(predictTime(board.SideToMove()));
+                PonderHit = false;
+                pondering = false;
+            }
+            if (searchInfo.MaxDepth() >= 100) continue;
+
             searchInfo.MaxPly = 0;
             searchInfo.ResetNodes();
 
