@@ -19,7 +19,7 @@ namespace Napoleon
     TranspositionTable Search::Table;
     bool Search::pondering = false;
     std::atomic<bool> Search::PonderHit(false);
-    std::atomic<bool> Search::StopSignal(true);
+    std::atomic<bool> Search::StopSignal(false);
     std::atomic<bool> Search::quit(false);
     int Search::GameTime[2];
     int Search::MoveTime;
@@ -51,9 +51,9 @@ namespace Napoleon
         Table.Clear();
 
         sendOutput = verbose;
-        StopSignal = false;
+        //StopSignal = false;
+        //PonderHit = false;
         pondering = false;
-        PonderHit = false;
         searchInfo.SetDepthLimit(depth_limit);
 
         if (type == SearchType::Infinite || type == SearchType::Ponder)
@@ -67,10 +67,9 @@ namespace Napoleon
 
             if (type == SearchType::TimePerGame)
             {
-                time = predictTime(board.SideToMove());
+                //time = predictTime(board.SideToMove());
                 int gameTime = GameTime[board.SideToMove()];
                 time = gameTime / 30 - (gameTime / (60 * 1000));
-                std::cout << "ALLOCATED: " << time << std::endl;
             }
             else // TimePerMove
             {
@@ -82,7 +81,7 @@ namespace Napoleon
 
         Move move = iterativeSearch(board);
 
-        if (sendOutput)
+        if (sendOutput && !move.IsNull())
         {
             Move ponder = getPonderMove(board, move);
             if (san)
@@ -104,6 +103,8 @@ namespace Napoleon
         }
 
         searchInfo.StopSearch();
+        PonderHit = false;
+        StopSignal = false;
         return move;
     }
 

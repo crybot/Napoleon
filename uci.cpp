@@ -135,8 +135,8 @@ namespace Napoleon
             }
             else if (cmd == "go")
             {
-                if (Search::StopSignal)
-                    go(stream);
+                //if (Search::StopSignal)
+                go(stream);
             }
             else if (cmd == "ponderhit")
             {
@@ -148,7 +148,7 @@ namespace Napoleon
     void Uci::go(istringstream& stream)
     {
         string token;
-		SearchType type = SearchType::TimePerGame;
+        SearchType type = SearchType::TimePerGame;
         bool san = false;
 
         while(stream >> token)
