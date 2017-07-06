@@ -1,3 +1,5 @@
+## Testing
+
 Whenever a functional change is proposed it is advisable to run a test and provide useful information whether the new build is stronger than master's one.
 The following setup is recommended:
 * 2400 games
