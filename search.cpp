@@ -35,6 +35,7 @@ namespace Napoleon
     int Search::depth_limit = 100;
     int Search::cores;
     const int Search::default_cores = 1;
+    int Age = 0;
 
     int Search::predictTime(Color color)
     {
@@ -105,6 +106,7 @@ namespace Napoleon
         searchInfo.StopSearch();
         PonderHit = false;
         StopSignal = false;
+        //Table.Clear();
         return move;
     }
 
@@ -190,6 +192,7 @@ namespace Napoleon
         int score;
         int temp;
 
+        Age = (Age + 1) % 64;
         score = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, move, board);
         searchInfo.IncrementDepth();
         if (score != Constants::Unknown) toMake = move;
@@ -332,7 +335,7 @@ namespace Napoleon
                 return alpha;
 
             // Transposition table lookup
-            auto hashHit = Table.Probe(board.zobrist, depth, alpha, beta);
+            auto hashHit = Table.Probe(board.zobrist, depth, Age, alpha, beta);
 
             if ((score = hashHit.first) != TranspositionTable::Unknown)
                 return score;
@@ -396,7 +399,7 @@ namespace Napoleon
                     board.ToggleNullMove();
 
                 //Transposition table lookup
-                auto hashHit = Table.Probe(board.zobrist, depth, alpha, beta);
+                auto hashHit = Table.Probe(board.zobrist, depth, Age, alpha, beta);
 
                 best = hashHit.second;
             }
@@ -605,7 +608,7 @@ namespace Napoleon
 
                         // for safety, we don't save forward pruned nodes inside transposition table
                         if (!pruned) 
-                            Table.Save(board.zobrist, newDepth, beta, best, ScoreType::Beta);
+                            Table.Save(board.zobrist, newDepth, Age, beta, best, ScoreType::Beta);
 
                         return beta;   //  fail hard beta-cutoff
                     }
@@ -635,7 +638,7 @@ namespace Napoleon
 
             // for safety, we don't save forward pruned nodes inside transposition table
             if (!pruned)
-                Table.Save(board.zobrist, newDepth, alpha, best, bound);
+                Table.Save(board.zobrist, newDepth, Age, alpha, best, bound);
 
             return alpha;
         }

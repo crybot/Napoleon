@@ -89,6 +89,8 @@ namespace Napoleon
             bool EndGame() const;
             bool HasCastled(Color);
 
+
+            int Clock() const;
             int Phase() const;
 
             bool PosIsOk() const;
@@ -620,6 +622,11 @@ namespace Napoleon
     inline bool Board::HasCastled(Color color)
     {
         return castled[color];
+    }
+
+    inline int Board::Clock() const
+    {
+        return halfMoveClock;
     }
 }
 

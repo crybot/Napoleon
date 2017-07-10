@@ -35,9 +35,9 @@ namespace Napoleon
             TranspositionTable(int size = 1);
 
             void SetSize(int);
-            void Save(ZobristKey, Byte, int, Move, ScoreType);
+            void Save(ZobristKey, Byte, Byte, int, Move, ScoreType);
             void Clear();
-            std::pair<int, Move> Probe(ZobristKey, Byte, int, int);
+            std::pair<int, Move> Probe(ZobristKey, Byte, Byte, int, int);
             Move GetPv(ZobristKey);
 
         private:

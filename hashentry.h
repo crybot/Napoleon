@@ -7,19 +7,19 @@
 
 namespace Napoleon
 {
-    enum class ScoreType : Byte { Exact, Alpha, Beta };
+    enum ScoreType : Byte { Exact=0, Alpha=1, Beta=2 };
 
     class HashEntry
     {
     public:
         ZobristKey Hash;
         Byte Depth;
-        ScoreType Bound;
+        Byte Bound; // also holds age
         Move BestMove;
         int Score;
 
         HashEntry();
-        HashEntry(ZobristKey, Byte, int, Move, ScoreType);
+        HashEntry(ZobristKey, Byte, Byte, int, Move, ScoreType);
     };
 }
 
