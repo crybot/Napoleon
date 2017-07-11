@@ -30,7 +30,7 @@ namespace Napoleon
             void Display(Napoleon::BitBoard);
 
             int PopCount(Napoleon::BitBoard);
-            int BitScanForward( Napoleon::BitBoard);
+            int BitScanForward(Napoleon::BitBoard);
             int BitScanForwardReset(Napoleon::BitBoard&);
             int BitScanReverse(Napoleon::BitBoard);
         }

@@ -61,7 +61,7 @@ namespace Napoleon
             bool IsAttacked(BitBoard, Color) const;
             bool IsPromotingPawn() const;
             bool IsOnSquare(Color, Type, Square) const;
-            bool IsRepetition() const;
+            bool IsDraw() const;
 
             Square KingSquare(Color) const;
 
@@ -82,6 +82,8 @@ namespace Napoleon
             int Material() const;
             int MaterialBalance(Color) const;
             int PawnsOnFile(Color, File) const;
+            int MinorPieces(Color) const;
+            int MinorPieces() const;
 
             GameStage Stage() const;
             bool Opening() const;
@@ -509,8 +511,55 @@ namespace Napoleon
         return gain[0];
     }
 
-    inline bool Board::IsRepetition() const
+    inline int Board::MinorPieces(Color c) const
     {
+        return NumOfPieces(c, PieceType::Bishop) + NumOfPieces(c, PieceType::Knight);
+    }
+
+    inline int Board::MinorPieces() const
+    {
+        return MinorPieces(PieceColor::White) + MinorPieces(PieceColor::Black);
+    }
+    inline bool Board::IsDraw() const
+    {
+        using namespace Utils::Piece;
+        using namespace Utils::BitBoard;
+        using namespace Constants;
+
+        // Material draw detection
+        if (EndGame())
+        {
+            if (NumOfPieces(PieceType::Queen) + 
+                    NumOfPieces(PieceType::Rook) +
+                    NumOfPieces(PieceType::Pawn) == 0)
+            {
+                if (MinorPieces() == 0) // KK
+                    return true;
+
+                for (auto c = PieceColor::White; c < PieceColor::None; c++)
+                {
+                    auto enemy = GetOpposite(c);
+                    if (MinorPieces(c) == 1 && MinorPieces(enemy) == 0) // KN+K, KB+K
+                        return true;
+                    if (NumOfPieces(c, PieceType::Knight) == 2 && MinorPieces(enemy) == 0) //KNN+K
+                        return true;
+                }
+                if (NumOfPieces(PieceColor::White, PieceType::Bishop) == 1 
+                        && NumOfPieces(PieceColor::Black, PieceType::Bishop) == 1) // KB+KB same color
+                {
+                    if (Pieces(PieceColor::White, PieceType::Bishop) & LightSquares)
+                    {
+                        if (Pieces(PieceColor::Black, PieceType::Bishop) & LightSquares)
+                            return true;
+                    }
+                    else if (Pieces(PieceColor::Black, PieceType::Bishop) & DarkSquares)
+                        return true;
+                }
+
+            }
+        }
+
+        // threefold repetition
         if (halfMoveClock >= 4)
         {
             int start = SideToMove() == PieceColor::White ? 0 : 1;
@@ -563,7 +612,7 @@ namespace Napoleon
         return Constants::Eval::MaxPhase - phase; // (256-0) to (0-256)
     }
 
-    
+
     // used for debug
     inline bool Board::PosIsOk() const
     {

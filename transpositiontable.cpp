@@ -36,9 +36,12 @@ namespace Napoleon
 
     void TranspositionTable::Save(ZobristKey key, Byte depth, Byte age, int score, Move move, ScoreType bound)
     {
-        stores++;
-        auto mux = locks + (key & mask)/BucketSize;
-        std::lock_guard<SpinLock> lock(*mux);
+        SpinLock* mux = locks + (key & mask)/BucketSize;;
+
+        if (Concurrent)
+            mux->lock();
+
+        //stores++;
 
         int min = Constants::MaxPly;
         auto hash = at(key);
@@ -69,12 +72,16 @@ namespace Napoleon
         //hashToOverride->Bound = (bound | (age << 2));
         hashToOverride->Bound = bound;
         hashToOverride->BestMove = move;
+
+        mux->unlock();
     }
 
     std::pair<int, Move> TranspositionTable::Probe(ZobristKey key, Byte depth, Byte age, int alpha, int beta)
     {
-        auto mux = locks + (key & mask)/BucketSize;
-        std::lock_guard<SpinLock> lock(*mux);
+        SpinLock* mux = locks + (key & mask)/BucketSize;
+
+        if (Concurrent)
+            mux->lock();
 
         auto hash = at(key);
         auto move = Constants::NullMove;
@@ -87,50 +94,53 @@ namespace Napoleon
                 if (hash->Depth >= depth)
                 {
                     if ((hash->Bound & 0x3) == ScoreType::Exact)
-                        return std::make_pair(hash->Score, move);
+                    { mux->unlock(); return std::make_pair(hash->Score, move); }
 
                     if ((hash->Bound & 0x3) == ScoreType::Alpha && hash->Score <= alpha)
-                        return std::make_pair(alpha, move);
+                    { mux->unlock(); return std::make_pair(alpha, move); }
 
                     if ((hash->Bound & 0x3) == ScoreType::Beta && hash->Score >= beta)
-                        return std::make_pair(beta, move);
+                    { mux->unlock(); return std::make_pair(beta, move); }
                 }
                 move = hash->BestMove; // get best move on this position
             }
         }
 
+        mux->unlock();
         return std::make_pair(Unknown, move);
     }
 
     void TranspositionTable::Clear()
     {
-        /*
-           auto hash = table;
-           unsigned long gen[64] = {0};
-           unsigned long empty = 0;
-           for (unsigned long i=0; i<entries; i++, hash++)
-           {
-           if (!hash->Hash)
-           {
-           empty++;
-           }
-           else
-           {
-           gen[(hash->Bound >> 2)]++;
-           }
-           }
-           std::cout << "empty cells: " << 100*empty/entries << "%" << std::endl;
-           std::cout << "stores/entries: " << 100*stores/entries << "%" << std::endl;
-           std::cout << "generation count: " << std::endl;
-           for (auto i=0; i<64; i++)
-           {
-           if (gen[i] > 0)
-           std::cout << "g[" << i << "]=" << 100*gen[i]/entries << "%" << '\t';
-           }
-           std::cout << std::endl;
-           */
+        //std::memset(table, 0, entries*sizeof(HashEntry)/2); // clear first half
+        // DO NOT CLEAR
 
-        std::memset(table, 0, entries*sizeof(HashEntry));
+        /*
+        auto hash = table;
+        unsigned long gen[64] = {0};
+        unsigned long empty = 0;
+        for (unsigned long i=0; i<entries; i++, hash++)
+        {
+            if (!hash->Hash)
+            {
+                empty++;
+            }
+            else
+            {
+                gen[(hash->Bound >> 2)]++;
+            }
+        }
+        std::cout << "empty cells: " << 100*empty/entries << "%" << std::endl;
+        std::cout << "stores/entries: " << 100*stores/entries << "%" << std::endl;
+        std::cout << "generation count: " << std::endl;
+        for (auto i=0; i<64; i++)
+        {
+            if (gen[i] > 0)
+                std::cout << "g[" << i << "]=" << 100*gen[i]/entries << "%" << '\t';
+        }
+        std::cout << std::endl;
+        */
+
     }
 
     //TODO return BEST pv move (exact score)

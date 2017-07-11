@@ -302,8 +302,10 @@ namespace Napoleon
             const int PawnBonus[3] = { 0, 10, 30 };
             const int KnightBonus[3] = { 3, -5, -12 };
             const int RookBonus[3] = { 0, 5, 15 };
+            const int PasserBonus[3] = {20, 30, 40};
 
             const int MaxPhase = 256;
+            //            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;
         }
 
         const std::string StartPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

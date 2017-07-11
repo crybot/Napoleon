@@ -49,7 +49,7 @@ namespace Napoleon
     {
         // NEED to test if it's better to clear the transposition table every time a new search starts.
         // empirical data suggest that it is better.
-        Table.Clear();
+        //Table.Clear();
 
         sendOutput = verbose;
         //StopSignal = false;
@@ -106,7 +106,7 @@ namespace Napoleon
         searchInfo.StopSearch();
         PonderHit = false;
         StopSignal = false;
-        //Table.Clear();
+        Table.Clear();
         return move;
     }
 
@@ -128,6 +128,7 @@ namespace Napoleon
 
     void Search::InitializeThreads(int threads_number)
     {
+        Table.Concurrent = threads_number > 1;
         if (threads_number == cores) return; // nothing to do 
 
         KillThreads();
@@ -352,7 +353,7 @@ namespace Napoleon
             if (depth == 0)
                 return quiescence(alpha, beta, board);
 
-            if (board.IsRepetition())
+            if (board.IsDraw())
                 return 0;
 
             int eval = Evaluation::Evaluate(board);
@@ -673,7 +674,7 @@ namespace Napoleon
         }
 
         // TO TEST
-        if (board.IsRepetition())
+        if (board.IsDraw())
             return 0;
 
         const BitBoard pinned = board.PinnedPieces();

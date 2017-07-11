@@ -40,6 +40,7 @@ namespace Napoleon
             std::pair<int, Move> Probe(ZobristKey, Byte, Byte, int, int);
             Move GetPv(ZobristKey);
 
+            bool Concurrent = false;
         private:
             unsigned long long mask;
             unsigned long entries;
