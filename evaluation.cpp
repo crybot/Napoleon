@@ -146,7 +146,9 @@ namespace Napoleon
             {
                 if (piece.Type == Pawn)
                 {
-                    if ((MoveDatabase::PasserSpan[piece.Color][sq] & board.Pieces(GetOpposite(piece.Color), Pawn)) == 0)
+                    if ((MoveDatabase::FrontSpan[piece.Color][sq] & board.Pieces(piece.Color, Pawn)) == 0 // NO OWN PAWNS IN FRONT
+                            && (MoveDatabase::PasserSpan[piece.Color][sq] & board.Pieces(GetOpposite(piece.Color), Pawn)) == 0
+                            )
                     {
                         auto rank = Utils::Square::GetRankIndex(sq);
                         if (piece.Color == White)
@@ -167,35 +169,34 @@ namespace Napoleon
         int shelter1 = 0, shelter2 = 0;
 
         //pawn shelter
-        BitBoard pawns = board.Pieces(White, Pawn);
         if (SquareMask[wking_square] & WhiteKingSide)
         {
-            shelter1 = PopCount(pawns & WhiteKingShield);
-            shelter2 = PopCount(pawns & OneStepNorth(WhiteKingShield));
+            shelter1 = PopCount(wpawns & WhiteKingShield);
+            shelter2 = PopCount(wpawns & OneStepNorth(WhiteKingShield));
         }
         else if (SquareMask[wking_square] & WhiteQueenSide)
         {
-            shelter1 = PopCount(pawns & WhiteQueenShield);
-            shelter2 = PopCount(pawns & OneStepNorth(WhiteQueenShield));
+            shelter1 = PopCount(wpawns & WhiteQueenShield);
+            shelter2 = PopCount(wpawns & OneStepNorth(WhiteQueenShield));
         }
         // else apply penalty
 
-        updateScore(scores, shelter1 * 4 + shelter2 * 3, shelter1 * 2 + shelter2 * 3); // shielding bonus
-        
-        pawns = board.Pieces(Black, Pawn);
+        updateScore(scores, shelter1 * 5.5 + shelter2 * 2, shelter1 + shelter2 ); // shielding bonus
+
+        shelter1 = shelter2 = 0;
         if (SquareMask[bking_square] & BlackKingSide)
         {
-            shelter1 = PopCount(pawns & BlackKingShield);
-            shelter2 = PopCount(pawns & OneStepSouth(BlackKingShield));
+            shelter1 = PopCount(bpawns & BlackKingShield);
+            shelter2 = PopCount(bpawns & OneStepSouth(BlackKingShield));
         }
         else if (SquareMask[bking_square] & BlackQueenSide)
         {
-            shelter1 = PopCount(pawns & BlackQueenShield);
-            shelter2 = PopCount(pawns & OneStepSouth(BlackQueenShield));
+            shelter1 = PopCount(bpawns & BlackQueenShield);
+            shelter2 = PopCount(bpawns & OneStepSouth(BlackQueenShield));
         }
         // else apply penalty
 
-        updateScore(scores, -(shelter1 * 4 + shelter2 * 3), -(shelter1 * 2 + shelter2 * 3)); // shielding bonus
+        updateScore(scores, -(shelter1 * 5.5 + shelter2 * 2), -shelter1 -shelter2); // shielding bonus
 
 
         //TODO: check wheter the king is in castle position
@@ -309,9 +310,15 @@ namespace Napoleon
         Score w_bishop_pair = Score(BishopPair[Opening], BishopPair[EndGame]);
         Score b_bishop_pair = Score(-BishopPair[Opening], -BishopPair[EndGame]);
 
+        auto wking_square = board.KingSquare(White);
+        auto bking_square = board.KingSquare(Black);
+
+        BitBoard wpawns = board.Pieces(White, Pawn);
+        BitBoard bpawns = board.Pieces(Black, Pawn);
+
         BitBoard king_proximity[2] = { // color
-            MoveDatabase::KingProximity[White][board.KingSquare(White)],
-            MoveDatabase::KingProximity[Black][board.KingSquare(Black)]
+            MoveDatabase::KingProximity[White][wking_square],
+            MoveDatabase::KingProximity[Black][bking_square]
         };
 
         formatParam("pawn-bonus", interpolate(pawn_bonus, phase), -interpolate(pawn_bonus, phase));
@@ -320,7 +327,39 @@ namespace Napoleon
         formatParam("prem. queen", w_pqueen, b_pqueen, phase);
         formatParam("tempo", board.SideToMove() == White ? 5 : -5, board.SideToMove() == White ? 0 : -5);
         formatParam("bish. pair", w_bishop_pair, b_bishop_pair, phase);
-        cout << endl;
+
+        int shelter1 = 0, shelter2 = 0;
+
+        //pawn shelter
+        if (SquareMask[wking_square] & WhiteKingSide)
+        {
+            shelter1 = PopCount(wpawns & WhiteKingShield);
+            shelter2 = PopCount(wpawns & OneStepNorth(WhiteKingShield));
+        }
+        else if (SquareMask[wking_square] & WhiteQueenSide)
+        {
+            shelter1 = PopCount(wpawns & WhiteQueenShield);
+            shelter2 = PopCount(wpawns & OneStepNorth(WhiteQueenShield));
+        }
+        // else apply penalty
+
+        int bshelter1 = 0, bshelter2 = 0;
+
+        if (SquareMask[bking_square] & BlackKingSide)
+        {
+            bshelter1 = PopCount(bpawns & BlackKingShield);
+            bshelter2 = PopCount(bpawns & OneStepSouth(BlackKingShield));
+        }
+        else if (SquareMask[bking_square] & BlackQueenSide)
+        {
+            bshelter1 = PopCount(bpawns & BlackQueenShield);
+            bshelter2 = PopCount(bpawns & OneStepSouth(BlackQueenShield));
+        }
+
+        formatParam("king shield", 
+                Score(shelter1*4+shelter2*2, shelter1+shelter2),
+                Score(-(bshelter1*4 + bshelter2*2), -bshelter1 -bshelter2),
+                phase);
 
         Display(king_proximity[White]);
         cout << endl;

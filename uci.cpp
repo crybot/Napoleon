@@ -35,7 +35,7 @@ namespace Napoleon
             {
                 SendCommand<Command::Generic>("id name Napoleon");
                 SendCommand<Command::Generic>("id author Marco Pampaloni");
-                SendCommand<Command::Generic>("option name Hash type spin default 1 min 1 max 1024");
+                SendCommand<Command::Generic>("option name Hash type spin default 1 min 1 max 131072"); // max 128 GB
                 SendCommand<Command::Generic>("option name Threads type spin default 1 min 1 max 8");
                 SendCommand<Command::Generic>("uciok");
             }

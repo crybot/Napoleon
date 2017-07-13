@@ -21,6 +21,7 @@ namespace Napoleon
         static BitBoard KingProximity[2][64]; // color, square
         static BitBoard SideFiles[8]; // file
         static BitBoard FrontSpan[2][64]; // color, square
+        static BitBoard RearSpan[2][64]; // color, square
         static BitBoard PasserSpan[2][64]; // color, square
         static int Distance[64][64]; // square, square
 

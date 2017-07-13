@@ -39,6 +39,17 @@ namespace Napoleon
 
     inline Move MoveSelector::First()
     {
+        /*
+        if (!hashMove.IsNull())
+        {
+            for(int i=0; i<count; i++) // do not trust hashMove (may be an illegal move)
+            {
+                if (moves[i] == hashMove) return hashMove;
+            }
+        }
+        return Next();
+        */
+
         if (!hashMove.IsNull())
             return hashMove;
         else
@@ -99,48 +110,48 @@ namespace Napoleon
     /// would score 0 and would be analyzed before killer moves.
 
     template<bool quiesce>
-    void MoveSelector::Sort(int ply)
-    {
-        using namespace Constants::Piece;
-
-        int max = 0;
-        int historyScore;
-
-        for (auto i=0; i<count; i++)
+        void MoveSelector::Sort(int ply)
         {
-            if (moves[i].IsPromotion())
+            using namespace Constants::Piece;
+
+            int max = 0;
+            int historyScore;
+
+            for (auto i=0; i<count; i++)
             {
-                scores[i] =  Constants::Piece::PieceValue[moves[i].PiecePromoted()];
+                if (moves[i].IsPromotion())
+                {
+                    scores[i] =  Constants::Piece::PieceValue[moves[i].PiecePromoted()];
+                }
+
+                else if (board.IsCapture(moves[i]))
+                {
+                    if (quiesce)
+                    {
+                        Type captured = moves[i].IsEnPassant() ? Type(PieceType::Pawn) : board.PieceOnSquare(moves[i].ToSquare()).Type; // MVV-LVA
+                        scores[i] = PieceValue[captured] - PieceValue[board.PieceOnSquare(moves[i].FromSquare()).Type];
+                    }
+                    else
+                    {
+                        scores[i] = board.See(moves[i]); // SEE
+                    }
+                }
+
+                else if (moves[i] == info.FirstKiller(ply))
+                    scores[i] = - 1;
+                else if (moves[i] == info.SecondKiller(ply))
+                    scores[i] = - 2;
+
+                else if ((historyScore = info.HistoryScore(moves[i], board.SideToMove())) > max)
+                    max = historyScore;
             }
 
-            else if (board.IsCapture(moves[i]))
+            for (auto i=0; i<count; i++)
             {
-                if (quiesce)
-                {
-                    Type captured = moves[i].IsEnPassant() ? Type(PieceType::Pawn) : board.PieceOnSquare(moves[i].ToSquare()).Type; // MVV-LVA
-                    scores[i] = PieceValue[captured] - PieceValue[board.PieceOnSquare(moves[i].FromSquare()).Type];
-                }
-                else
-                {
-                    scores[i] = board.See(moves[i]); // SEE
-                }
+                if (!board.IsCapture(moves[i]) && moves[i] != info.FirstKiller(ply) && moves[i] != info.SecondKiller(ply))
+                    scores[i] = info.HistoryScore(moves[i], board.SideToMove()) - max - 3;
             }
-
-            else if (moves[i] == info.FirstKiller(ply))
-                scores[i] = - 1;
-            else if (moves[i] == info.SecondKiller(ply))
-                scores[i] = - 2;
-
-            else if ((historyScore = info.HistoryScore(moves[i], board.SideToMove())) > max)
-                max = historyScore;
         }
-
-        for (auto i=0; i<count; i++)
-        {
-            if (!board.IsCapture(moves[i]) && moves[i] != info.FirstKiller(ply) && moves[i] != info.SecondKiller(ply))
-                scores[i] = info.HistoryScore(moves[i], board.SideToMove()) - max - 3;
-        }
-    }
 
 }
 

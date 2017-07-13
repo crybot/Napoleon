@@ -32,7 +32,8 @@ namespace Napoleon
             static const int Unknown;
             static const int BucketSize;
 
-            TranspositionTable(int size = 1);
+            TranspositionTable() = default;
+            TranspositionTable(int size);
 
             void SetSize(int);
             void Save(ZobristKey, Byte, Byte, int, Move, ScoreType);

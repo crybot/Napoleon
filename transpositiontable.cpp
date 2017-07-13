@@ -50,13 +50,12 @@ namespace Napoleon
         for (auto i=0; i<BucketSize; i++, hash++)
         {
             /*
-               if (age != (hash->Bound >> 2))
-               {
-               hashToOverride = hash;
-               min = 0;
-               break;
-               }
-               */
+            if (age != (hash->Bound >> 2))
+            {
+                hashToOverride = hash;
+                break;
+            }
+            */
             if (hash->Depth < min)
             {
                 min = hash->Depth;
@@ -69,8 +68,7 @@ namespace Napoleon
         hashToOverride->Hash = key;
         hashToOverride->Score = score;
         hashToOverride->Depth = depth;
-        //hashToOverride->Bound = (bound | (age << 2));
-        hashToOverride->Bound = bound;
+        hashToOverride->Bound = (bound | (age << 2));
         hashToOverride->BestMove = move;
 
         mux->unlock();
@@ -90,7 +88,7 @@ namespace Napoleon
         {
             if (hash->Hash == key)
             {
-                //hash->Bound = ((hash->Bound & 0x3) | (age << 2));
+                hash->Bound = ((hash->Bound & 0x3) | (age << 2));
                 if (hash->Depth >= depth)
                 {
                     if ((hash->Bound & 0x3) == ScoreType::Exact)
@@ -116,30 +114,30 @@ namespace Napoleon
         // DO NOT CLEAR
 
         /*
-        auto hash = table;
-        unsigned long gen[64] = {0};
-        unsigned long empty = 0;
-        for (unsigned long i=0; i<entries; i++, hash++)
-        {
-            if (!hash->Hash)
-            {
-                empty++;
-            }
-            else
-            {
-                gen[(hash->Bound >> 2)]++;
-            }
-        }
-        std::cout << "empty cells: " << 100*empty/entries << "%" << std::endl;
-        std::cout << "stores/entries: " << 100*stores/entries << "%" << std::endl;
-        std::cout << "generation count: " << std::endl;
-        for (auto i=0; i<64; i++)
-        {
-            if (gen[i] > 0)
-                std::cout << "g[" << i << "]=" << 100*gen[i]/entries << "%" << '\t';
-        }
-        std::cout << std::endl;
-        */
+           auto hash = table;
+           unsigned long gen[64] = {0};
+           unsigned long empty = 0;
+           for (unsigned long i=0; i<entries; i++, hash++)
+           {
+           if (!hash->Hash)
+           {
+           empty++;
+           }
+           else
+           {
+           gen[(hash->Bound >> 2)]++;
+           }
+           }
+           std::cout << "empty cells: " << 100*empty/entries << "%" << std::endl;
+           std::cout << "stores/entries: " << 100*stores/entries << "%" << std::endl;
+           std::cout << "generation count: " << std::endl;
+           for (auto i=0; i<64; i++)
+           {
+           if (gen[i] > 0)
+           std::cout << "g[" << i << "]=" << 100*gen[i]/entries << "%" << '\t';
+           }
+           std::cout << std::endl;
+           */
 
     }
 
