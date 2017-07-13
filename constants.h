@@ -303,6 +303,7 @@ namespace Napoleon
             const int KnightBonus[3] = { 3, -5, -12 };
             const int RookBonus[3] = { 0, 5, 15 };
             const int PasserBonus[3] = {20, 30, 40};
+            const int HalfOpenFileBonus[3] = {5, 8, 0}; // OpenFileBonus = HalfOpenFileBonus*2
 
             const int MaxPhase = 256;
             //            const int MaxNonPawnMaterial = PieceValue[PieceType::Knight]*4;

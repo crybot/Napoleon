@@ -136,7 +136,9 @@ namespace Napoleon
 
         // mobility evaluation
         Piece piece;
+        Color enemy;
         auto pieceList = board.PieceList();
+        Rank rank;
 
         for (Napoleon::Square sq = IntA1; sq <= IntH8; sq++)
         {
@@ -144,23 +146,20 @@ namespace Napoleon
 
             if (piece.Type != PieceType::None)
             {
+                enemy = GetOpposite(piece.Color);
                 if (piece.Type == Pawn)
                 {
                     if ((MoveDatabase::FrontSpan[piece.Color][sq] & board.Pieces(piece.Color, Pawn)) == 0 // NO OWN PAWNS IN FRONT
-                            && (MoveDatabase::PasserSpan[piece.Color][sq] & board.Pieces(GetOpposite(piece.Color), Pawn)) == 0
-                            )
+                            && (MoveDatabase::PasserSpan[piece.Color][sq] & board.Pieces(enemy, Pawn)) == 0) // NO ENEMY PAWNS
                     {
-                        auto rank = Utils::Square::GetRankIndex(sq);
+                        rank = Utils::Square::GetRankIndex(sq);
                         if (piece.Color == White)
                             updateScore(scores, passedPawn[Opening][rank], passedPawn[EndGame][rank]);
                         else
                             updateScore(scores, -passedPawn[Opening][7 - rank], -passedPawn[EndGame][7 - rank]);
                     }
                 }
-                else if (piece.Color == White)
-                    updateScore(scores, EvaluatePiece(piece, sq, king_proximity[Black], board)); // opponent's king's proximity
-                else
-                    updateScore(scores, -EvaluatePiece(piece, sq, king_proximity[White], board)); // opponent's king's proximity
+                else updateScore(scores, EvaluatePiece(piece, sq, king_proximity[enemy], board)); // opponent's king proximity
             }
         }
 
@@ -210,10 +209,12 @@ namespace Napoleon
         return score * (1-(board.SideToMove()*2)); // score relative to side to move
     }
 
-    int Evaluation::EvaluatePiece(Piece piece, Square square, BitBoard king_proxy, Board& board)
+    Score Evaluation::EvaluatePiece(Piece piece, Square square, BitBoard king_proxy, Board& board)
     {
         using namespace Utils::BitBoard;
         using namespace Utils::Piece;
+        using namespace Constants::Masks;
+        using namespace Constants::Eval;
 
         Color us = piece.Color;
         Color enemy = GetOpposite(us);
@@ -221,6 +222,8 @@ namespace Napoleon
         int tropism = 0;
         int distance = 7; // longest distance
         Square ksq = board.KingSquare(enemy); // enemy king
+        Score bonus(0,0);
+        File file;
 
         switch(piece.Type)
         {
@@ -241,6 +244,14 @@ namespace Napoleon
                 b = Rook::TargetsFrom(square, us, board);
                 tropism = 10;
                 distance = MoveDatabase::Distance[square][ksq]*2;
+                file = Utils::Square::GetFileIndex(square);
+
+                if((FileMask[file] & board.Pieces(PieceType::Pawn)) == 0) // OPEN FILE
+                    updateScore(bonus, 2*HalfOpenFileBonus[Opening], 2*HalfOpenFileBonus[EndGame]);
+
+                else if((FileMask[file] & board.Pieces(us, PieceType::Pawn)) == 0) // HALF-OPEN FILE
+                    updateScore(bonus, HalfOpenFileBonus[Opening], HalfOpenFileBonus[EndGame]);
+
                 break;
 
             case PieceType::Queen:
@@ -251,12 +262,14 @@ namespace Napoleon
         }
 
         int count = PopCount(b);
-        assert(count <= Constants::QueenMaxMoves);
-
+        int mobility = mobilityBonus[piece.Type][count];
         tropism = tropism*PopCount(king_proxy & b) + (7 - distance);
-        tropism = ((float)tropism*board.Material(us))/(float)Constants::Eval::MaxPlayerMat; // tropism scaling
+        //tropism = ((float)tropism*board.Material(us))/(float)Constants::Eval::MaxPlayerMat; // tropism scaling
 
-        return mobilityBonus[piece.Type][count] + tropism;
+        updateScore(bonus, mobility + tropism, mobility + tropism/2);
+
+        if (piece.Color == PieceColor::White) return bonus;
+        else return -bonus;
     }
 
     void Evaluation::formatParam(std::string name, int wvalue, int bvalue)

@@ -15,7 +15,7 @@ namespace Napoleon
     namespace Evaluation
     {
         int Evaluate(Board&);
-        int EvaluatePiece(Piece, Square, BitBoard, Board&);
+        Score EvaluatePiece(Piece, Square, BitBoard, Board&);
         Score PieceSquareValue(Piece, Square);
         int KingSafety(Board&);
 
@@ -26,6 +26,7 @@ namespace Napoleon
         void formatParam(std::string, Score, Score, int);
         inline void updateScore(Score&, int, int);
         inline void updateScore(Score&, int);
+        inline void updateScore(Score&, Score);
 
 
         extern int multiPawnP[8]; // penalization for doubled, tripled... pawns
@@ -43,6 +44,11 @@ namespace Napoleon
     {
         scores.first += openingBonus;
         scores.second += openingBonus;
+    }
+    INLINE void Evaluation::updateScore(std::pair<int, int>& scores, Score bonus)
+    {
+        scores.first += bonus.first;
+        scores.second += bonus.second;
     }
 
     inline int Evaluation::interpolate(Score score, int phase)

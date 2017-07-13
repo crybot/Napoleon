@@ -27,6 +27,11 @@ namespace Napoleon
     typedef unsigned int Rank;
     typedef std::pair<int,int> Score;
 
+    inline Score operator- (const Score& score)
+    {
+        return Score(-score.first, -score.second);
+    }
+
     enum GameStage { Opening = 0, MiddleGame = 1, EndGame = 2 };
     enum Operation { Add, Sub };
 }
