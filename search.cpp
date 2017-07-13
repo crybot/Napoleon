@@ -372,7 +372,8 @@ namespace Napoleon
                     //&& !pv
                     && depth >= 3
                     && !attackers
-                    && !board.EndGame())
+                    //&& !board.EndGame()
+                    )
             {
                 int R = depth > 6 ? 3 : 2; // dynamic depth-based reduction
 
@@ -576,7 +577,13 @@ namespace Napoleon
                             if (moveNumber > 9)
                             {
                                 R = 2;
+                                //if (searchInfo.HistoryScore(move, Utils::Piece::GetOpposite(board.SideToMove())) < 500)
+                                //{
+                                    //board.UndoMove(move);
+                                    //continue;
+                                //}
                             }
+
                         }
 
                         newDepth = std::max(1, depth - R);
@@ -624,10 +631,11 @@ namespace Napoleon
                 }
             }
 
+            //if (attackers) assert(board.IsCheck());
             // check for stalemate and checkmate
             if (legal == 0)
             {
-                if (board.IsCheck())
+                if (attackers)
                     alpha = -Constants::Mate + ply; // return best score for the deepest mate
                 else
                     alpha = 0; // return draw score (TODO contempt factor)
