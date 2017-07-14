@@ -4,6 +4,7 @@
 #include "bishop.h"
 #include "knight.h"
 #include "queen.h"
+#include <cassert>
 
 namespace Napoleon
 {
@@ -16,6 +17,13 @@ namespace Napoleon
         {0, 0, 10, 20, 40, 60, 125, 0} // ENDGAME
     };
 
+    int Evaluation::candidatePawn[3][8] = // phase, rank
+    {
+        {0, 0, 5, 5, 8, 10, 0, 0}, // OPENING
+        {0, 0, 0, 0, 0, 0, 0, 0}, // MIDDLEGAME (not used)
+        {0, 0, 10, 15, 20, 30, 0, 0} //ENDGAME
+    };
+
     int Evaluation::mobilityBonus[][Constants::QueenMaxMoves + 1] =
     {
         {}, // PAWNS
@@ -23,8 +31,8 @@ namespace Napoleon
         {-15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 30, 35, 35, 35}, // BISHOPS
         {-5, -5, 0, 5, 10, 10, 15, 20, 30, 35, 35, 40, 40, 40, 40}, // ROOKS
         {-5, -4, -3, -2, -1, 0, 5, 10,
-         13, 16, 18, 20, 22, 24, 26, 28,
-         29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30}, // QUEENS
+            13, 16, 18, 20, 22, 24, 26, 28,
+            29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30}, // QUEENS
         {}, // KING
         {}, // NONE
     };
@@ -49,6 +57,13 @@ namespace Napoleon
             MoveDatabase::KingProximity[White][wking_square],
             MoveDatabase::KingProximity[Black][bking_square]
         };
+
+        /* // TODO: PRECOMPUTE
+           BitBoard pawnAttacks[2] = { // color
+           Pawn::GetAnyAttack(board.Pieces(White, PieceType::Pawn), White, Constants::Universe),
+           Pawn::GetAnyAttack(board.Pieces(Black, PieceType::Pawn), Black, Constants::Universe)
+           };
+           */
 
         // material evaluation
         int material = board.MaterialBalance(White);
@@ -102,6 +117,9 @@ namespace Napoleon
 
         BitBoard wpawns = board.Pieces(White, Pawn);
         BitBoard bpawns = board.Pieces(Black, Pawn);
+        BitBoard pawns[2] = { // color
+            wpawns, bpawns
+        };
 
         for (File f = 0; f<8; f++)
         {
@@ -149,14 +167,33 @@ namespace Napoleon
                 enemy = GetOpposite(piece.Color);
                 if (piece.Type == Pawn)
                 {
-                    if ((MoveDatabase::FrontSpan[piece.Color][sq] & board.Pieces(piece.Color, Pawn)) == 0 // NO OWN PAWNS IN FRONT
-                            && (MoveDatabase::PasserSpan[piece.Color][sq] & board.Pieces(enemy, Pawn)) == 0) // NO ENEMY PAWNS
+                    if ((MoveDatabase::FrontSpan[piece.Color][sq] & pawns[piece.Color]) == 0) // NO OWN PAWNS IN FRONT
                     {
                         rank = Utils::Square::GetRankIndex(sq);
-                        if (piece.Color == White)
-                            updateScore(scores, passedPawn[Opening][rank], passedPawn[EndGame][rank]);
-                        else
-                            updateScore(scores, -passedPawn[Opening][7 - rank], -passedPawn[EndGame][7 - rank]);
+
+                        if ((MoveDatabase::PasserSpan[piece.Color][sq] & pawns[enemy]) == 0) // NO ENEMY PAWNS (i.e. PASSED PAWN)
+                        {
+                            if (piece.Color == White)
+                                updateScore(scores, passedPawn[Opening][rank], passedPawn[EndGame][rank]);
+                            else
+                                updateScore(scores, -passedPawn[Opening][7 - rank], -passedPawn[EndGame][7 - rank]);
+                        }
+                        else if ((MoveDatabase::FrontSpan[piece.Color][sq] & pawns[enemy]) == 0) // NO ENEMY PAWNS IN FRONT (i.e. OPEN PAWN)
+                        {
+                            register int defenders = PopCount(MoveDatabase::CandidateDefenders[piece.Color][sq] & pawns[piece.Color]);
+                            if (defenders > 0)
+                            {
+                                register int attackers = PopCount(MoveDatabase::CandidateSpan[piece.Color][sq] & pawns[enemy]);
+
+                                if (defenders >= attackers)
+                                {
+                                    if (piece.Color == White)
+                                        updateScore(scores, candidatePawn[Opening][rank], candidatePawn[EndGame][rank]);
+                                    else
+                                        updateScore(scores, -candidatePawn[Opening][7 - rank], -candidatePawn[EndGame][7 - rank]);
+                                }
+                            }
+                        }
                     }
                 }
                 else updateScore(scores, EvaluatePiece(piece, sq, king_proximity[enemy], board)); // opponent's king proximity
@@ -373,11 +410,6 @@ namespace Napoleon
                 Score(shelter1*4+shelter2*2, shelter1+shelter2),
                 Score(-(bshelter1*4 + bshelter2*2), -bshelter1 -bshelter2),
                 phase);
-
-        Display(king_proximity[White]);
-        cout << endl;
-        Display(king_proximity[Black]);
-        cout << endl << endl;
     }
 
 

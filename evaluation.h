@@ -32,6 +32,7 @@ namespace Napoleon
         extern int multiPawnP[8]; // penalization for doubled, tripled... pawns
         extern int isolatedPawnP[8];
         extern int passedPawn[3][8]; // phase, file
+        extern int candidatePawn[3][8]; // phase, color, rank
         extern int mobilityBonus[][Constants::QueenMaxMoves + 1];
     }
 

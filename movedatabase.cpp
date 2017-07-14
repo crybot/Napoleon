@@ -22,8 +22,9 @@ namespace Napoleon
     BitBoard MoveDatabase::KingProximity[2][64]; // color, square
     BitBoard MoveDatabase::SideFiles[8]; // file
     BitBoard MoveDatabase::FrontSpan[2][64]; // color, square
-    BitBoard MoveDatabase::RearSpan[2][64]; // color, square
     BitBoard MoveDatabase::PasserSpan[2][64]; //color, square
+    BitBoard MoveDatabase::CandidateSpan[2][64]; //color, square
+    BitBoard MoveDatabase::CandidateDefenders[2][64]; //color, square
 
     int MoveDatabase::Distance[64][64]; // square, square
 
@@ -84,17 +85,28 @@ namespace Napoleon
             bspan |= bspan >> 32;
             bspan = CompassRose::OneStepSouth(bspan);
 
-            FrontSpan[PieceColor::White][sq] = RearSpan[PieceColor::Black][sq] = wspan;
-            FrontSpan[PieceColor::Black][sq] = RearSpan[PieceColor::White][sq] = bspan;
-
-            PasserSpan[PieceColor::White][sq] = FrontSpan[PieceColor::White][sq];
-            PasserSpan[PieceColor::Black][sq] = FrontSpan[PieceColor::Black][sq];
+            PasserSpan[PieceColor::White][sq] = FrontSpan[PieceColor::White][sq] = wspan;
+            PasserSpan[PieceColor::Black][sq] = FrontSpan[PieceColor::Black][sq] = bspan;
 
             PasserSpan[PieceColor::White][sq] |= CompassRose::OneStepWest(wspan);
             PasserSpan[PieceColor::White][sq] |= CompassRose::OneStepEast(wspan);
 
             PasserSpan[PieceColor::Black][sq] |= CompassRose::OneStepWest(bspan);
             PasserSpan[PieceColor::Black][sq] |= CompassRose::OneStepEast(bspan);
+
+            CandidateSpan[PieceColor::White][sq] = CompassRose::OneStepWest(wspan); 
+            CandidateSpan[PieceColor::White][sq] |= CompassRose::OneStepEast(wspan); 
+
+            CandidateSpan[PieceColor::Black][sq] = CompassRose::OneStepWest(bspan); 
+            CandidateSpan[PieceColor::Black][sq] |= CompassRose::OneStepEast(bspan); 
+
+            CandidateDefenders[PieceColor::White][sq] = PawnAttacks[PieceColor::Black][sq];
+            CandidateDefenders[PieceColor::White][sq] |= CompassRose::OneStepWest(Constants::Masks::SquareMask[sq]);
+            CandidateDefenders[PieceColor::White][sq] |= CompassRose::OneStepEast(Constants::Masks::SquareMask[sq]);
+
+            CandidateDefenders[PieceColor::Black][sq] = PawnAttacks[PieceColor::White][sq];
+            CandidateDefenders[PieceColor::Black][sq] |= CompassRose::OneStepWest(Constants::Masks::SquareMask[sq]);
+            CandidateDefenders[PieceColor::Black][sq] |= CompassRose::OneStepEast(Constants::Masks::SquareMask[sq]);
         }
     }
 

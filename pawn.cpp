@@ -15,21 +15,21 @@ namespace Napoleon
         return (GetEastAttacks(board.SideToMove(), pawns) | GetWestAttacks(board.SideToMove(), pawns)) & board.EnemyPieces();
     }
 
-	BitBoard Pawn::GetAnyAttack(BitBoard pawns, Color color, BitBoard squares)
-	{
-		return (GetEastAttacks(color, pawns) | GetWestAttacks(color, pawns)) & squares;
-	}
+    BitBoard Pawn::GetAnyAttack(BitBoard pawns, Color color, BitBoard squares)
+    {
+        return (GetEastAttacks(color, pawns) | GetWestAttacks(color, pawns)) & squares;
+    }
 
     BitBoard Pawn::GetPawnsAbleToSinglePush(Color color, BitBoard pawns, BitBoard empty)
     {
         switch (color)
         {
-        case PieceColor::White:
-            return CompassRose::OneStepSouth(empty) & pawns;
-        case PieceColor::Black:
-            return CompassRose::OneStepNorth(empty) & pawns;
-        default:
-            throw std::exception();
+            case PieceColor::White:
+                return CompassRose::OneStepSouth(empty) & pawns;
+            case PieceColor::Black:
+                return CompassRose::OneStepNorth(empty) & pawns;
+            default:
+                throw std::exception();
         }
     }
 
@@ -37,18 +37,18 @@ namespace Napoleon
     {
         switch (color)
         {
-        case PieceColor::White:
-        {
-            BitBoard emptyRank3 = CompassRose::OneStepSouth(empty & Constants::Ranks::Four) & empty;
-            return GetPawnsAbleToSinglePush(color, pawns, emptyRank3);
-        }
-        case PieceColor::Black:
-        {
-            BitBoard emptyRank6 = CompassRose::OneStepNorth(empty & Constants::Ranks::Six) & empty;
-            return GetPawnsAbleToSinglePush(color, pawns, emptyRank6);
-        }
-        default:
-            throw std::exception();
+            case PieceColor::White:
+                {
+                    BitBoard emptyRank3 = CompassRose::OneStepSouth(empty & Constants::Ranks::Four) & empty;
+                    return GetPawnsAbleToSinglePush(color, pawns, emptyRank3);
+                }
+            case PieceColor::Black:
+                {
+                    BitBoard emptyRank6 = CompassRose::OneStepNorth(empty & Constants::Ranks::Six) & empty;
+                    return GetPawnsAbleToSinglePush(color, pawns, emptyRank6);
+                }
+            default:
+                throw std::exception();
         }
     }
 
