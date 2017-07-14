@@ -8,8 +8,8 @@
 
 namespace Napoleon
 {
-    int Evaluation::multiPawnP[8] = { 0, 0, 10, 20, 35, 50, 75, 100 };
-    int Evaluation::isolatedPawnP[8] = { 5, 7, 10, 18, 18, 10, 7, 5 };
+    int Evaluation::multiPawnP[8] = { 0, 0, 10, 20, 35, 50, 75, 100 }; // TODO: add phase dependent penalties
+    int Evaluation::isolatedPawnP[8] = { 5, 7, 10, 18, 18, 10, 7, 5 }; // TODO: add phase dependent penalties
     int Evaluation::passedPawn[3][8] = // phase, rank
     {
         {0, 0, 10, 15, 25, 30, 30, 0}, // OPENING
@@ -21,7 +21,14 @@ namespace Napoleon
     {
         {0, 0, 5, 5, 8, 10, 0, 0}, // OPENING
         {0, 0, 0, 0, 0, 0, 0, 0}, // MIDDLEGAME (not used)
-        {0, 0, 10, 15, 20, 30, 0, 0} //ENDGAME
+        {0, 0, 10, 15, 20, 30, 0, 0} // ENDGAME
+    };
+
+    int Evaluation::pawnIslandsP[3][5] = 
+    {
+        {0, 0, 5, 7, 9}, // OPENING
+        {0, 0, 0, 0}, // MIDDLEGAME (not used)
+        {0, 0, 8, 10, 12} // ENDGAME
     };
 
     int Evaluation::mobilityBonus[][Constants::QueenMaxMoves + 1] =
@@ -121,6 +128,17 @@ namespace Napoleon
             wpawns, bpawns
         };
 
+        Byte wpawnset = (Byte) Utils::BitBoard::SouthFill(wpawns);
+        Byte bpawnset = (Byte) Utils::BitBoard::SouthFill(bpawns);
+
+        int wislands = PopCount(wpawnset & (wpawnset ^ (wpawnset >> 1)));
+        int bislands = PopCount(bpawnset & (bpawnset ^ (bpawnset >> 1)));
+
+        assert (wislands <= 4 && bislands <= 4);
+
+        updateScore(scores, -pawnIslandsP[Opening][wislands], -pawnIslandsP[EndGame][wislands]);
+        updateScore(scores, pawnIslandsP[Opening][bislands], pawnIslandsP[EndGame][bislands]);
+
         for (File f = 0; f<8; f++)
         {
             int pawns;
@@ -132,10 +150,11 @@ namespace Napoleon
                 updateScore(scores, -multiPawnP[pawns]);
 
                 if (f < 7)
-                    updateScore(scores, -multiPawnP[board.PawnsOnFile(White, ++f)]);
-                // since there's a pawn on this file, the next pawn (if present) would not be isolated
+                    updateScore(scores, -multiPawnP[pawns = board.PawnsOnFile(White, ++f)]);
+                // since there's a pawn on this file, the next pawn (if present) will not be isolated
             }
         }
+
         for (File f = 0; f<8; f++)
         {
             int pawns;
@@ -148,7 +167,7 @@ namespace Napoleon
 
                 if (f < 7)
                     updateScore(scores, multiPawnP[board.PawnsOnFile(Black, ++f)]);
-                // since there's a pawn on this file, the next pawn (if present) would not be isolated
+                // since there's a pawn on this file, the next pawn (if present) will not be isolated
             }
         }
 

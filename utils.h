@@ -33,6 +33,7 @@ namespace Napoleon
             int BitScanForward(Napoleon::BitBoard);
             int BitScanForwardReset(Napoleon::BitBoard&);
             int BitScanReverse(Napoleon::BitBoard);
+            Napoleon::BitBoard SouthFill(Napoleon::BitBoard);
         }
 
         namespace Piece
@@ -124,6 +125,14 @@ namespace Napoleon
             bitBoard = ((bitBoard >> 4) + bitBoard) & 0x0F0F0F0F0F0F0F0FUL;
             return (int)((bitBoard * 0x0101010101010101UL) >> 56);
 #endif
+        }
+
+        INLINE Napoleon::BitBoard BitBoard::SouthFill(Napoleon::BitBoard bitboard)
+        {
+            bitboard |= bitboard >> 8;
+            bitboard |= bitboard >> 16;
+            bitboard |= bitboard >> 32;
+            return bitboard;
         }
 
         inline int Square::GetA1H8DiagonalIndex(int file, int rank)
