@@ -13,9 +13,9 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 DEFINES       = 
-OPTIMIZE      = -m64 -Ofast -march=native -funroll-loops -mbmi2
+OPTIMIZE      = -flto -m64 -Ofast -march=native -funroll-loops -mbmi2
 CFLAGS        = $(OPTIMIZE) -pipe -mtune=native -Wall -W $(DEFINES)
-CXXFLAGS      = $(OPTIMIZE) -flto -pipe -std=c++0x -pthread -mtune=haswell -Wall -W $(DEFINES)
+CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++0x -pthread -mtune=native -Wall -W $(DEFINES)
 INCPATH       = -I. -I/usr/lib/qt/mkspecs/linux-g++
 QMAKE         = /usr/bin/qmake
 DEL_FILE      = rm -f

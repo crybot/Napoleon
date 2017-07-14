@@ -79,7 +79,7 @@ namespace Napoleon
         wPstValues = board.PstValue(White);
         bPstValues = board.PstValue(Black);
 
-        updateScore(scores, material + (wPstValues.first - bPstValues.first)/2, material + (wPstValues.second - bPstValues.second)/2);
+        updateScore(scores, material + (wPstValues.first - bPstValues.first), material + (wPstValues.second - bPstValues.second));
 
         /* PHASE-DEPENDENT piece bonus*/
         int wPawns = board.NumOfPieces(White, Pawn);
@@ -150,7 +150,7 @@ namespace Napoleon
                 updateScore(scores, -multiPawnP[pawns]);
 
                 if (f < 7)
-                    updateScore(scores, -multiPawnP[pawns = board.PawnsOnFile(White, ++f)]);
+                    updateScore(scores, -multiPawnP[board.PawnsOnFile(White, ++f)]);
                 // since there's a pawn on this file, the next pawn (if present) will not be isolated
             }
         }
