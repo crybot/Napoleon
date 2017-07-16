@@ -110,7 +110,7 @@ namespace Napoleon
 
     void TranspositionTable::Clear()
     {
-        //std::memset(table, 0, entries*sizeof(HashEntry)/2); // clear first half
+        std::memset(table, 0, entries*sizeof(HashEntry)); // clear first half
         // DO NOT CLEAR
 
         /*

@@ -7,6 +7,8 @@
 #include "stopwatch.h"
 #include "benchmark.h"
 #include "evaluation.h"
+#include "tuner.h"
+#include <fstream>
 
 namespace Napoleon
 {
@@ -37,6 +39,11 @@ namespace Napoleon
                 SendCommand<Command::Generic>("id author Marco Pampaloni");
                 SendCommand<Command::Generic>("option name Hash type spin default 1 min 1 max 131072"); // max 128 GB
                 SendCommand<Command::Generic>("option name Threads type spin default 1 min 1 max 8");
+
+                for (auto i=0; i<Search::Parameters::MAX; i++)
+                {
+                    SendCommand<Command::Generic>("option name " + Search::param_name[i] + " type spin default 1 min 1 max 1024");
+                }
                 SendCommand<Command::Generic>("uciok");
             }
             else if (cmd == "setoption")
@@ -57,6 +64,19 @@ namespace Napoleon
                     stream >> token; // "value"
                     stream >> parallel_threads;
                     Search::InitializeThreads(parallel_threads);
+                }
+
+                else
+                {
+                    for (auto i=0; i<Search::Parameters::MAX; i++)
+                    {
+                        if (token == Search::param_name[i])
+                        {
+                            stream >> token; // "value"
+                            stream >> Search::param[i];
+                            break;
+                        }
+                    }
                 }
             }
             else if (cmd == "quit")
@@ -141,6 +161,11 @@ namespace Napoleon
             else if (cmd == "ponderhit")
             {
                 Search::PonderHit = true;
+            }
+            else if (cmd == "tune")
+            {
+                Tuner tuner;
+                tuner.Tune();
             }
         }
     }

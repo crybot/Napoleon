@@ -44,6 +44,20 @@ namespace Napoleon
         extern std::atomic<bool> quit;
         extern const int default_cores;
 
+        enum Parameters : int {
+            RAZOR1=0, RAZOR2, RAZOR3, 
+            REVERSENULL_DEPTH, REVERSENULL1, REVERSENULL2,
+            NULLPRUNE1, NULLPRUNE2, NULLPRUNE3,
+            FUTILITY1, FUTILITY2,
+            IID_DEPTH, IID1,
+            LMR_DEPTH1, LMR_DEPTH2, LMR_DEPTH3,
+            LMR_R1, LMR_R2,
+            LMR_MARGIN,
+            MAX
+        };
+        extern int param[];
+        extern std::string param_name[];
+
         void InitializeThreads(int = default_cores);
         void KillThreads();
         void signalThreads(int, int, int, const Board&, bool);
@@ -60,7 +74,7 @@ namespace Napoleon
         int searchRoot(int, int, int, Move&, Board&, const Move=Constants::NullMove);
 
         template<NodeType>
-        int search(int, int, int, int, Board&, bool);
+            int search(int, int, int, int, Board&, bool);
         int quiescence(int, int, Board&);
 
         int razorMargin(int);
@@ -68,7 +82,7 @@ namespace Napoleon
 
     inline int Search::razorMargin(int depth)
     {
-        return (25*(depth-1) + 150);
+        return (param[RAZOR1]*(depth-param[RAZOR2]) + param[RAZOR3]);
     }
 }
 

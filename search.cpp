@@ -37,6 +37,20 @@ namespace Napoleon
     const int Search::default_cores = 1;
     int Age = 0;
 
+    int Search::param[Parameters::MAX] = { 25 , 1 , 150 , 3, 250, 50, 6 , 3 , 2 , 500 , 250 , 5 , 3 , 5 , 4 , 2 , 1 , 2 , 9}; //original
+
+    std::string Search::param_name[] = {
+        "RAZOR1", "RAZOR2", "RAZOR3",
+        "REVERSENULL_DEPTH", "REVERSENULL1", "REVERSENULL2",
+        "NULLPRUNE1", "NULLPRUNE2", "NULLPRUNE3",
+        "FUTILITY1", "FUTILITY2",
+        "IID_DEPTH", "IID1",
+        "LMR_DEPTH1", "LMR_DEPTH2", "LMR_DEPTH3",
+        "LMR_R1", "LMR_R2",
+        "LMR_MARGIN"
+    };
+
+
     int Search::predictTime(Color color)
     {
         int gameTime = GameTime[color];
@@ -106,7 +120,7 @@ namespace Napoleon
         searchInfo.StopSearch();
         PonderHit = false;
         StopSignal = false;
-        Table.Clear();
+        //Table.Clear();
         return move;
     }
 
@@ -214,7 +228,7 @@ namespace Napoleon
             searchInfo.MaxPly = 0;
             searchInfo.ResetNodes();
 
-            if (searchInfo.MaxDepth() > 5 && cores > 1)
+            if (searchInfo.MaxDepth() > 4 && cores > 1)
                 signalThreads(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, board, true);
 
             // aspiration search
@@ -357,12 +371,12 @@ namespace Napoleon
                 return 0;
 
             int eval = Evaluation::Evaluate(board);
-            if (depth <= 3
+            if (depth <= param[REVERSENULL_DEPTH]
                     && !pv
                     && !attackers
                     && std::abs(alpha) < Constants::Mate - Constants::MaxPly
                     && std::abs(beta) < Constants::Mate - Constants::MaxPly
-                    && eval - 250 - 50*depth >= beta)
+                    && eval - param[REVERSENULL1] - param[REVERSENULL2]*depth >= beta)
             {
                 return beta;
             }
@@ -373,14 +387,14 @@ namespace Napoleon
                     && depth >= 3
                     && !attackers
                     //&& !board.EndGame()
-                    )
+               )
             {
-                int R = depth > 6 ? 3 : 2; // dynamic depth-based reduction
-
+                int R = depth > param[NULLPRUNE1] ? param[NULLPRUNE2] : param[NULLPRUNE3]; // dynamic depth-based reduction
+                R = std::min(depth - 1, R);
                 // cut node
                 board.MakeNullMove();
                 // make a null-window search (we don't care by how much it fails high, if it does)
-                score = -search<NodeType::NONPV>(depth - R - 1, -beta, -beta + 1, ply, board, !cut_node); 
+                score = -search<NodeType::NONPV>(depth - R - 1, -beta, -beta + 1, ply, board, !cut_node); // try ply + 1
                 board.UndoNullMove();
 
                 if (score >= beta)
@@ -388,9 +402,10 @@ namespace Napoleon
             }
 
             // internal iterative deepening (IID)
-            if (depth >= 5 && best.IsNull() && pv)
+            if (depth >= param[IID_DEPTH] && best.IsNull() && pv)
             {
-                int R = 3;
+                int R = param[IID1];
+                R = std::min(depth - 2, R);
 
                 if (board.AllowNullMove())
                     board.ToggleNullMove();
@@ -429,7 +444,7 @@ namespace Napoleon
                     && !extension
                     && std::abs(alpha) < Constants::Mate - Constants::MaxPly
                     && std::abs(beta) < Constants::Mate - Constants::MaxPly
-                    && eval + 500 <= alpha       // NEED to test other values
+                    && eval + param[FUTILITY1] <= alpha       // NEED to test other values
                )
             {
                 futility = true;
@@ -441,7 +456,7 @@ namespace Napoleon
                     && depth == 1
                     && std::abs(alpha) < Constants::Mate - Constants::MaxPly
                     && std::abs(beta) < Constants::Mate - Constants::MaxPly
-                    && eval + 250 <= alpha       // NEED to test other values
+                    && eval + param[FUTILITY2] <= alpha       // NEED to test other values
                )
             {
                 futility = true;
@@ -558,7 +573,7 @@ namespace Napoleon
                     else
                     {
                         register int R = 0;
-                        register int N = newDepth >= 5 ? 4 : 2; // TO TEST
+                        register int N = newDepth >= param[LMR_DEPTH1] ? param[LMR_DEPTH2] : param[LMR_DEPTH3]; // TO TEST
 
                         // late move reduction
                         if (moveNumber >= N
@@ -572,18 +587,17 @@ namespace Napoleon
                                 && !board.KingAttackers(board.KingSquare(board.SideToMove()), board.SideToMove())
                            )
                         {
-                            R = 1;
+                            R = param[LMR_R1];
 
-                            if (moveNumber > 9)
+                            if (moveNumber > param[LMR_MARGIN])
                             {
-                                R = 2;
+                                R = param[LMR_R2];
                                 //if (searchInfo.HistoryScore(move, Utils::Piece::GetOpposite(board.SideToMove())) < 500)
                                 //{
-                                    //board.UndoMove(move);
-                                    //continue;
+                                //board.UndoMove(move);
+                                //continue;
                                 //}
                             }
-
                         }
 
                         newDepth = std::max(1, depth - R);

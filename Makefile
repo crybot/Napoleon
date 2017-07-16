@@ -36,7 +36,7 @@ COMPRESS      = gzip -9f
 DISTNAME      = NapoleonPP1.0.0
 DISTDIR = /home/crybot/Napoleon/.tmp/NapoleonPP1.0.0
 LINK          = g++
-LFLAGS        = -flto -Wl,-Ofast -Wl,-Ofast,--sort-common,--as-needed,-z,relro
+LFLAGS        = -lboost_filesystem -lboost_system -flto -Wl,-Ofast -Wl,-Ofast,--sort-common,--as-needed,-z,relro
 LIBS          = $(SUBLIBS) -pthread 
 AR            = ar cqs
 RANLIB        = 
@@ -70,7 +70,8 @@ SOURCES       = main.cpp \
 		hashentry.cpp \
 		uci.cpp \
 		searchinfo.cpp \
-		moveselector.cpp 
+		moveselector.cpp \
+		tuner.cpp
 OBJECTS       = main.o \
 		move.o \
 		utils.o \
@@ -92,7 +93,8 @@ OBJECTS       = main.o \
 		hashentry.o \
 		uci.o \
 		searchinfo.o \
-		moveselector.o
+		moveselector.o \
+		tuner.o 
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/common/unix.conf \
 		/usr/lib/qt/mkspecs/common/linux.conf \
@@ -190,6 +192,9 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		uci.h \
 		searchinfo.h \
 		moveselector.h \
+		tuner.h \
+		encoder.h \
+		evolution.h \
 		piecesquaretables.h main.cpp \
 		move.cpp \
 		utils.cpp \
@@ -211,7 +216,8 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		hashentry.cpp \
 		uci.cpp \
 		searchinfo.cpp \
-		moveselector.cpp
+		moveselector.cpp \
+		tuner.cpp
 QMAKE_TARGET  = NapoleonPP
 DESTDIR       = 
 TARGET        = NapoleonPP
@@ -261,7 +267,7 @@ compiler_clean:
 
 ####### Compile
 
-main.o: main.cpp uci.h
+main.o: main.cpp uci.h encoder.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
 move.o: move.cpp move.h \
