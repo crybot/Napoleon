@@ -37,7 +37,8 @@ namespace Napoleon
     const int Search::default_cores = 1;
     int Age = 0;
 
-    int Search::param[Parameters::MAX] = { 25 , 1 , 150 , 3, 250, 50, 6 , 3 , 2 , 500 , 250 , 5 , 3 , 5 , 4 , 2 , 1 , 2 , 9}; //original
+    //int Search::param[Parameters::MAX] = { 25 , 1 , 150 , 3, 250, 50, 6 , 3 , 2 , 500 , 250 , 5 , 3 , 5 , 4 , 2 , 1 , 2 , 9}; // original
+    int Search::param[Parameters::MAX] = { 91 , 1 , 18 , 9 , 118 , 36 , 2 , 3 , 2 , 490 , 72 , 4 , 3 , 1 , 4 , 2 , 1 , 2 , 8 ,  }; // tuned
 
     std::string Search::param_name[] = {
         "RAZOR1", "RAZOR2", "RAZOR3",
@@ -676,13 +677,19 @@ namespace Napoleon
         int stand_pat = 0; // to suppress warning
         int score;
 
+        int Delta;
         if (!inCheck)
         {
             stand_pat = Evaluation::Evaluate(board);
             if (stand_pat >= beta)
                 return beta;
 
-            int Delta = Constants::Piece::PieceValue[PieceType::Queen];
+            /*
+            Delta = Evaluation::hangingValue[Utils::Piece::GetOpposite(board.SideToMove())];
+            Delta = 200 + std::max(Constants::Piece::PieceValue[PieceType::Pawn], Delta);
+            Delta = std::min(Constants::Piece::PieceValue[PieceType::Queen], Delta);
+            */
+            Delta = Constants::Piece::PieceValue[PieceType::Queen];
 
             if (board.IsPromotingPawn())
                 Delta += Constants::Piece::PieceValue[PieceType::Queen] - Constants::Piece::PieceValue[PieceType::Pawn];
@@ -710,11 +717,18 @@ namespace Napoleon
 
         moves.Sort<true>();
 
+
+        //Color enemy = Utils::Piece::GetOpposite(board.SideToMove());
         for (auto move = moves.First(); !move.IsNull(); move = moves.Next())
         {
             // delta futility pruning
             if (!inCheck)
             {
+                //if(200 + Constants::Piece::PieceValue[board.PieceOnSquare(move.ToSquare()).Type] > Delta)
+                //{
+                    //board.Display();
+                    //std::cin.get();
+                //}
                 if (!move.IsPromotion() && (Constants::Piece::PieceValue[board.PieceOnSquare(move.ToSquare()).Type] + stand_pat + 200 <= alpha || board.See(move) < 0))
                     continue;
             }

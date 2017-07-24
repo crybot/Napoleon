@@ -22,14 +22,18 @@ namespace Napoleon
     typedef unsigned char Byte;
     typedef unsigned long long ZobristKey;
     typedef unsigned long long Random64;
-    typedef unsigned int Square;
-    typedef unsigned int File;
-    typedef unsigned int Rank;
+    typedef unsigned int Square; // change with unsigned char
+    typedef unsigned int File; // change with unsigned char
+    typedef unsigned int Rank; // change with unsigned char
     typedef std::pair<int,int> Score;
 
     inline Score operator- (const Score& score)
     {
         return Score(-score.first, -score.second);
+    }
+    inline Score operator/ (const Score& score, int d)
+    {
+        return Score(score.first/d, score.second/d);
     }
 
     enum GameStage { Opening = 0, MiddleGame = 1, EndGame = 2 };

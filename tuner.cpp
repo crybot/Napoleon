@@ -84,8 +84,8 @@ namespace Napoleon
             int ith = 1;
             for (auto& p : population)
             {
-                //if (p.fitness == 0) // IT MAY REDUCE EXPLORATION
-                p.fitness = fitness(p, board, encoder);
+                if (p.fitness == -9999) // IT MAY REDUCE EXPLORATION
+                    p.fitness = fitness(p, board, encoder);
 
                 std::cout << "#" << ith++ << "/" << pop_size << " elo difference: " << p.fitness << std::endl;
             }
@@ -119,7 +119,7 @@ namespace Napoleon
 
             std::cout << "best: " << best<< std::endl;
             std::cout << "elo difference: " << best.fitness << std::endl;
-            std::cout << encoder.Decode(best);
+            std::cout << encoder.Decode(best) << std::endl;
             generation++;
         }
     }
@@ -128,21 +128,24 @@ namespace Napoleon
     {
         namespace bp = boost::process;
         std::string par_path = "parameters.txt";
+        std::string output_path = "genetic.log";
         std::ofstream file(par_path);
+        std::fstream output;
+        output.open(output_path, std::ios::out | std::ios::trunc);
+        output.close();
 
         encoder.Decode(string);
         encoder.ApplyGenes(file);
 
         bp::ipstream is;
-        bp::system("./fitness-tournament.sh " + par_path, bp::std_out > is);
+        bp::system("./fitness-tournament.sh " + par_path, bp::std_out > output_path);
 
-        std::vector<std::string> data;
         std::string line;
 
-        while(std::getline(is, line) && line.find("ELO")==std::string::npos) 
-        {
-            std::cout << line << std::endl;
-        }
+        output.open(output_path, std::ios::in);
+        while(std::getline(output, line) && line.find("ELO")==std::string::npos) 
+        {}
+        output.close();
 
         int elo = -9999;
 

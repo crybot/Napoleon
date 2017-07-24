@@ -22,7 +22,7 @@ namespace Evolution
             Chromosome() 
                 :d_bitset()
             {
-
+                reset_fitness();
             }
             Chromosome(size_t bits)
                 :d_bitset(bits)
@@ -33,12 +33,13 @@ namespace Evolution
             Chromosome(const string& str )
                 :d_bitset(str)
             {
+                reset_fitness();
             }
 
             Chromosome(size_t bits, unsigned long long val) 
                 :d_bitset(bits, val)
             {
-
+                reset_fitness();
             }
 
             d_bitset& set(size_t pos, bool value = true)
@@ -59,7 +60,7 @@ namespace Evolution
             }
             void reset_fitness()
             {
-                fitness = 0;
+                fitness = -9999;
             }
             bool operator[]( std::size_t pos ) const = delete;
             typename d_bitset::reference operator[]( std::size_t pos ) = delete;
@@ -70,47 +71,47 @@ namespace Evolution
 
     };
 
-        static Chromosome Subset(Chromosome c, size_t start, size_t subsize)
-        {
-            Chromosome sub(subsize);
-            for(auto i=start; i<(start+subsize); ++i)
-                sub.set(i - start, c.test(i));
+    static Chromosome Subset(Chromosome c, size_t start, size_t subsize)
+    {
+        Chromosome sub(subsize);
+        for(auto i=start; i<(start+subsize); ++i)
+            sub.set(i - start, c.test(i));
 
-            return sub;
-        }
+        return sub;
+    }
 
-        static Chromosome Mutate(Chromosome c)
+    static Chromosome Mutate(Chromosome c)
+    {
+        std::bernoulli_distribution flip(3/(float)c.size());
+        for (auto i=0u; i<c.size(); i++)
         {
-            std::bernoulli_distribution flip(3/(float)c.size());
-            for (auto i=0u; i<c.size(); i++)
-            {
-                if (flip(gen))
-                    c.flip(i);
-            }
-            return c;
+            if (flip(gen))
+                c.flip(i);
         }
+        return c;
+    }
 
-        static pair<Chromosome, Chromosome> Crossover(Chromosome a, Chromosome b)
+    static pair<Chromosome, Chromosome> Crossover(Chromosome a, Chromosome b)
+    {
+        Chromosome first = a, second = b;
+        for (auto i=(rand() % (a.size()-1)); i < a.size(); ++i)
         {
-            Chromosome first = a, second = b;
-            for (auto i=(rand() % (a.size()-1)); i < a.size(); ++i)
-            {
-                first.set(i, b.test(i));
-                second.set(i, a.test(i));
-            }        
-            first.reset_fitness();
-            second.reset_fitness();
-            return make_pair(Mutate(first), Mutate(second));
-        }
+            first.set(i, b.test(i));
+            second.set(i, a.test(i));
+        }        
+        first.reset_fitness();
+        second.reset_fitness();
+        return make_pair(Mutate(first), Mutate(second));
+    }
 
-        static Chromosome Random(size_t size)
-        {
-            std::bernoulli_distribution r(0.5);
-            Chromosome random(size, 0);
-            for (auto i=0u; i<random.size(); i++)
-                    random.set(i, r(gen));
-            return random;
-        }
+    static Chromosome Random(size_t size)
+    {
+        std::bernoulli_distribution r(0.5);
+        Chromosome random(size, 0);
+        for (auto i=0u; i<random.size(); i++)
+            random.set(i, r(gen));
+        return random;
+    }
 
 };
 

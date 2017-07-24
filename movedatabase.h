@@ -21,9 +21,11 @@ namespace Napoleon
         static BitBoard KingProximity[2][64]; // color, square
         static BitBoard SideFiles[8]; // file
         static BitBoard FrontSpan[2][64]; // color, square
+        static BitBoard RearSpan[2][64]; // color, square
         static BitBoard PasserSpan[2][64]; // color, square
-        static BitBoard CandidateSpan[2][64]; //color, square
+        static BitBoard AttackFrontSpan[2][64]; //color, square
         static BitBoard CandidateDefenders[2][64]; //color, square
+        static BitBoard PawnStop[2][64]; // color, square
         static int Distance[64][64]; // square, square
 
         static BitBoard GetA1H8DiagonalAttacks(BitBoard, Square);

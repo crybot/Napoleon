@@ -12,7 +12,7 @@ namespace Napoleon
 
         static BitBoard GetAllTargets(BitBoard pawns, Board& board);
         INLINE static BitBoard GetAnyAttack(BitBoard pawns, Board& board);
-		static BitBoard GetAnyAttack(BitBoard pawns, Color color, BitBoard squares);
+        static BitBoard GetAnyAttack(BitBoard pawns, Color color, BitBoard squares);
         static BitBoard GetQuietTargets(Color color, BitBoard pawns, BitBoard empty);
 
     private:
@@ -40,8 +40,8 @@ namespace Napoleon
         BitBoard singlePush = GetSinglePushTargets(color, pawns, empty);
 
         return color == PieceColor::White
-                ? CompassRose::OneStepNorth(singlePush) & empty & Constants::Ranks::Four
-                : CompassRose::OneStepSouth(singlePush) & empty & Constants::Ranks::Five;
+            ? CompassRose::OneStepNorth(singlePush) & empty & Constants::Ranks::Four
+            : CompassRose::OneStepSouth(singlePush) & empty & Constants::Ranks::Five;
     }
 
 }

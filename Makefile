@@ -13,7 +13,7 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 DEFINES       = 
-OPTIMIZE      = -flto -m64 -Ofast -march=native -funroll-loops -mbmi2
+OPTIMIZE      = -fpermissive -flto -m64 -Ofast -march=native -funroll-loops -mbmi2
 CFLAGS        = $(OPTIMIZE) -pipe -mtune=native -Wall -W $(DEFINES)
 CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++0x -pthread -mtune=native -Wall -W $(DEFINES)
 INCPATH       = -I. -I/usr/lib/qt/mkspecs/linux-g++
@@ -71,7 +71,8 @@ SOURCES       = main.cpp \
 		uci.cpp \
 		searchinfo.cpp \
 		moveselector.cpp \
-		tuner.cpp
+		tuner.cpp \
+		pawntable.cpp
 OBJECTS       = main.o \
 		move.o \
 		utils.o \
@@ -94,7 +95,8 @@ OBJECTS       = main.o \
 		uci.o \
 		searchinfo.o \
 		moveselector.o \
-		tuner.o 
+		tuner.o \
+		pawntable.o 
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/common/unix.conf \
 		/usr/lib/qt/mkspecs/common/linux.conf \
@@ -195,6 +197,7 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		tuner.h \
 		encoder.h \
 		evolution.h \
+		pawntable.h \
 		piecesquaretables.h main.cpp \
 		move.cpp \
 		utils.cpp \

@@ -18,6 +18,7 @@ namespace Napoleon
             int GetFileIndex(int);
             int GetRankIndex(int);
             int GetSquareIndex(int, int);
+            int RelativeRank(Color, int);
             int MirrorSquare(int);
             int Distance(int, int);
             int Parse(std::string);
@@ -28,6 +29,7 @@ namespace Napoleon
         {
             bool IsBitSet(Napoleon::BitBoard, int);
             void Display(Napoleon::BitBoard);
+            void SetBit(Napoleon::BitBoard&, unsigned int);
 
             int PopCount(Napoleon::BitBoard);
             int BitScanForward(Napoleon::BitBoard);
@@ -48,6 +50,11 @@ namespace Napoleon
         {
             // visual studio does not provide log2 function
             double Log2(double);
+        }
+
+        INLINE void BitBoard::SetBit(Napoleon::BitBoard& bitboard, unsigned int sq)
+        {
+            bitboard |= (static_cast<Napoleon::BitBoard>(1) << sq);
         }
 
 #if defined(__GNUC__) && defined(__LP64__)
@@ -188,6 +195,11 @@ namespace Napoleon
         inline Color Piece::GetOpposite(Color color)
         {
             return Color(1 ^ color);
+        }
+
+        inline int Square::RelativeRank(Color color, int rank)
+        {
+            return color == PieceColor::White ? rank : 7 - rank;
         }
     }
 }

@@ -27,6 +27,7 @@ namespace Napoleon
             BitBoard EmptySquares;
 
             ZobristKey zobrist;
+            ZobristKey pawnKey; // pawns and king zobrist key
 
             Board();
 
@@ -282,10 +283,16 @@ namespace Napoleon
         zobrist ^= Zobrist::Color;
 
         if (enPassantSquare != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+        }
 
         if (enpSquaresHistory[currentPly] != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
+        }
 
         allowNullMove = false;
         currentPly++;
@@ -300,7 +307,10 @@ namespace Napoleon
         zobrist ^= Zobrist::Color;
 
         if (enpSquaresHistory[currentPly] != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
+        }
 
         allowNullMove = true;
     }

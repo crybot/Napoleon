@@ -50,6 +50,7 @@ namespace Napoleon
         allowNullMove = true;
         currentPly = 0;
         zobrist = 0;
+        pawnKey = 0;
         initializeCastlingStatus(fenString);
         initializesideToMove(fenString);
         initializePieceSet(fenString);
@@ -94,7 +95,12 @@ namespace Napoleon
             zobrist ^= Zobrist::Piece[piece.Color][piece.Type][sq];
 
             if (piece.Type == PieceType::Pawn)
+            {
                 pawnsOnFile[piece.Color][Utils::Square::GetFileIndex(sq)]++;
+                pawnKey ^= Zobrist::Piece[piece.Color][PieceType::Pawn][sq];
+            }
+            //if (piece.Type == PieceType::King)
+                //pawnKey ^= Zobrist::Piece[piece.Color][PieceType::King][sq];
         }
     }
 
@@ -233,7 +239,10 @@ namespace Napoleon
     {
         enPassantSquare = fenString.EnPassantSquare;
         if (enPassantSquare != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+        }
     }
 
     void Board::initializeHalfMoveClock(const FenString& fenString)
@@ -326,6 +335,12 @@ namespace Napoleon
         zobrist ^= Zobrist::Piece[sideToMove][pieceMoved][from]; // aggiorna zobrist key (rimuove il pezzo mosso)
         zobrist ^= Zobrist::Piece[sideToMove][pieceMoved][to]; // aggiorna zobrist key (sposta il pezzo mosso)
 
+        if (pieceMoved == PieceType::Pawn /*|| pieceMoved == PieceType::King*/)
+        {
+            pawnKey ^= Zobrist::Piece[sideToMove][pieceMoved][from]; 
+            pawnKey ^= Zobrist::Piece[sideToMove][pieceMoved][to]; 
+        }
+
         // aggiorna i pezzi del giocatore
         pieces[sideToMove] ^= FromTo;
 
@@ -377,6 +392,7 @@ namespace Napoleon
             material[sideToMove] += Constants::Piece::PieceValue[promoted];
             zobrist ^= Zobrist::Piece[sideToMove][PieceType::Pawn][to];
             zobrist ^= Zobrist::Piece[sideToMove][promoted][to];
+            pawnKey ^= Zobrist::Piece[sideToMove][PieceType::Pawn][to];
             updatePstvalue<Sub>(sideToMove, Evaluation::PieceSquareValue(Piece(sideToMove, PieceType::Pawn), to));
             updatePstvalue<Add>(sideToMove, Evaluation::PieceSquareValue(Piece(sideToMove, promoted), to));
 
@@ -396,6 +412,7 @@ namespace Napoleon
                     pieceSet[enPassantSquare - 8] = Constants::Piece::Null;
                     updatePstvalue<Sub>(enemy, Evaluation::PieceSquareValue(Piece(enemy, PieceType::Pawn), enPassantSquare - 8));
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare - 8]; // rimuove il pedone nero catturato en passant
+                    pawnKey ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
                 else
                 {
@@ -403,6 +420,7 @@ namespace Napoleon
                     pieceSet[enPassantSquare + 8] = Constants::Piece::Null;
                     updatePstvalue<Sub>(enemy, Evaluation::PieceSquareValue(Piece(enemy, PieceType::Pawn), enPassantSquare + 8));
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare + 8]; // rimuove il pedone bianco catturato en passant
+                    pawnKey ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare + 8]; // rimuove il pedone bianco catturato en passant
                 }
 
                 pieces[enemy] ^= piece;
@@ -436,6 +454,7 @@ namespace Napoleon
                 else if (captured == PieceType::Pawn)
                 {
                     pawnsOnFile[enemy][Utils::Square::GetFileIndex(to)]--;
+                    pawnKey ^= Zobrist::Piece[enemy][PieceType::Pawn][to];
                 }
 
                 if (pieceMoved == PieceType::Pawn)
@@ -463,7 +482,10 @@ namespace Napoleon
         }
 
         if (enPassantSquare != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+        }
 
         // azzera la casella enpassant
         enPassantSquare = Constants::Squares::Invalid;
@@ -478,6 +500,7 @@ namespace Napoleon
             {
                 enPassantSquare = to - sq / 2;
                 zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+                pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
             }
         }
 
@@ -519,10 +542,16 @@ namespace Napoleon
             zobrist ^= Zobrist::Castling[castlingStatus]; // cambia i diritti di arrocco
 
         if (enPassantSquare != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enPassantSquare)];
+        }
 
         if (enpSquaresHistory[currentPly] != Constants::Squares::Invalid)
+        {
             zobrist ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
+            pawnKey ^= Zobrist::Enpassant[Utils::Square::GetFileIndex(enpSquaresHistory[currentPly])];
+        }
 
         halfMoveClock = halfMoveClockHistory[currentPly];
 
@@ -553,6 +582,12 @@ namespace Napoleon
         bitBoardSet[sideToMove][pieceMoved] ^= FromTo;
         zobrist ^= Zobrist::Piece[sideToMove][pieceMoved][from]; // aggiorna zobrist key (rimuove il pezzo mosso)
         zobrist ^= Zobrist::Piece[sideToMove][pieceMoved][to]; // aggiorna zobrist key (sposta il pezzo mosso)
+
+        if (pieceMoved == PieceType::Pawn /*|| pieceMoved == PieceType::King*/)
+        {
+            pawnKey ^= Zobrist::Piece[sideToMove][pieceMoved][from]; 
+            pawnKey ^= Zobrist::Piece[sideToMove][pieceMoved][to]; 
+        }
 
         // aggiorna i pezzi del giocatore
         pieces[sideToMove] ^= FromTo;
@@ -586,6 +621,7 @@ namespace Napoleon
             bitBoardSet[sideToMove][PieceType::Pawn] ^= To;
             zobrist ^= Zobrist::Piece[sideToMove][PieceType::Pawn][to];
             zobrist ^= Zobrist::Piece[sideToMove][promoted][to];
+            pawnKey ^= Zobrist::Piece[sideToMove][PieceType::Pawn][to];
             updatePstvalue<Add>(sideToMove, Evaluation::PieceSquareValue(Piece(sideToMove, PieceType::Pawn), from));
             updatePstvalue<Sub>(sideToMove, Evaluation::PieceSquareValue(Piece(sideToMove, promoted), to));
 
@@ -611,6 +647,7 @@ namespace Napoleon
                     pieceSet[enPassantSquare - 8] = Piece(PieceColor::Black, PieceType::Pawn);
                     updatePstvalue<Add>(enemy, Evaluation::PieceSquareValue(Piece(enemy, PieceType::Pawn), enPassantSquare - 8));
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare - 8]; // rimuove il pedone nero catturato en passant
+                    pawnKey ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare - 8]; // rimuove il pedone nero catturato en passant
                 }
                 else
                 {
@@ -618,6 +655,7 @@ namespace Napoleon
                     pieceSet[enPassantSquare + 8] = Piece(PieceColor::White, PieceType::Pawn);
                     updatePstvalue<Add>(enemy, Evaluation::PieceSquareValue(Piece(enemy, PieceType::Pawn), enPassantSquare + 8));
                     zobrist ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare + 8]; // rimuove il pedone nero catturato en passant
+                    pawnKey ^= Zobrist::Piece[enemy][PieceType::Pawn][enPassantSquare + 8]; // rimuove il pedone nero catturato en passant
                 }
 
                 pieces[enemy] ^= piece;
@@ -641,6 +679,7 @@ namespace Napoleon
                 else if (captured == PieceType::Pawn)
                 {
                     pawnsOnFile[enemy][Utils::Square::GetFileIndex(to)]++;
+                    pawnKey ^= Zobrist::Piece[enemy][PieceType::Pawn][to];
                 }
                 if (pieceMoved == PieceType::Pawn)
                 {
