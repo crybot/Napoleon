@@ -8,6 +8,7 @@
 #include "fenstring.h"
 #include "encoder.h"
 #include "search.h"
+#include "piecesquaretables.h"
 #include <boost/process.hpp>
 
 using namespace Evolution;
@@ -46,6 +47,7 @@ namespace Napoleon
         Board board;
         Encoder encoder;
 
+        /*
         encoder.AddField(Search::RAZOR1, 7);
         encoder.AddField(Search::RAZOR2, 2);
         encoder.AddField(Search::RAZOR3, 9);
@@ -65,12 +67,15 @@ namespace Napoleon
         encoder.AddField(Search::LMR_R1, 3);
         encoder.AddField(Search::LMR_R2, 3);
         encoder.AddField(Search::LMR_MARGIN, 5);
+        */
+        auto a = PieceSquareTable[PieceType::Pawn][Opening];
+        encoder.AddVector(std::vector<int>(a, a + 64), "PstPawnMg");
         size_t bits = encoder.Bits();
 
-        for (auto i=0; i<pop_size/2; ++i)
-            population.push_back(encoder.Encode(Search::param));
+        //for (auto i=0; i<pop_size/2; ++i)
+            //population.push_back(encoder.Encode(Search::param));
 
-        for (auto i=pop_size/2; i < pop_size; ++i)
+        for (auto i=0; i < pop_size; ++i)
             population.push_back(Evolution::Random(bits));
 
         for (auto p : population)

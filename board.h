@@ -479,11 +479,13 @@ namespace Napoleon
 
         Square to = move.ToSquare();
         Square from = move.FromSquare();
-        Piece captured = PieceOnSquare(to);
+        Type captured = move.IsEnPassant() ? static_cast<Type>(PieceType::Pawn) : PieceOnSquare(to).Type;
         Type attackingPiece = PieceOnSquare(from).Type;
 
         //if (PieceValue[PieceOnSquare(from).Type] <= PieceValue[PieceOnSquare(to).Type])
         //	return 1;
+
+        assert(captured != PieceType::None && attackingPiece != PieceType::None);
 
         int gain[100];
         int depth = 0;
@@ -492,7 +494,7 @@ namespace Napoleon
         BitBoard occ = OccupiedSquares;
         BitBoard attackers;
 
-        gain[depth++] = PieceValue[captured.Type];
+        gain[depth++] = PieceValue[captured];
 
         Color side = GetOpposite(sideToMove);
         occ ^= SquareMask[from];

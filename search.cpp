@@ -619,9 +619,6 @@ namespace Napoleon
 
                     if (score >= beta)
                     {
-                        if (move == best) // we don't want to save our hash move also as a killer move
-                            return beta;
-
                         //killer moves and history heuristic
                         if (!board.IsCapture(move))
                         {

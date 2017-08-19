@@ -3,7 +3,7 @@
 
 namespace Napoleon
 {
-    const int PieceSquareTable[][3][64] =
+    static int PieceSquareTable[][3][64] =
     {
         //PAWN
         {

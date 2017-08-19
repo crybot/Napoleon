@@ -65,6 +65,14 @@ namespace Napoleon
                     stream >> parallel_threads;
                     Search::InitializeThreads(parallel_threads);
                 }
+                else if (token == "PstPawnMg") // evaluation parameters
+                {
+                    stream >> token; // "value"
+                    int i=0;
+                    int val;
+                    while (stream >> val)
+                        PieceSquareTable[PieceType::Pawn][Opening][i++] = val;
+                }
 
                 else
                 {

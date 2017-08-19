@@ -13,7 +13,7 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 DEFINES       = 
-OPTIMIZE      = -fpermissive -flto -m64 -Ofast -march=native -funroll-loops -mbmi2
+OPTIMIZE      = -flto -m64 -Ofast -march=native -funroll-loops -mbmi2
 CFLAGS        = $(OPTIMIZE) -pipe -mtune=native -Wall -W $(DEFINES)
 CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++0x -pthread -mtune=native -Wall -W $(DEFINES)
 INCPATH       = -I. -I/usr/lib/qt/mkspecs/linux-g++
@@ -272,6 +272,9 @@ compiler_clean:
 
 main.o: main.cpp uci.h encoder.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
+
+tuner.o: tuner.cpp tuner.h fenstring.h encoder.h search.h piecesquaretables.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tuner.o tuner.cpp
 
 move.o: move.cpp move.h \
 		defines.h \
