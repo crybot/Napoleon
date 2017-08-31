@@ -40,6 +40,7 @@ namespace Napoleon
         extern int mobilityBonus[3][7][Constants::QueenMaxMoves + 1];
         extern int backwardPawnP[3]; // phase
         extern BitBoard pawnAttacks[2]; // color
+        extern BitBoard unpinnedKnightAttacks[2]; // color
         extern PawnTable pawnTable;
         extern int hangingValue[2]; // color
     }

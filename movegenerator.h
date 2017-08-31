@@ -34,6 +34,7 @@ namespace Napoleon
         template<bool>
         void GetEvadeMoves(Board& board, BitBoard attackers, Move moveList[], int& pos);
         void GetCaptures(Move allMoves[], int& pos, Board& board);
+        void GetCapturesAndPromotions(Move allMoves[], int& pos, Board& board);
         void GetNonCaptures(Move allMoves[], int& pos, Board& board);
     }
 
@@ -55,7 +56,7 @@ namespace Napoleon
         }
         else if (onlyCaptures)
         {
-            GetCaptures(allMoves, pos, board);
+            GetCapturesAndPromotions(allMoves, pos, board);
             board.SetCheckState(false);
         }
         else
@@ -82,6 +83,18 @@ namespace Napoleon
         GetRookMoves(board.Pieces(board.SideToMove(), PieceType::Rook), board, allMoves, pos, enemy);
     }
 
+    INLINE void MoveGenerator::GetCapturesAndPromotions(Move allMoves[], int& pos, Board& board)
+    {
+        BitBoard enemy = board.EnemyPieces();
+        GetPawnMoves<true>(board.Pieces(board.SideToMove(), PieceType::Pawn), board, allMoves, pos, 
+                enemy | Constants::Masks::RankMask[Utils::Square::RelativeRank(board.SideToMove(), 7)]);
+        GetKnightMoves(board.Pieces(board.SideToMove(), PieceType::Knight), board, allMoves, pos, enemy);
+        GetBishopMoves(board.Pieces(board.SideToMove(), PieceType::Bishop), board, allMoves, pos, enemy);
+        GetQueenMoves(board.Pieces(board.SideToMove(), PieceType::Queen), board, allMoves, pos, enemy);
+        GetKingMoves(board.Pieces(board.SideToMove(), PieceType::King), board, allMoves, pos, enemy);
+        GetRookMoves(board.Pieces(board.SideToMove(), PieceType::Rook), board, allMoves, pos, enemy);
+    }
+
     INLINE void MoveGenerator::GetNonCaptures(Move allMoves[], int&pos, Board& board)
     {
         BitBoard enemy = ~board.EnemyPieces();
@@ -95,50 +108,50 @@ namespace Napoleon
     }
 
     template<bool ep>
-    INLINE void MoveGenerator::GetPawnMoves(BitBoard pawns, Board& board, Move moveList[], int& pos, BitBoard target)
-    {
-        BitBoard targets;
-        BitBoard epTargets;
-        Square fromIndex;
-        Square toIndex;
-
-        while (pawns != 0)
+        INLINE void MoveGenerator::GetPawnMoves(BitBoard pawns, Board& board, Move moveList[], int& pos, BitBoard target)
         {
-            fromIndex = Utils::BitBoard::BitScanForwardReset(pawns); // search for LS1B and then reset it
-            targets = Pawn::GetAllTargets(Constants::Masks::SquareMask[fromIndex], board) & target;
+            BitBoard targets;
+            BitBoard epTargets;
+            Square fromIndex;
+            Square toIndex;
 
-            if (ep)
+            while (pawns != 0)
             {
-                // en passant
-                if (board.EnPassantSquare() != Constants::Squares::Invalid)
-                {
-                    epTargets = MoveDatabase::PawnAttacks[board.SideToMove()][fromIndex];
+                fromIndex = Utils::BitBoard::BitScanForwardReset(pawns); // search for LS1B and then reset it
+                targets = Pawn::GetAllTargets(Constants::Masks::SquareMask[fromIndex], board) & target;
 
-                    if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare()]) != 0)
-                        moveList[pos++] =  Move(fromIndex, board.EnPassantSquare(), EnPassant);
+                if (ep)
+                {
+                    // en passant
+                    if (board.EnPassantSquare() != Constants::Squares::Invalid)
+                    {
+                        epTargets = MoveDatabase::PawnAttacks[board.SideToMove()][fromIndex];
+
+                        if ((epTargets & Constants::Masks::SquareMask[board.EnPassantSquare()]) != 0)
+                            moveList[pos++] =  Move(fromIndex, board.EnPassantSquare(), EnPassant);
+                    }
                 }
-            }
 
-            while (targets != 0)
-            {
-                toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
+                while (targets != 0)
+                {
+                    toIndex = Utils::BitBoard::BitScanForwardReset(targets); // search for LS1B and then reset it
 
-                // promotions
-                if ((Utils::Square::GetRankIndex(toIndex) == 7 && board.SideToMove() == PieceColor::White) ||
-                        (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove() == PieceColor::Black))
-                {
-                    moveList[pos++] =  Move(fromIndex, toIndex, QueenPromotion);
-                    moveList[pos++] =  Move(fromIndex, toIndex, RookPromotion);
-                    moveList[pos++] =  Move(fromIndex, toIndex, BishopPromotion);
-                    moveList[pos++] =  Move(fromIndex, toIndex, KnightPromotion);
-                }
-                else
-                {
-                    moveList[pos++] =  Move(fromIndex, toIndex); // no promotions
+                    // promotions
+                    if ((Utils::Square::GetRankIndex(toIndex) == 7 && board.SideToMove() == PieceColor::White) ||
+                            (Utils::Square::GetRankIndex(toIndex) == 0 && board.SideToMove() == PieceColor::Black))
+                    {
+                        moveList[pos++] =  Move(fromIndex, toIndex, QueenPromotion);
+                        moveList[pos++] =  Move(fromIndex, toIndex, RookPromotion);
+                        moveList[pos++] =  Move(fromIndex, toIndex, BishopPromotion);
+                        moveList[pos++] =  Move(fromIndex, toIndex, KnightPromotion);
+                    }
+                    else
+                    {
+                        moveList[pos++] =  Move(fromIndex, toIndex); // no promotions
+                    }
                 }
             }
         }
-    }
 
     INLINE void MoveGenerator::GetKnightMoves(BitBoard knights, Board &board, Move moveList[], int& pos, BitBoard target)
     {
@@ -262,79 +275,79 @@ namespace Napoleon
 
     //thanks stockfish for this
     template<bool onlyCaptures>
-    void MoveGenerator::GetEvadeMoves(Board& board, BitBoard checkers, Move moveList[], int& pos)
-    {
-        BitBoard b;
-        Square to;
-        Square from, checksq;
-        Square ksq = board.KingSquare(board.SideToMove());
-        int checkersCnt = 0;
-        BitBoard sliderAttacks = 0;
-
-        // Find squares attacked by slider checkers, we will remove them from the king
-        // evasions so to skip known illegal moves avoiding useless legality check later.
-        b = checkers;
-        do
+        void MoveGenerator::GetEvadeMoves(Board& board, BitBoard checkers, Move moveList[], int& pos)
         {
-            checkersCnt++;
-            checksq = Utils::BitBoard::BitScanForwardReset(b);
+            BitBoard b;
+            Square to;
+            Square from, checksq;
+            Square ksq = board.KingSquare(board.SideToMove());
+            int checkersCnt = 0;
+            BitBoard sliderAttacks = 0;
 
-            switch (board.PieceOnSquare(checksq).Type)
+            // Find squares attacked by slider checkers, we will remove them from the king
+            // evasions so to skip known illegal moves avoiding useless legality check later.
+            b = checkers;
+            do
             {
-            case PieceType::Bishop: sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq]; break;
-            case PieceType::Rook: sliderAttacks |= MoveDatabase::PseudoRookAttacks[checksq]; break;
-            case PieceType::Queen:
-                // If queen and king are far or not on a diagonal line we can safely
-                // remove all the squares attacked in the other direction becuase are
-                // not reachable by the king anyway.
-                if ( MoveDatabase::ObstructedTable[ksq][checksq] || (MoveDatabase::PseudoBishopAttacks[checksq] & Constants::Masks::SquareMask[ksq])==0)
-                    sliderAttacks |=  MoveDatabase::PseudoBishopAttacks[checksq]
-                            | MoveDatabase::PseudoRookAttacks[checksq];
+                checkersCnt++;
+                checksq = Utils::BitBoard::BitScanForwardReset(b);
 
-                // Otherwise we need to use real rook attacks to check if king is safe
-                // to move in the other direction. For example: king in B2, queen in A1
-                // a knight in B1, and we can safely move to C1.
-                else
-                    sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq] | MoveDatabase::GetRookAttacks(board.OccupiedSquares, checksq);
-                break;
+                switch (board.PieceOnSquare(checksq).Type)
+                {
+                    case PieceType::Bishop: sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq]; break;
+                    case PieceType::Rook: sliderAttacks |= MoveDatabase::PseudoRookAttacks[checksq]; break;
+                    case PieceType::Queen:
+                                          // If queen and king are far or not on a diagonal line we can safely
+                                          // remove all the squares attacked in the other direction becuase are
+                                          // not reachable by the king anyway.
+                                          if ( MoveDatabase::ObstructedTable[ksq][checksq] || (MoveDatabase::PseudoBishopAttacks[checksq] & Constants::Masks::SquareMask[ksq])==0)
+                                              sliderAttacks |=  MoveDatabase::PseudoBishopAttacks[checksq]
+                                                  | MoveDatabase::PseudoRookAttacks[checksq];
 
-            default:
-                break;
+                                          // Otherwise we need to use real rook attacks to check if king is safe
+                                          // to move in the other direction. For example: king in B2, queen in A1
+                                          // a knight in B1, and we can safely move to C1.
+                                          else
+                                              sliderAttacks |= MoveDatabase::PseudoBishopAttacks[checksq] | MoveDatabase::GetRookAttacks(board.OccupiedSquares, checksq);
+                                          break;
+
+                    default:
+                                          break;
+                }
+            } while (b);
+
+            // Generate evasions for king, capture and non capture moves
+            if (onlyCaptures)
+                b = MoveDatabase::KingAttacks[ksq] & checkers;
+            else
+                b = MoveDatabase::KingAttacks[ksq] & ~board.PlayerPieces() & ~sliderAttacks;
+
+            from = ksq;
+
+            while (b)
+            {
+                to = Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
+                moveList[pos++] = Move(from, to);
             }
-        } while (b);
 
-        // Generate evasions for king, capture and non capture moves
-        if (onlyCaptures)
-            b = MoveDatabase::KingAttacks[ksq] & checkers;
-        else
-            b = MoveDatabase::KingAttacks[ksq] & ~board.PlayerPieces() & ~sliderAttacks;
+            // Generate evasions for other pieces only if not under a double check
+            if (checkersCnt > 1)
+                return;
 
-        from = ksq;
+            // Blocking evasions or captures of the checking piece
+            BitBoard target;
 
-        while (b)
-        {
-            to = Utils::BitBoard::BitScanForwardReset(b); // search for LS1B and then reset it
-            moveList[pos++] = Move(from, to);
+            if (onlyCaptures)
+                target = checkers;
+            else
+                target = MoveDatabase::ObstructedTable[checksq][ksq] | checkers;
+
+            GetPawnMoves<true>(board.Pieces(board.SideToMove(), PieceType::Pawn), board, moveList, pos, target);
+            GetKnightMoves(board.Pieces(board.SideToMove(), PieceType::Knight), board, moveList, pos, target);
+            GetBishopMoves(board.Pieces(board.SideToMove(), PieceType::Bishop), board, moveList, pos, target);
+            GetRookMoves(board.Pieces(board.SideToMove(), PieceType::Rook), board, moveList, pos, target);
+            GetQueenMoves(board.Pieces(board.SideToMove(), PieceType::Queen), board, moveList, pos, target);
         }
-
-        // Generate evasions for other pieces only if not under a double check
-        if (checkersCnt > 1)
-            return;
-
-        // Blocking evasions or captures of the checking piece
-        BitBoard target;
-
-        if (onlyCaptures)
-            target = checkers;
-        else
-            target = MoveDatabase::ObstructedTable[checksq][ksq] | checkers;
-
-        GetPawnMoves<true>(board.Pieces(board.SideToMove(), PieceType::Pawn), board, moveList, pos, target);
-        GetKnightMoves(board.Pieces(board.SideToMove(), PieceType::Knight), board, moveList, pos, target);
-        GetBishopMoves(board.Pieces(board.SideToMove(), PieceType::Bishop), board, moveList, pos, target);
-        GetRookMoves(board.Pieces(board.SideToMove(), PieceType::Rook), board, moveList, pos, target);
-        GetQueenMoves(board.Pieces(board.SideToMove(), PieceType::Queen), board, moveList, pos, target);
-    }
 
 
     INLINE void MoveGenerator::GetLegalMoves(Move allMoves[],int& pos, Board& board)

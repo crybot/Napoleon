@@ -384,6 +384,7 @@ namespace Napoleon
 
             // adaptive null move pruning
             if (board.AllowNullMove()
+                    && beta == alpha+1 // non-pv node condition
                     //&& !pv
                     && depth >= 3
                     && !attackers

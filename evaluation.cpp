@@ -92,9 +92,10 @@ namespace Napoleon
         5 // ENDGAME
     };
 
-    BitBoard Evaluation::pawnAttacks[2];
+    BitBoard Evaluation::pawnAttacks[2]; // color
+    BitBoard Evaluation::unpinnedKnightAttacks[2]; // color
     BitBoard attacks[2] = {0}; // all squares attacked by each color
-    int Evaluation::hangingValue[2] = {0};
+    int Evaluation::hangingValue[2] = {0}; // color
 
 
     int Evaluation::Evaluate(Board& board)
@@ -121,6 +122,7 @@ namespace Napoleon
         };
 
         attacks[White] = attacks[Black] = 0;
+        unpinnedKnightAttacks[White] = unpinnedKnightAttacks[Black] = 0;
         hangingValue[White] = hangingValue[Black] = 0;
 
         // material evaluation
@@ -164,13 +166,13 @@ namespace Napoleon
         if (board.NumOfPieces(Black, PieceType::Bishop) == 2)
             updateScore(scores, -BishopPair[Opening], -BishopPair[EndGame]);
 
+
         auto entry = pawnTable.at(board.pawnKey); 
         bool probed = false;
         if (entry->key == board.pawnKey) // PAWN HASH-HIT
         {
             pawnStructure = entry->score;
-            pawnAttacks[White] = entry->attacks[White];
-            pawnAttacks[Black] = entry->attacks[Black];
+            pawnAttacks[White] = entry->attacks[White]; pawnAttacks[Black] = entry->attacks[Black];
             probed = true;
         }
 
@@ -234,6 +236,11 @@ namespace Napoleon
                 Pawn::GetAnyAttack(board.Pieces(Black, PieceType::Pawn), Black, Constants::Universe); // squares attacked by Black pawns
         }
 
+        BitBoard pieces[2] = { // color
+            board.Pieces(White) ^ board.Pieces(White, Pawn),
+            board.Pieces(Black) ^ board.Pieces(Black, Pawn)
+        };
+
 
         // loop through pawns (skipped when hash hit)
         for (Color c = White; !probed && c < PieceColor::None; c++)
@@ -243,6 +250,30 @@ namespace Napoleon
             {
                 Napoleon::Square sq = BitScanForwardReset(pawns);
                 updateScore(pawnStructure, evaluatePawn(c, sq, board, entry));
+            }
+        }
+
+        // pinned pieces penalty
+        BitBoard pinned = board.PinnedPieces(); // TODO: may be sent by search
+        updateScore(scores, -10*PopCount(pinned & board.Pieces(White)));
+        updateScore(scores, 10*PopCount(pinned & board.Pieces(Black)));
+
+        BitBoard unpinnedPawnAttacks[2] = { // color 
+            Pawn::GetAnyAttack(board.Pieces(White, PieceType::Pawn) & ~pinned, White, Constants::Universe), // squares attacked by White pawns
+            Pawn::GetAnyAttack(board.Pieces(Black, PieceType::Pawn) & ~pinned, Black, Constants::Universe) // squares attacked by Black pawns
+        };
+
+        // pseudo pawn-fork evaluation:
+        // we check if multiple (not pinned) pawns, attack different pieces at ones 
+        // (which includes forks)
+        // TODO: adjust penalty depending on the forked piece
+        BitBoard forked = 0;
+        for(Color c = White; c < PieceColor::None; c++)
+        {
+            if(PopCount(forked = unpinnedPawnAttacks[c] & pieces[GetOpposite(c)]) >= 2)
+            {
+                assert(forked != 0 && forked >= 2);
+                updateScore(scores, c == White ? 50 : -50);
             }
         }
 
@@ -263,12 +294,27 @@ namespace Napoleon
         }
 
         pawnTable.Save(board.pawnKey, pawnStructure);
-
         updateScore(scores, pawnStructure);
+
+        // pseudo knight-forks evaluation
+        /*
+        for(Color c = White; c < PieceColor::None; c++)
+        {
+            Color enemy = GetOpposite(c);
+            if(PopCount(unpinnedKnightAttacks[c] & 
+                        (board.Pieces(enemy, King) 
+                         | board.Pieces(enemy, Queen) 
+                         | board.Pieces(enemy, Rook))) >= 2)
+            {
+                updateScore(scores, c == White ? 20 : -20);
+            }
+        }
+        */
+
+
+
         //KING SAFETY
-
         int shelter1 = 0, shelter2 = 0;
-
         //pawn shelter
         if (SquareMask[wking_square] & WhiteKingSide)
         {
@@ -298,6 +344,16 @@ namespace Napoleon
         // else apply penalty
 
         updateScore(scores, -(shelter1 * 5.5 + shelter2 * 2), -shelter1 -shelter2); // shielding bonus
+
+
+        /*
+        // king on open file evaluation
+        if((MoveDatabase::FrontSpan[White][wking_square] & board.Pieces(White, PieceType::Pawn)) == 0) // KING ON (SEMI)OPEN FILE
+            updateScore(scores, -1, 0);
+
+        if((MoveDatabase::FrontSpan[Black][bking_square] & board.Pieces(Black, PieceType::Pawn)) == 0) // KING ON (SEMI)OPEN FILE
+            updateScore(scores, 1, 0);
+            */
 
 
         /* DISABLED TO TEST MOBILITY VARIATION
@@ -409,12 +465,18 @@ namespace Napoleon
         Score bonus(0,0);
         File file;
 
+        // TODO: do not count mobility if the piece is pinned
         switch(piece.Type)
         {
             case PieceType::Knight:
-                b = Knight::TargetsFrom(square, us, board) & ~pawnAttacks[enemy];
+                b = Knight::TargetsFrom(square, us, board);
+
+                //if (!(SquareMask[square] & pinned)) // only save unpinned knight attacks
+                //unpinnedKnightAttacks[us] |= b; // used to evaluate knight forks
+
                 tropism = 5; 
                 distance = MoveDatabase::Distance[square][ksq];
+                b &= ~pawnAttacks[enemy];
                 break;
 
             case PieceType::Bishop:
