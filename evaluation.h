@@ -9,6 +9,7 @@
 #include "board.h"
 #include "pawntable.h"
 #include <cassert>
+#include <cmath>
 
 namespace Napoleon
 {
@@ -41,8 +42,9 @@ namespace Napoleon
         extern int backwardPawnP[3]; // phase
         extern BitBoard pawnAttacks[2]; // color
         extern BitBoard unpinnedKnightAttacks[2]; // color
-        extern PawnTable pawnTable;
+        extern thread_local PawnTable pawnTable;
         extern int hangingValue[2]; // color
+        extern int kingAttacks[100]; // number of weighted attacks
     }
 
     INLINE void Evaluation::updateScore(std::pair<int, int>& scores, int openingBonus, int endBonus)
@@ -85,10 +87,6 @@ namespace Napoleon
             board.Pieces(White, Pawn), board.Pieces(Black, Pawn)
         };
 
-        //int king_distance[2] = { // color
-        //MoveDatabase::Distance[square][board.KingSquare(White)],
-        //MoveDatabase::Distance[square][board.KingSquare(Black)],
-        //};
 
         //int tropism = 1;
 
@@ -139,10 +137,18 @@ namespace Napoleon
             }
         }
 
-        // Only consider distance to own pawns, averaged by the number of own pawns.
-        // This way we hope to prioriteze pawn protection as we get closer to late pawn endgames.
-        // DISABLED: no elo gains
-        //updateScore(score, 0, (-king_distance[color]*tropism)/board.NumOfPieces(color, Pawn));
+        //int enemy_king_distance = MoveDatabase::Distance[square][board.KingSquare(enemy)];
+        //int pawn_file = GetFileIndex(square);
+        //int king_file = GetFileIndex(board.KingSquare(enemy));
+
+        //pawn storm evaluation:
+        //we penalize enemy pawns near own king
+        //updateScore(score, 7 - enemy_king_distance, 0); 
+
+        // NEXT TO TRY:
+        // ONLY CONDIDER PAWNS ON ADJACENT FILES TO KING
+        //if (std::abs(pawn_file - king_file) <= 1) // i.e. on the same or adjacent file to king
+            //updateScore(score, 3 - enemy_king_distance/2, 0);
 
         return color == White ? score : -score;
     }

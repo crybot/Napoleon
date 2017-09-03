@@ -8,7 +8,7 @@
 
 namespace Napoleon
 {
-    PawnTable Evaluation::pawnTable;
+    thread_local PawnTable Evaluation::pawnTable;
 
     int Evaluation::multiPawnP[8] = { 0, 0, 10, 20, 35, 50, 75, 100 }; // TODO: add phase dependent penalties
     int Evaluation::isolatedPawnP[8] = { 5, 7, 10, 18, 18, 10, 7, 5 }; // TODO: add phase dependent penalties
@@ -92,10 +92,25 @@ namespace Napoleon
         5 // ENDGAME
     };
 
+    int Evaluation::kingAttacks[100] = { // f(x) = 500/(1.0 + std::exp(-x/5.1 + 7.0) + std::min(i, 20))
+        0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 
+        13, 14, 16, 18, 20, 23, 26, 29, 33, 37, 
+        42, 46, 51, 58, 65, 74, 84, 96, 110, 125, 
+        143, 162, 183, 205, 228, 252, 277, 301, 325, 348, 
+        369, 389, 407, 423, 437, 450, 461, 470, 478, 485, 
+        491, 496, 500, 503, 506, 508, 510, 512, 513, 514, 
+        515, 516, 517, 517, 518, 518, 518, 518, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+    };
+
     BitBoard Evaluation::pawnAttacks[2]; // color
     BitBoard Evaluation::unpinnedKnightAttacks[2]; // color
     BitBoard attacks[2] = {0}; // all squares attacked by each color
     int Evaluation::hangingValue[2] = {0}; // color
+
+    int kingAttacksCount[2] = {0}; // color
 
 
     int Evaluation::Evaluate(Board& board)
@@ -124,6 +139,7 @@ namespace Napoleon
         attacks[White] = attacks[Black] = 0;
         unpinnedKnightAttacks[White] = unpinnedKnightAttacks[Black] = 0;
         hangingValue[White] = hangingValue[Black] = 0;
+        kingAttacksCount[White] = kingAttacksCount[Black] = 0;
 
         // material evaluation
         int material = board.MaterialBalance(White);
@@ -286,7 +302,7 @@ namespace Napoleon
         {
             piece = pieceList[sq];
 
-            if (piece.Type != PieceType::None && piece.Type != Pawn)
+            if (piece.Type != PieceType::None && piece.Type != Pawn /*&& piece.Type != King*/) // speedup (TO TEST elo gain)
             {
                 enemy = GetOpposite(piece.Color);
                 updateScore(scores, EvaluatePiece(piece, sq, king_proximity[enemy], entry, board)); // opponent's king proximity
@@ -298,24 +314,29 @@ namespace Napoleon
 
         // pseudo knight-forks evaluation
         /*
-        for(Color c = White; c < PieceColor::None; c++)
-        {
-            Color enemy = GetOpposite(c);
-            if(PopCount(unpinnedKnightAttacks[c] & 
-                        (board.Pieces(enemy, King) 
-                         | board.Pieces(enemy, Queen) 
-                         | board.Pieces(enemy, Rook))) >= 2)
-            {
-                updateScore(scores, c == White ? 20 : -20);
-            }
-        }
-        */
+           for(Color c = White; c < PieceColor::None; c++)
+           {
+           Color enemy = GetOpposite(c);
+           if(PopCount(unpinnedKnightAttacks[c] & 
+           (board.Pieces(enemy, King) 
+           | board.Pieces(enemy, Queen) 
+           | board.Pieces(enemy, Rook))) >= 2)
+           {
+           updateScore(scores, c == White ? 20 : -20);
+           }
+           }
+           */
 
 
 
         //KING SAFETY
-        int shelter1 = 0, shelter2 = 0;
+        //king attacks table application (incrementally computed piece by piece)
+        //TODO: try not to scale down
+        updateScore(scores, kingAttacks[kingAttacksCount[White]], kingAttacks[kingAttacksCount[White]]/2);
+        updateScore(scores, -kingAttacks[kingAttacksCount[Black]], -kingAttacks[kingAttacksCount[Black]]/2);
+        
         //pawn shelter
+        int shelter1 = 0, shelter2 = 0;
         if (SquareMask[wking_square] & WhiteKingSide)
         {
             shelter1 = PopCount(wpawns & WhiteKingShield);
@@ -349,11 +370,11 @@ namespace Napoleon
         /*
         // king on open file evaluation
         if((MoveDatabase::FrontSpan[White][wking_square] & board.Pieces(White, PieceType::Pawn)) == 0) // KING ON (SEMI)OPEN FILE
-            updateScore(scores, -1, 0);
+        updateScore(scores, -1, 0);
 
         if((MoveDatabase::FrontSpan[Black][bking_square] & board.Pieces(Black, PieceType::Pawn)) == 0) // KING ON (SEMI)OPEN FILE
-            updateScore(scores, 1, 0);
-            */
+        updateScore(scores, 1, 0);
+        */
 
 
         /* DISABLED TO TEST MOBILITY VARIATION
@@ -474,20 +495,20 @@ namespace Napoleon
                 //if (!(SquareMask[square] & pinned)) // only save unpinned knight attacks
                 //unpinnedKnightAttacks[us] |= b; // used to evaluate knight forks
 
-                tropism = 5; 
+                tropism = 2; 
                 distance = MoveDatabase::Distance[square][ksq];
                 b &= ~pawnAttacks[enemy];
                 break;
 
             case PieceType::Bishop:
                 b = Bishop::TargetsFrom(square, us, board);
-                tropism = 10; // TO TEST: divide by distance to king
+                tropism = 2; // TO TEST: divide by distance to king
                 distance = MoveDatabase::Distance[square][ksq]*2;
                 break;
 
             case PieceType::Rook:
                 b = Rook::TargetsFrom(square, us, board);
-                tropism = 10;
+                tropism = 4;
                 distance = MoveDatabase::Distance[square][ksq]*2;
                 file = Utils::Square::GetFileIndex(square);
 
@@ -504,20 +525,20 @@ namespace Napoleon
 
             case PieceType::Queen:
                 b = Queen::TargetsFrom(square, us, board);
-                tropism = 3;
+                tropism = 6;
                 distance = MoveDatabase::Distance[square][ksq]/2;
                 break;
+            //default:
+                //return bonus;
         }
 
         //attacks[us] |= b;
 
         int count = PopCount(b);
-        //int mobility = mobilityBonus[piece.Type][count];
-        tropism = tropism*PopCount(king_proxy & b) + (7 - distance);
-        //tropism = ((float)tropism*board.Material(us))/(float)Constants::Eval::MaxPlayerMat; // tropism scaling
+        kingAttacksCount[us] += tropism*PopCount(king_proxy & b); 
 
-        updateScore(bonus, mobilityBonus[Opening][piece.Type][count] + tropism, 
-                mobilityBonus[EndGame][piece.Type][count] + tropism/2);
+        updateScore(bonus, mobilityBonus[Opening][piece.Type][count] + (7 - distance),
+                mobilityBonus[EndGame][piece.Type][count] + (7 - distance)/2);
 
         if (piece.Color == PieceColor::White) return bonus;
         else return -bonus;

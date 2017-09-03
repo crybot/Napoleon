@@ -40,6 +40,7 @@ namespace Napoleon
     inline Move MoveSelector::First()
     {
         /*
+         * TODO: TRY THIS
         if (!hashMove.IsNull())
         {
             for(int i=0; i<count; i++) // do not trust hashMove (may be an illegal move)
@@ -74,7 +75,7 @@ namespace Napoleon
             return Constants::NullMove;
 
         for (auto i=first+1; i<count; i++)
-            if (scores[i] > scores[max])
+            if (scores[i] > scores[max] /*&& moves[i] != hashMove*/)
                 max = i;
 
         if (max != first)

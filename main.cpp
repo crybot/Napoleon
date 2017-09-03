@@ -6,6 +6,5 @@ using namespace std;
 int main()
 {
     Uci::Start();
-
     return 0;
 }
