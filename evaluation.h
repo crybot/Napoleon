@@ -44,7 +44,7 @@ namespace Napoleon
         extern BitBoard unpinnedKnightAttacks[2]; // color
         extern thread_local PawnTable pawnTable;
         extern int hangingValue[2]; // color
-        extern int kingAttacks[100]; // number of weighted attacks
+        extern int kingAttacks[200]; // number of weighted attacks
     }
 
     INLINE void Evaluation::updateScore(std::pair<int, int>& scores, int openingBonus, int endBonus)

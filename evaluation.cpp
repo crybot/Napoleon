@@ -92,7 +92,7 @@ namespace Napoleon
         5 // ENDGAME
     };
 
-    int Evaluation::kingAttacks[100] = { // f(x) = 500/(1.0 + std::exp(-x/5.1 + 7.0) + std::min(i, 20))
+    int Evaluation::kingAttacks[200] = { // f(x) = 500/(1.0 + std::exp(-x/5.1 + 7.0) + std::min(i, 20))
         0, 1, 2, 3, 4, 6, 7, 8, 10, 11, 
         13, 14, 16, 18, 20, 23, 26, 29, 33, 37, 
         42, 46, 51, 58, 65, 74, 84, 96, 110, 125, 
@@ -100,6 +100,16 @@ namespace Napoleon
         369, 389, 407, 423, 437, 450, 461, 470, 478, 485, 
         491, 496, 500, 503, 506, 508, 510, 512, 513, 514, 
         515, 516, 517, 517, 518, 518, 518, 518, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
+        519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
         519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
         519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
         519, 519, 519, 519, 519, 519, 519, 519, 519, 519, 
@@ -535,10 +545,12 @@ namespace Napoleon
         //attacks[us] |= b;
 
         int count = PopCount(b);
-        kingAttacksCount[us] += tropism*PopCount(king_proxy & b); 
+        // We consider the number of attacks to the king zone, weighted by piece type.
+        // We then add up (7 - distance to the king):
+        kingAttacksCount[us] += tropism*PopCount(king_proxy & b) + (7 - distance); 
 
-        updateScore(bonus, mobilityBonus[Opening][piece.Type][count] + (7 - distance),
-                mobilityBonus[EndGame][piece.Type][count] + (7 - distance)/2);
+        updateScore(bonus, mobilityBonus[Opening][piece.Type][count], 
+                mobilityBonus[EndGame][piece.Type][count]);
 
         if (piece.Color == PieceColor::White) return bonus;
         else return -bonus;
