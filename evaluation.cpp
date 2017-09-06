@@ -8,7 +8,7 @@
 
 namespace Napoleon
 {
-    thread_local PawnTable Evaluation::pawnTable;
+    PawnTable Evaluation::pawnTable;
 
     int Evaluation::multiPawnP[8] = { 0, 0, 10, 20, 35, 50, 75, 100 }; // TODO: add phase dependent penalties
     int Evaluation::isolatedPawnP[8] = { 5, 7, 10, 18, 18, 10, 7, 5 }; // TODO: add phase dependent penalties
@@ -125,14 +125,15 @@ namespace Napoleon
 
     int Evaluation::Evaluate(Board& board)
     {
-        using namespace PieceColor;
         using namespace Constants::Squares;
-        using namespace Constants::Eval;
         using namespace Constants::Castle;
         using namespace Constants::Masks;
+        using namespace Constants::Eval;
         using namespace Utils::BitBoard;
+        using namespace Utils::Square;
         using namespace Utils::Piece;
         using namespace CompassRose;
+        using namespace PieceColor;
 
         Score scores(0, 0);
         Score pawnStructure(0,0);
@@ -140,6 +141,10 @@ namespace Napoleon
 
         auto wking_square = board.KingSquare(White);
         auto bking_square = board.KingSquare(Black);
+
+        File kingFile[2] = { // color
+            (File)GetFileIndex(wking_square), (File)GetFileIndex(bking_square)
+        };
 
         BitBoard king_proximity[2] = { // color
             MoveDatabase::KingProximity[White][wking_square],
@@ -198,7 +203,8 @@ namespace Napoleon
         if (entry->key == board.pawnKey) // PAWN HASH-HIT
         {
             pawnStructure = entry->score;
-            pawnAttacks[White] = entry->attacks[White]; pawnAttacks[Black] = entry->attacks[Black];
+            pawnAttacks[White] = entry->attacks[White]; 
+            pawnAttacks[Black] = entry->attacks[Black];
             probed = true;
         }
 
@@ -275,7 +281,7 @@ namespace Napoleon
             while(pawns != 0)
             {
                 Napoleon::Square sq = BitScanForwardReset(pawns);
-                updateScore(pawnStructure, evaluatePawn(c, sq, board, entry));
+                updateScore(pawnStructure, evaluatePawn(c, sq, board));
             }
         }
 
@@ -312,10 +318,10 @@ namespace Napoleon
         {
             piece = pieceList[sq];
 
-            if (piece.Type != PieceType::None && piece.Type != Pawn /*&& piece.Type != King*/) // speedup (TO TEST elo gain)
+            if (piece.Type != PieceType::None && piece.Type != Pawn && piece.Type != King)
             {
                 enemy = GetOpposite(piece.Color);
-                updateScore(scores, EvaluatePiece(piece, sq, king_proximity[enemy], entry, board)); // opponent's king proximity
+                updateScore(scores, EvaluatePiece(piece, sq, king_proximity[enemy], board)); // opponent's king proximity
             }
         }
 
@@ -344,15 +350,16 @@ namespace Napoleon
         //TODO: try not to scale down
         updateScore(scores, kingAttacks[kingAttacksCount[White]], kingAttacks[kingAttacksCount[White]]/2);
         updateScore(scores, -kingAttacks[kingAttacksCount[Black]], -kingAttacks[kingAttacksCount[Black]]/2);
-        
+
         //pawn shelter
         int shelter1 = 0, shelter2 = 0;
-        if (SquareMask[wking_square] & WhiteKingSide)
+
+        if (kingFile[White] > Constants::Files::IntE)
         {
             shelter1 = PopCount(wpawns & WhiteKingShield);
             shelter2 = PopCount(wpawns & OneStepNorth(WhiteKingShield));
         }
-        else if (SquareMask[wking_square] & WhiteQueenSide)
+        else if (kingFile[White] < Constants::Files::IntD)
         {
             shelter1 = PopCount(wpawns & WhiteQueenShield);
             shelter2 = PopCount(wpawns & OneStepNorth(WhiteQueenShield));
@@ -362,12 +369,12 @@ namespace Napoleon
         updateScore(scores, shelter1 * 5.5 + shelter2 * 2, shelter1 + shelter2 ); // shielding bonus
 
         shelter1 = shelter2 = 0;
-        if (SquareMask[bking_square] & BlackKingSide)
+        if (kingFile[Black] > Constants::Files::IntE)
         {
             shelter1 = PopCount(bpawns & BlackKingShield);
             shelter2 = PopCount(bpawns & OneStepSouth(BlackKingShield));
         }
-        else if (SquareMask[bking_square] & BlackQueenSide)
+        else if (kingFile[Black] < Constants::Files::IntD)
         {
             shelter1 = PopCount(bpawns & BlackQueenShield);
             shelter2 = PopCount(bpawns & OneStepSouth(BlackQueenShield));
@@ -375,16 +382,6 @@ namespace Napoleon
         // else apply penalty
 
         updateScore(scores, -(shelter1 * 5.5 + shelter2 * 2), -shelter1 -shelter2); // shielding bonus
-
-
-        /*
-        // king on open file evaluation
-        if((MoveDatabase::FrontSpan[White][wking_square] & board.Pieces(White, PieceType::Pawn)) == 0) // KING ON (SEMI)OPEN FILE
-        updateScore(scores, -1, 0);
-
-        if((MoveDatabase::FrontSpan[Black][bking_square] & board.Pieces(Black, PieceType::Pawn)) == 0) // KING ON (SEMI)OPEN FILE
-        updateScore(scores, 1, 0);
-        */
 
 
         /* DISABLED TO TEST MOBILITY VARIATION
@@ -421,54 +418,7 @@ namespace Napoleon
         }
         */
 
-        /*
-           for (Napoleon::Square sq = IntA1; eval_hanging && sq <= IntH8; sq++)
-           {
-           piece = pieceList[sq];
-           if (piece.Type != PieceType::None 
-           && piece.Type != PieceType::Pawn
-           && PieceValue[piece.Type] > hangingValue[piece.Color] )
-           {
-           enemy = GetOpposite(piece.Color);
-           if(attacks[enemy] & SquareMask[sq] && !(attacks[piece.Color] & SquareMask[sq]))
-           {
-           hangingValue[piece.Color] = PieceValue[piece.Type];
-           }
-           }
-           }
-           */
-
-        /*
-           for (Type piece = PieceType::Queen; piece > PieceType::Pawn; piece--)
-           {
-           if (board.Pieces(White, piece) & attacks[Black])
-           {
-           if(!(board.Pieces(White, piece) & attacks[White]))
-           {
-           hangingValue[White] = PieceValue[piece];
-           std::cout << "White's highest hanging piece: " << hangingValue[White] << std::endl;
-           break;
-           }
-           }
-
-           }
-
-           for (Type piece = PieceType::Queen; piece > PieceType::Pawn; piece--)
-           {
-           if (board.Pieces(Black, piece) & attacks[White])
-           {
-           if(!(board.Pieces(Black, piece) & attacks[Black]))
-           {
-           hangingValue[Black] = PieceValue[piece];
-           std::cout << "Black's highest hanging piece: " << hangingValue[Black] << std::endl;
-           break;
-           }
-           }
-           }
-           */
-
-
-        //TODO: check wheter the king is in castle position
+        //TODO: check whether the king is in castle position
 
         int opening = scores.first; // opening score
         int endgame = scores.second; // endgame score
@@ -480,7 +430,7 @@ namespace Napoleon
     }
 
 
-    Score Evaluation::EvaluatePiece(Piece piece, Square square, BitBoard king_proxy, const PawnEntry* const entry, Board& board)
+    Score Evaluation::EvaluatePiece(Piece piece, Square square, BitBoard king_proxy, Board& board)
     {
         using namespace Utils::BitBoard;
         using namespace Utils::Piece;
@@ -519,7 +469,7 @@ namespace Napoleon
             case PieceType::Rook:
                 b = Rook::TargetsFrom(square, us, board);
                 tropism = 4;
-                distance = MoveDatabase::Distance[square][ksq]*2;
+                distance = MoveDatabase::Distance[square][ksq]*3;
                 file = Utils::Square::GetFileIndex(square);
 
                 ///if(MoveDatabase::FrontSpan[us][square] & entry->passers[enemy])
@@ -538,8 +488,9 @@ namespace Napoleon
                 tropism = 6;
                 distance = MoveDatabase::Distance[square][ksq]/2;
                 break;
-            //default:
-                //return bonus;
+
+            default:
+                return bonus;
         }
 
         //attacks[us] |= b;

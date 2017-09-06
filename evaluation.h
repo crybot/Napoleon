@@ -17,13 +17,13 @@ namespace Napoleon
     namespace Evaluation
     {
         int Evaluate(Board&);
-        Score EvaluatePiece(Piece, Square, BitBoard, const PawnEntry* const, Board&);
+        Score EvaluatePiece(Piece, Square, BitBoard, Board&);
         Score PieceSquareValue(Piece, Square);
         int KingSafety(Board&);
 
         void PrintEval(Board&);
 
-        Score evaluatePawn(Color, Square, Board&, PawnEntry*);
+        Score evaluatePawn(Color, Square, Board&);
         int interpolate(Score, int);
         void formatParam(std::string, int, int);
         void formatParam(std::string, Score, Score, int);
@@ -42,7 +42,7 @@ namespace Napoleon
         extern int backwardPawnP[3]; // phase
         extern BitBoard pawnAttacks[2]; // color
         extern BitBoard unpinnedKnightAttacks[2]; // color
-        extern thread_local PawnTable pawnTable;
+        extern PawnTable pawnTable;
         extern int hangingValue[2]; // color
         extern int kingAttacks[200]; // number of weighted attacks
     }
@@ -75,7 +75,7 @@ namespace Napoleon
         return std::make_pair(PieceSquareTable[piece.Type][Opening][square], PieceSquareTable[piece.Type][EndGame][square]);
     }
 
-    inline Score Evaluation::evaluatePawn(Color color, Square square, Board& board, PawnEntry* entry)
+    inline Score Evaluation::evaluatePawn(Color color, Square square, Board& board)
     {
         using namespace PieceColor;
         using namespace Utils::BitBoard;

@@ -125,6 +125,11 @@ namespace Napoleon
 
         namespace Ranks
         {
+            enum Rank : Napoleon::Rank
+            {
+                Int1=0, Int2, Int3, Int4, Int5, Int6, Int7, Int8
+            };
+
             const BitBoard One = 0x00000000000000FF;
             const BitBoard Two = 0x000000000000FF00;
             const BitBoard Three = 0x0000000000FF0000;
@@ -137,6 +142,11 @@ namespace Napoleon
 
         namespace Files
         {
+            enum File : Napoleon::File
+            {
+                IntA=0, IntB, IntC, IntD, IntE, IntF, IntG, IntH
+            };
+
             const BitBoard A = 0x0101010101010101;
             const BitBoard B = 0x0202020202020202;
             const BitBoard C = 0x0404040404040404;

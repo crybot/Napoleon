@@ -9,7 +9,7 @@ namespace Napoleon
             ZobristKey key;
             Score score;
             BitBoard attacks[2]; // color
-            BitBoard passers[2]; // holds (candidate) passers positions for both colors
+            //BitBoard passers[2]; // holds (candidate) passers positions for both colors
     };
 
     class PawnTable 

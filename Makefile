@@ -273,6 +273,9 @@ compiler_clean:
 main.o: main.cpp uci.h encoder.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
 
+pawntable.o: pawntable.cpp pawntable.h transpositiontable.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o pawntable.o pawntable.cpp
+
 tuner.o: tuner.cpp tuner.h fenstring.h encoder.h search.h piecesquaretables.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tuner.o tuner.cpp
 
@@ -524,6 +527,7 @@ evaluation.o: evaluation.cpp evaluation.h \
 		compassrose.h \
 		bishop.h \
 		knight.h \
+		pawntable.h \
 		queen.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o evaluation.o evaluation.cpp
 
