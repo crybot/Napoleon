@@ -24,6 +24,7 @@ namespace Napoleon
         void PrintEval(Board&);
 
         Score evaluatePawn(Color, Square, Board&);
+        Score evaluateOutpost(Color, Square, Board&);
         int interpolate(Score, int);
         void formatParam(std::string, int, int);
         void formatParam(std::string, Score, Score, int);
@@ -151,6 +152,31 @@ namespace Napoleon
             //updateScore(score, 3 - enemy_king_distance/2, 0);
 
         return color == White ? score : -score;
+    }
+
+
+    inline Score Evaluation::evaluateOutpost(Color color, Square square, Board& board)
+    {
+        using namespace PieceColor;
+        using namespace Utils::BitBoard;
+        using namespace Utils::Square;
+
+        Score bonus(0,0);
+        Rank rrank = RelativeRank(color, square);
+        BitBoard square_mask = Constants::Masks::SquareMask[square];
+        if (rrank < Constants::Ranks::Int4) return bonus;
+
+        Color enemy = Utils::Piece::GetOpposite(color);
+        if (pawnAttacks[color] & square_mask) // & ~pawAttacks not needed
+        {
+            if((MoveDatabase::AttackFrontSpan[color][square] & board.Pieces(enemy, Pawn)) == 0)
+            {
+                updateScore(bonus, 10, 8);
+            }
+        }
+
+        return bonus;
+
     }
 
 

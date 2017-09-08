@@ -2,30 +2,12 @@
 #define TRANSPOSITIONTABLE_H
 #include "defines.h"
 #include "hashentry.h"
+#include "spinlock.h"
 #include <mutex>
 #include <atomic>
 
 namespace Napoleon
 {
-    //COPIED
-    class SpinLock
-    {
-        public:
-            void lock()
-            {
-                while(lck.test_and_set(std::memory_order_acquire))
-                {}
-            }
-
-            void unlock()
-            {
-                lck.clear(std::memory_order_release);
-            }
-
-        private:
-            std::atomic_flag lck = ATOMIC_FLAG_INIT;
-    };
-
     class TranspositionTable
     {
         public:

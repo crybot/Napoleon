@@ -101,8 +101,8 @@ namespace Napoleon
                     return a.fitness > b.fitness;
                     });
 
-            auto rand1 = population[random() % (pop_size - pop_size/2) + pop_size/2];
-            //auto rand2 = population[random() % (pop_size - pop_size/2) + pop_size/2];
+            auto rand1 = population[rand() % (pop_size - pop_size/2) + pop_size/2];
+            //auto rand2 = population[rand() % (pop_size - pop_size/2) + pop_size/2];
             best = population.front();
 
             population.resize(pop_size/2);

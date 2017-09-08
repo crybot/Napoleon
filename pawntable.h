@@ -19,10 +19,13 @@ namespace Napoleon
             void Save(ZobristKey, Score);
             Score Probe(ZobristKey);
             PawnEntry* at(ZobristKey) const;
+            bool Concurrent = false;
         private:
             PawnEntry* table;
+            SpinLock* locks;
             unsigned long long mask;
             unsigned long long entries;
+            unsigned long lock_entries;
     };
 
 }

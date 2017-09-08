@@ -71,7 +71,6 @@ SOURCES       = main.cpp \
 		uci.cpp \
 		searchinfo.cpp \
 		moveselector.cpp \
-		tuner.cpp \
 		pawntable.cpp
 OBJECTS       = main.o \
 		move.o \
@@ -95,7 +94,6 @@ OBJECTS       = main.o \
 		uci.o \
 		searchinfo.o \
 		moveselector.o \
-		tuner.o \
 		pawntable.o 
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		/usr/lib/qt/mkspecs/common/unix.conf \
@@ -194,10 +192,10 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		uci.h \
 		searchinfo.h \
 		moveselector.h \
-		tuner.h \
 		encoder.h \
 		evolution.h \
 		pawntable.h \
+		spinlock.h \
 		piecesquaretables.h main.cpp \
 		move.cpp \
 		utils.cpp \
@@ -220,7 +218,6 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		uci.cpp \
 		searchinfo.cpp \
 		moveselector.cpp \
-		tuner.cpp
 QMAKE_TARGET  = NapoleonPP
 DESTDIR       = 
 TARGET        = NapoleonPP
@@ -276,8 +273,8 @@ main.o: main.cpp uci.h encoder.h
 pawntable.o: pawntable.cpp pawntable.h transpositiontable.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o pawntable.o pawntable.cpp
 
-tuner.o: tuner.cpp tuner.h fenstring.h encoder.h search.h piecesquaretables.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tuner.o tuner.cpp
+#tuner.o: tuner.cpp tuner.h fenstring.h encoder.h search.h piecesquaretables.h
+	#$(CXX) -c $(CXXFLAGS) $(INCPATH) -o tuner.o tuner.cpp
 
 move.o: move.cpp move.h \
 		defines.h \
@@ -531,7 +528,7 @@ evaluation.o: evaluation.cpp evaluation.h \
 		queen.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o evaluation.o evaluation.cpp
 
-transpositiontable.o: transpositiontable.cpp transpositiontable.h \
+transpositiontable.o: transpositiontable.cpp transpositiontable.h spinlock.h \
 		defines.h \
 		hashentry.h \
 		move.h \

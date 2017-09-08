@@ -458,6 +458,7 @@ namespace Napoleon
                 tropism = 2; 
                 distance = MoveDatabase::Distance[square][ksq];
                 b &= ~pawnAttacks[enemy];
+                updateScore(bonus, evaluateOutpost(us, square, board));
                 break;
 
             case PieceType::Bishop:

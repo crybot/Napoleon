@@ -146,6 +146,7 @@ namespace Napoleon
     void Search::InitializeThreads(int threads_number)
     {
         Table.Concurrent = threads_number > 1;
+        Evaluation::pawnTable.Concurrent = threads_number > 1;
         if (threads_number == cores) return; // nothing to do 
 
         KillThreads();

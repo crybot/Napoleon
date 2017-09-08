@@ -7,7 +7,7 @@
 #include "stopwatch.h"
 #include "benchmark.h"
 #include "evaluation.h"
-#include "tuner.h"
+//#include "tuner.h"
 #include <fstream>
 
 namespace Napoleon
@@ -170,11 +170,13 @@ namespace Napoleon
             {
                 Search::PonderHit = true;
             }
+            /*
             else if (cmd == "tune")
             {
                 Tuner tuner;
                 tuner.Tune();
             }
+            */
         }
     }
 
