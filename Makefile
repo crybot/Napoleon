@@ -13,7 +13,7 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 DEFINES       = 
-OPTIMIZE      = -flto -m64 -Ofast -march=native -funroll-loops -mbmi2
+OPTIMIZE      = -flto -m64 -Ofast -funroll-loops #-march=native
 CFLAGS        = $(OPTIMIZE) -pipe -mtune=native -Wall -W $(DEFINES)
 CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++0x -pthread -mtune=native -Wall -W $(DEFINES)
 INCPATH       = -I. -I/usr/lib/qt/mkspecs/linux-g++
@@ -36,7 +36,7 @@ COMPRESS      = gzip -9f
 DISTNAME      = NapoleonPP1.0.0
 DISTDIR = /home/crybot/Napoleon/.tmp/NapoleonPP1.0.0
 LINK          = g++
-LFLAGS        = -lboost_filesystem -lboost_system -flto -Wl,-Ofast -Wl,-Ofast,--sort-common,--as-needed,-z,relro
+LFLAGS        = -flto -lboost_filesystem -lboost_system -Wl,-Ofast -Wl,-Ofast,--sort-common,--as-needed,-z,relro
 LIBS          = $(SUBLIBS) -pthread 
 AR            = ar cqs
 RANLIB        = 

@@ -3,6 +3,8 @@
 #include "knight.h"
 #include "king.h"
 #include <algorithm>
+#include <random>
+#include <limits>
 
 namespace Napoleon
 {
@@ -32,6 +34,7 @@ namespace Napoleon
 
     /* all this operation will be executed before the engine gets active, so it is not needed optimization */
 
+    
     void MoveDatabase::InitAttacks()
     {
         initPawnAttacks();
@@ -116,6 +119,50 @@ namespace Napoleon
             PawnStop[PieceColor::White][sq] = CompassRose::OneStepNorth(Constants::Masks::SquareMask[sq]);
             PawnStop[PieceColor::Black][sq] = CompassRose::OneStepSouth(Constants::Masks::SquareMask[sq]);
         }
+    }
+
+    template<MoveDatabase::Magic kind>
+    void MoveDatabase::initMagics() // only used to generate magic numbers before compiling
+    {
+        std::uniform_int_distribution<BitBoard> dis(1, std::numeric_limits<BitBoard>::max());
+        std::mt19937 gen;
+
+        using namespace Constants::Masks;
+
+        const BitBoard* mask = kind == Magic::Rook ? RookMask :
+            kind == Magic::File ? SixBitFileMask : kind == Magic::Diag ? SixBitA1H8DiagonalMask : SixBitH1A8DiagonalMask;
+        const int max = kind == Magic::Rook ? 64 :
+            kind == Magic::File ? 8 : kind == Magic::Diag ? 15 : 15;
+        const int bits = kind == Magic::Rook ? 12 : 6;
+
+        std::cout << " {" << std::endl;
+        for(int i=0; i<max; i++)
+        {
+            bool found = false;
+            BitBoard magic = 0;
+            while(!found)
+            {
+                magic = dis(gen) & dis(gen) & dis(gen);
+                //if ((Utils::BitBoard::PopCount(magic * SixBitA1H8DiagonalMask[diag]) & 63) < 6) continue;
+                for(BitBoard occ = 0; occ < (1 << bits); occ++)
+                {
+                    BitBoard d_occ = _pdep_u64(occ, mask[i]);
+                    found = true;
+                    if ((d_occ & mask[i]) == 0)
+                        continue;
+                    auto pext = _pext_u64(d_occ, mask[i]);
+                    int occupancy = (int)((d_occ & mask[i]) * magic >> 56);
+                    if (pext != ((occupancy >> 1) & 63))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+            }
+            std::cout << "0x" << std::hex << magic << ", ";
+        }
+        std::cout << std::endl << "};" << std::endl;
+
     }
 
     void MoveDatabase::initPawnAttacks()
@@ -368,7 +415,7 @@ namespace Napoleon
                     word >>= 6; // consume 6 bits
                     f_occ |= word << f_bits; // remaining bits
                 }
- 
+
                 // right outer squares
                 else if (f == 7)
                 {
