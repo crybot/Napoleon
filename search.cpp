@@ -38,6 +38,8 @@ namespace Napoleon
     int Age = 0;
 
     std::atomic<unsigned long> node_count(0);
+    std::ofstream* Search::positions_dataset;
+    bool Search::record_positions = false;
 
     //int Search::param[Parameters::MAX] = { 25 , 1 , 150 , 3, 250, 50, 6 , 3 , 2 , 500 , 250 , 5 , 3 , 5 , 4 , 2 , 1 , 2 , 9}; // original
     int Search::param[Parameters::MAX] = { 91 , 1 , 18 , 9 , 118 , 36 , 2 , 3 , 2 , 490 , 72 , 4 , 3 , 1 , 4 , 2 , 1 , 2 , 8 ,  }; // tuned
@@ -209,13 +211,17 @@ namespace Napoleon
     {
         Move move = Constants::NullMove;
         Move toMake = Constants::NullMove;
+        int move_score = Constants::Unknown;
         int score;
         int temp;
 
         Age = (Age + 1) % 64;
         score = searchRoot(searchInfo.MaxDepth(), -Constants::Infinity, Constants::Infinity, move, board);
         searchInfo.IncrementDepth();
-        if (score != Constants::Unknown) toMake = move;
+        if (score != Constants::Unknown) {
+          toMake = move;
+          move_score = score;
+        }
 
         while ((searchInfo.MaxDepth() < 100 && !searchInfo.TimeOver()) || pondering)
         {
@@ -248,13 +254,23 @@ namespace Napoleon
 
             score = temp;
 
-            if (score != Constants::Unknown)
+            if (score != Constants::Unknown) {
                 toMake = move;
+                move_score = score;
+            }
 
             searchInfo.IncrementDepth();
         }
 
         StopThinking();
+
+        if (record_positions)
+        {
+          (*positions_dataset) << board.GetFen() << ","
+            << board.ToCsv() << ","
+            << searchInfo.MaxDepth()-1 << "," 
+            << move_score << std::endl;
+        }
 
         return toMake;
     }

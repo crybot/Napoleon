@@ -67,6 +67,26 @@ namespace Napoleon
                 }
                 std::cout << "\n    A  B  C  D  E  F  G  H\n";
             }
+
+            std::string ToString(Napoleon::BitBoard bitBoard)
+            {
+                std::string flattened;
+                for (int r = 7; r >= 0; r--)
+                {
+                    for (int c = 0; c <= 7; c++)
+                    {
+                        if (IsBitSet(bitBoard, Square::GetSquareIndex(c, r)))
+                        {
+                            flattened += "1";
+                        }
+                        else
+                        {
+                            flattened += "0";
+                        }
+                    }
+                }
+                return flattened;
+            }
         }
 
         namespace Piece

@@ -33,6 +33,7 @@ namespace Napoleon
 
             void LoadGame(std::string = Constants::StartPosition);
 
+            std::string ToCsv() const;
             void Display() const;
             void AddPiece(Piece, Square);
             BitBoard PlayerPieces() const;

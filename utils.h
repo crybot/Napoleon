@@ -30,6 +30,7 @@ namespace Napoleon
             bool IsBitSet(Napoleon::BitBoard, int);
             void Display(Napoleon::BitBoard);
             void SetBit(Napoleon::BitBoard&, unsigned int);
+            std::string ToString(Napoleon::BitBoard);
 
             int PopCount(Napoleon::BitBoard);
             int BitScanForward(Napoleon::BitBoard);

@@ -73,7 +73,12 @@ namespace Napoleon
                     while (stream >> val)
                         PieceSquareTable[PieceType::Pawn][Opening][i++] = val;
                 }
-
+                else if (token == "Record") 
+                {
+                  Search::positions_dataset = new ofstream();
+                  Search::positions_dataset->open("positions_dataset.csv", ios::out | ios::app);
+                  Search::record_positions = true;
+                }
                 else
                 {
                     for (auto i=0; i<Search::Parameters::MAX; i++)
@@ -92,6 +97,9 @@ namespace Napoleon
                 SendCommand<Command::Generic>("Bye Bye");
                 Search::KillThreads();
                 exit = true;
+                if (Search::record_positions) {
+                  Search::positions_dataset->close();
+                }
             }
             else if (cmd == "isready")
             {
@@ -169,6 +177,10 @@ namespace Napoleon
             else if (cmd == "ponderhit")
             {
                 Search::PonderHit = true;
+            }
+            else if (cmd == "csv")
+            {
+                std::cout << board.ToCsv() << std::endl;
             }
             /*
             else if (cmd == "tune")

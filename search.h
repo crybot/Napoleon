@@ -10,6 +10,7 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <fstream>
 
 namespace Napoleon
 {
@@ -43,6 +44,8 @@ namespace Napoleon
         extern int cores;
         extern std::atomic<bool> quit;
         extern const int default_cores;
+        extern std::ofstream* positions_dataset;
+        extern bool record_positions;
 
         enum Parameters : int {
             RAZOR1=0, RAZOR2, RAZOR3, 

@@ -128,6 +128,22 @@ namespace Napoleon
         EmptySquares = ~OccupiedSquares;
     }
 
+    std::string Board::ToCsv() const 
+    {
+        std::string csv;
+
+        for (auto c = PieceColor::White; c < PieceColor::None; c++) {
+          for (Type p = PieceType::Pawn; p < PieceType::None; p++) {
+            csv += Utils::BitBoard::ToString(Pieces(c, p)) += ",";
+          }
+        }
+
+        csv += std::to_string(sideToMove) + ",";
+        csv += std::to_string(enPassantSquare) + ",";
+        csv += std::to_string(castlingStatus);
+        return csv;
+    }
+
     void Board::Display() const
     {
         Piece piece;
