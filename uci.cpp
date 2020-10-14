@@ -7,6 +7,9 @@
 #include "stopwatch.h"
 #include "benchmark.h"
 #include "evaluation.h"
+#include "moveselector.h"
+#include "movegenerator.h"
+#include "searchinfo.h"
 //#include "tuner.h"
 #include <fstream>
 
@@ -181,6 +184,17 @@ namespace Napoleon
             else if (cmd == "csv")
             {
                 std::cout << board.ToCsv() << std::endl;
+            }
+            else if (cmd == "moves")
+            {
+              SearchInfo searchInfo;
+              searchInfo.NewSearch();
+              MoveSelector moves(board, searchInfo);
+              MoveGenerator::GetLegalMoves(moves.moves, moves.count, board);
+              for (auto move = moves.First(); !move.IsNull(); move = moves.Next()) {
+                std::cout << move.ToAlgebraic() << " ";
+              }
+              std::cout << std::endl;
             }
             /*
             else if (cmd == "tune")

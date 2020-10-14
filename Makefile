@@ -13,7 +13,7 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 DEFINES       = 
-OPTIMIZE      = -flto -m64 -Ofast -funroll-loops #-march=native
+OPTIMIZE      = -flto -m64 -Ofast -funroll-loops -march=native
 CFLAGS        = $(OPTIMIZE) -pipe -mtune=native -Wall -W $(DEFINES)
 CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++0x -pthread -mtune=native -Wall -W $(DEFINES)
 INCPATH       = -I. -I/usr/lib/qt/mkspecs/linux-g++

@@ -237,7 +237,8 @@ namespace Napoleon
             {
                 if ((Constants::Castle::WhiteCastleMaskOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOO, board.SideToMove()))
+                    if (board.KingSquare(PieceColor::White) == Constants::Squares::E1 &&
+                        !board.IsAttacked(Constants::Castle::WhiteCastleMaskOO, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::WhiteCastlingOO;
                 }
 
@@ -246,7 +247,9 @@ namespace Napoleon
             {
                 if ((Constants::Castle::WhiteCastleMaskOOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::WhiteCastleMaskOOO ^ Constants::Squares::B1, board.SideToMove()))
+                    if (board.KingSquare(PieceColor::White) == Constants::Squares::E1 &&
+                        !board.IsAttacked(Constants::Castle::WhiteCastleMaskOOO 
+                          ^ Constants::Squares::B1, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::WhiteCastlingOOO;
                 }
             }
@@ -258,7 +261,8 @@ namespace Napoleon
             {
                 if ((Constants::Castle::BlackCastleMaskOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOO, board.SideToMove()))
+                    if (board.KingSquare(PieceColor::Black) == Constants::Squares::E8 &&
+                        !board.IsAttacked(Constants::Castle::BlackCastleMaskOO, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::BlackCastlingOO;
                 }
             }
@@ -266,7 +270,8 @@ namespace Napoleon
             {
                 if ((Constants::Castle::BlackCastleMaskOOO & board.OccupiedSquares) == 0)
                 {
-                    if (!board.IsAttacked(Constants::Castle::BlackCastleMaskOOO^ Constants::Squares::B8, board.SideToMove()))
+                    if (board.KingSquare(PieceColor::Black) == Constants::Squares::E8 &&
+                        !board.IsAttacked(Constants::Castle::BlackCastleMaskOOO^ Constants::Squares::B8, board.SideToMove()))
                         moveList[pos++] =  Constants::Castle::BlackCastlingOOO;
                 }
             }
