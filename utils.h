@@ -3,6 +3,7 @@
 #include "defines.h"
 #include "constants.h"
 #include <string>
+#include <vector>
 #include <cmath>
 
 namespace Napoleon
@@ -51,6 +52,11 @@ namespace Napoleon
         {
             // visual studio does not provide log2 function
             double Log2(double);
+        }
+
+        namespace String
+        {
+           void Split(std::vector<std::string> &, const std::string &, char);
         }
 
         INLINE void BitBoard::SetBit(Napoleon::BitBoard& bitboard, unsigned int sq)

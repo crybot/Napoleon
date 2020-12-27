@@ -1,7 +1,7 @@
 #include "fenstring.h"
 #include "utils.h"
 #include "constants.h"
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
 //#include <boost/lexical_cast.hpp>
 #include <vector>
 #include <sstream>
@@ -65,7 +65,7 @@ namespace Napoleon
         }
 
         std::vector<std::string> ranks;
-        boost::split(ranks, field, boost::is_any_of("/"));
+        Utils::String::Split(ranks, field, '/');
 
         for (unsigned i = 0; i < ranks.size(); i++)
         {
