@@ -1,6 +1,6 @@
 #include "benchmark.h"
 #include <fstream>
-#include <boost/algorithm/string.hpp>
+//#include <boost/algorithm/string.hpp>
 #include <sstream>
 #include <vector>
 #include <string>
@@ -45,7 +45,7 @@ namespace Napoleon
         for (std::string line : strings)
         {
             std::cout << i++ << " ";
-            boost::split(fields, line, boost::is_any_of(";"));
+            Utils::String::Split(fields, line, ';');
 
             FenString epd(fields[0]);
             board.LoadGame(epd.FullString);
@@ -83,7 +83,7 @@ namespace Napoleon
 
         for (unsigned i=0; i<50; i++)
         {
-            boost::split(fields, strings[i], boost::is_any_of(";"));
+            Utils::String::Split(fields, strings[i], ';');
             board.LoadGame(fields[0]);
 
             Search::StartThinking(SearchType::Infinite, board);

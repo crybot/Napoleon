@@ -182,6 +182,28 @@ namespace Napoleon
             }
         }
 
+        namespace String
+        {
+
+            void Split(std::vector<std::string> &results, const std::string &str, char sep)
+            {
+                std::string::const_iterator first = str.begin();
+                std::string::const_iterator last  = str.end();
+                std::string::const_iterator pos;
+
+                while(first != last)
+                {
+                    pos = std::find(first, last, sep);
+                    results.push_back(std::string(first, pos));
+
+                    // If no separator was found, we can stop our search here
+                    if(pos == last) break;
+
+                    // Ignore separator
+                    first = pos + 1;
+                }
+            }
+        }
 
     }
 }
