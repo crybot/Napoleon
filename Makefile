@@ -9,13 +9,16 @@
 MAKEFILE      = Makefile
 
 ####### Compiler, tools and options
+# -fno-semantic-interposition and fipa-icf break the code
 
 CC            = gcc
 CXX           = g++
 DEFINES       = 
-OPTIMIZE      = -flto -m64 -Ofast -funroll-loops -march=native
+# OPTIMIZE      = -flto -m64 -O3 -funroll-loops -march=native -fno-ipa-icf -mavx2
+# OPTIMIZE      = -flto -m64 -O3 -funroll-loops -march=native -fno-ipa-icf -mavx2
+OPTIMIZE      = -flto -m64 -O3 -funroll-loops -march=native -mavx2
 CFLAGS        = $(OPTIMIZE) -pipe -mtune=native -Wall -W $(DEFINES)
-CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++0x -pthread -mtune=native -Wall -W $(DEFINES)
+CXXFLAGS      = $(OPTIMIZE) -pipe -std=c++17 -pthread -mtune=native -Wall -W $(DEFINES)
 INCPATH       = -I. -I/usr/lib/qt/mkspecs/linux-g++
 QMAKE         = /usr/bin/qmake
 DEL_FILE      = rm -f
@@ -36,7 +39,7 @@ COMPRESS      = gzip -9f
 DISTNAME      = NapoleonPP1.0.0
 DISTDIR = /home/crybot/Napoleon/.tmp/NapoleonPP1.0.0
 LINK          = g++
-LFLAGS        = -flto -Wl,-Ofast -Wl,-Ofast,--sort-common,--as-needed,-z,relro
+LFLAGS        = $(OPTIMIZE) -flto -Wl,--sort-common,--as-needed,-z,relro
 LIBS          = $(SUBLIBS) -pthread 
 AR            = ar cqs
 RANLIB        = 
