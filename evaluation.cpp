@@ -347,9 +347,10 @@ namespace Napoleon
 
         //KING SAFETY
         //king attacks table application (incrementally computed piece by piece)
-        //TODO: try not to scale down
-        updateScore(scores, kingAttacks[kingAttacksCount[White]], kingAttacks[kingAttacksCount[White]]/2);
-        updateScore(scores, -kingAttacks[kingAttacksCount[Black]], -kingAttacks[kingAttacksCount[Black]]/2);
+        // TODO:: try not to scale down end-game king safety 
+        // (it makes sense to have pieces attacking the king near the end)
+        updateScore(scores, kingAttacks[kingAttacksCount[White]]/3, kingAttacks[kingAttacksCount[White]]/6);
+        updateScore(scores, -kingAttacks[kingAttacksCount[Black]]/3, -kingAttacks[kingAttacksCount[Black]]/6);
 
         //pawn shelter
         int shelter1 = 0, shelter2 = 0;
@@ -464,13 +465,13 @@ namespace Napoleon
             case PieceType::Bishop:
                 b = Bishop::TargetsFrom(square, us, board);
                 tropism = 2; // TO TEST: divide by distance to king
-                distance = MoveDatabase::Distance[square][ksq]*2;
+                distance = MoveDatabase::Distance[square][ksq];
                 break;
 
             case PieceType::Rook:
                 b = Rook::TargetsFrom(square, us, board);
                 tropism = 4;
-                distance = MoveDatabase::Distance[square][ksq]*3;
+                distance = MoveDatabase::Distance[square][ksq];
                 file = Utils::Square::GetFileIndex(square);
 
                 ///if(MoveDatabase::FrontSpan[us][square] & entry->passers[enemy])
@@ -487,7 +488,7 @@ namespace Napoleon
             case PieceType::Queen:
                 b = Queen::TargetsFrom(square, us, board);
                 tropism = 6;
-                distance = MoveDatabase::Distance[square][ksq]/2;
+                distance = MoveDatabase::Distance[square][ksq];
                 break;
 
             default:
