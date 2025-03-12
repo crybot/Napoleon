@@ -29,6 +29,9 @@ namespace Napoleon
         free(table);
         free(locks);
         table = (HashEntry*) std::calloc(entries * sizeof(HashEntry), 1);
+        // table = static_cast<HashEntry*>(std::aligned_alloc(32, entries * sizeof(HashEntry)));
+        std::memset(table, 0, entries*sizeof(HashEntry)); // clear first half
+  //
         locks = new SpinLock[lock_entries];
 
         mask = entries - BucketSize;
@@ -110,7 +113,7 @@ namespace Napoleon
 
     void TranspositionTable::Clear()
     {
-        std::memset(table, 0, entries*sizeof(HashEntry)); // clear first half
+        // std::memset(table, 0, entries*sizeof(HashEntry)); // clear first half
         // DO NOT CLEAR
 
         /*
