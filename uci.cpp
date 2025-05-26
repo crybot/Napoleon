@@ -23,14 +23,17 @@ thread Uci::search;
 
 void Uci::Start()
 {
-  SendCommand<Command::Generic>("--------Napoleon Engine--------");
-  cout.setf(ios::unitbuf);// Make sure that the outputs are sent straight away to the GUI
-
+  const std::string model_path = "./models/model.onnx";
+  int gpu_device = 0;
+  bool exit = false;
   string line;
   string cmd;
   Search::Table.SetSize(512);
   Search::InitializeThreads();
-  bool exit = false;
+  Evaluation::init(model_path, gpu_device);
+
+  SendCommand<Command::Generic>("--------Napoleon Engine--------");
+  cout.setf(ios::unitbuf);// Make sure that the outputs are sent straight away to the GUI
 
   while(!exit && getline(cin, line))
   {
@@ -172,6 +175,10 @@ void Uci::Start()
     {
       Evaluation::PrintEval(board);
       std::cout << Evaluation::Evaluate(board) << std::endl;
+    }
+    else if (cmd == "nneval") {
+      Evaluation::PrintEval(board);
+      std::cout << Evaluation::evaluateNN(board) << std::endl;
     }
     else if (cmd == "go")
     {

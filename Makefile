@@ -28,7 +28,8 @@ SRCS = main.cpp \
        searchinfo.cpp \
        moveselector.cpp \
        pawntable.cpp \
-			 csv.cpp
+			 csv.cpp \
+			 model_runner.cpp
 
 # --- Object Files (Derived from Sources) ---
 OBJS = $(SRCS:.cpp=.o)
@@ -38,13 +39,13 @@ OBJS = $(SRCS:.cpp=.o)
 OPTIMIZE = -flto -m64 -O3 -funroll-loops -march=native -mavx2
 
 # Compiler Flags
-# -std=c++17: C++ Standard
+# -std=c++20: C++ Standard
 # -pthread: Enable thread support (compilation)
 # -pipe: Use pipes for communication between compiler stages (faster)
 # -mtune=native: Tune code for the build machine's CPU
 # -Wall -W: Enable common warnings
 # -I.: Include current directory (for local headers like "constants.h")
-CXXFLAGS = $(OPTIMIZE) -pipe -std=c++17 -pthread -mtune=native -Wall -W -I.
+CXXFLAGS = $(OPTIMIZE) -pipe -std=c++20 -pthread -mtune=native -Wall -W -I.
 
 # Linker Flags
 # -flto: Enable Link-Time Optimization (must match CXXFLAGS)
@@ -53,10 +54,10 @@ CXXFLAGS = $(OPTIMIZE) -pipe -std=c++17 -pthread -mtune=native -Wall -W -I.
 #   --sort-common: Linker optimization
 #   --as-needed: Link only necessary libraries
 #   -z,relro: Security feature (Read-Only Relocations)
-LDFLAGS = $(OPTIMIZE) -pthread -Wl,--sort-common,--as-needed,-z,relro
+LDFLAGS = $(OPTIMIZE) -pthread -Wl,--sort-common,--as-needed,-z,relro -lonnxruntime -lcudart
 
 # Libraries to link (usually just -pthread is needed here if covered in LDFLAGS)
-LIBS = # Add libraries like -lm if needed
+LIBS = -lonnxruntime -lcudart
 
 # --- Utility Commands ---
 DEL_FILE = rm -f

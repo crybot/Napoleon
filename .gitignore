@@ -166,3 +166,10 @@ $RECYCLE.BIN/
 moc_*.cpp
 qrc_*.cpp
 *-build-*
+
+.direnv/
+.envrc
+.cache/
+
+# Binaries
+NapoleonPP
