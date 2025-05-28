@@ -44,7 +44,8 @@ void preprocess_csv(const std::string& input_path, const std::string& output_pat
       if (parse_pv) {
         std::string move_str;
         Move move;
-        while (ss >> move_str && !(move = board.ParseMove(move_str)).IsNull()) {
+        while (ss >> move_str) {
+          move = board.ParseMove(move_str);
           pv_moves.push_back(move);
         }
       }
