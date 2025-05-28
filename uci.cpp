@@ -23,7 +23,7 @@ thread Uci::search;
 
 void Uci::Start()
 {
-  const std::string model_path = "./models/model.onnx";
+  const std::string model_path = "./models/g8oemn8l.onnx";
   int gpu_device = 0;
   bool exit = false;
   string line;

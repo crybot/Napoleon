@@ -36,7 +36,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 # --- Build Flags ---
 # Optimization & Architecture Flags (Keep consistent for CXXFLAGS and LDFLAGS if using LTO)
-OPTIMIZE = -flto -m64 -O3 -funroll-loops -march=native -mavx2
+OPTIMIZE = -flto -m64 -Ofast -funroll-loops -march=znver4 -mavx2
 
 # Compiler Flags
 # -std=c++20: C++ Standard
@@ -45,7 +45,7 @@ OPTIMIZE = -flto -m64 -O3 -funroll-loops -march=native -mavx2
 # -mtune=native: Tune code for the build machine's CPU
 # -Wall -W: Enable common warnings
 # -I.: Include current directory (for local headers like "constants.h")
-CXXFLAGS = $(OPTIMIZE) -pipe -std=c++20 -pthread -mtune=native -Wall -W -I.
+CXXFLAGS = $(OPTIMIZE) -pipe -std=c++20 -pthread -mtune=znver4 -Wall -W -I.
 
 # Linker Flags
 # -flto: Enable Link-Time Optimization (must match CXXFLAGS)

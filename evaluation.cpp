@@ -129,14 +129,19 @@ void Evaluation::init(const std::string& model_path, int gpu_device) {
 
 auto Evaluation::evaluateNN(const Board& board) -> int {
   // TODO: Mock batch data
-  std::vector<float> bitboards (1*12*8*8, 0.5f);
+  // std::vector<float> bitboards (1*12*8*8, 0.5f);
+  auto ep = static_cast<float>(board.EnPassantSquare());
+  auto castle = static_cast<float>(board.CastlingStatus());
+  auto stm = static_cast<float>(board.SideToMove());
+  auto bitboards = board.bitboardsTensor();
+  // std::vector<float> bitboards (1*12*8*8, 0.5f);
   std::vector<int64_t> bitboards_shape = {1,12,8,8};
-  std::vector<float> aux = {1.0f,2.0f,3.0f};
+  std::vector<float> aux = {stm, ep, castle};
   std::vector<int64_t> aux_shape = {1,3};
 
   // TODO: custom target scale as an argument
   auto score = modelRunner->run(bitboards, bitboards_shape, aux, aux_shape) * 100;
-  return score;
+  return score * (-2 * stm + 1);
 }
 
 int Evaluation::Evaluate(Board& board)
