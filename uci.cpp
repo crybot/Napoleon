@@ -198,6 +198,8 @@ void Uci::Start()
       std::string token;
       std::string inpath;
       std::string outpath;
+      bool parse_pv = false;
+
       while(stream >> token) {
 
         if (token == "in") {
@@ -206,8 +208,11 @@ void Uci::Start()
         if (token == "out") {
           stream >> outpath;
         }
+        if (token == "parse_pv") {
+          parse_pv = true;
+        }
       }
-      preprocess_csv(inpath, outpath, true);
+      preprocess_csv(inpath, outpath, true, parse_pv);
       std::cout << std::endl;
     }
     else if (cmd == "moves")

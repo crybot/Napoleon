@@ -184,7 +184,6 @@ namespace Napoleon
 
         namespace String
         {
-
             void Split(std::vector<std::string> &results, const std::string &str, char sep)
             {
                 std::string::const_iterator first = str.begin();
