@@ -64,6 +64,9 @@ namespace Napoleon
 
     inline int Move::ButterflyIndex() const // used to index from-to based tables
     {
+        if (IsNull()) { // Null moves do not necessarily have from=0 and to=0, so we return 0 just in case.
+          return 0;
+        }
         return (move & 0xfff);
     }
 
