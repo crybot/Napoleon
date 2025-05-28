@@ -387,7 +387,6 @@ int Search::search(int depth, int alpha, int beta, int ply, Board& board, bool c
 
   // call to quiescence search
   if (depth == 0)
-    // return Evaluation::evaluateNN(board);
     return quiescence(alpha, beta, board);
 
   if (board.IsDraw())
@@ -711,8 +710,12 @@ int Search::quiescence(int alpha, int beta, Board& board)
   int Delta;
   if (!inCheck)
   {
-    // stand_pat = Evaluation::Evaluate(board);
-    stand_pat = Evaluation::evaluateNN(board);
+    #ifdef NN_EVAL
+      stand_pat = Evaluation::evaluateNN(board);
+    #else 
+      stand_pat = Evaluation::Evaluate(board);
+    #endif
+
     if (stand_pat >= beta)
       return beta;
 

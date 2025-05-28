@@ -30,7 +30,9 @@ void Uci::Start()
   string cmd;
   Search::Table.SetSize(512);
   Search::InitializeThreads();
-  Evaluation::init(model_path, gpu_device);
+  #ifdef NN_EVAL
+    Evaluation::init(model_path, gpu_device);
+  #endif
 
   SendCommand<Command::Generic>("--------Napoleon Engine--------");
   cout.setf(ios::unitbuf);// Make sure that the outputs are sent straight away to the GUI
