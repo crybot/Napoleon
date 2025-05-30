@@ -172,4 +172,6 @@ qrc_*.cpp
 .cache/
 
 # Binaries
-NapoleonPP
+/NapoleonPP
+/Napoleon-old
+/NapoleonZero
