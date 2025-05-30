@@ -5,102 +5,107 @@
 
 namespace Napoleon
 {
-    enum MoveType
-    {
-        KingCastle = 0x2, QueenCastle = 0x3, EnPassant = 0x5, QueenPromotion = 0xB,
-        RookPromotion = 0xA, BishopPromotion = 0x9, KnightPromotion = 0x8
-    };
+enum MoveType
+{
+  KingCastle = 0x2, QueenCastle = 0x3, EnPassant = 0x5, QueenPromotion = 0xB,
+  RookPromotion = 0xA, BishopPromotion = 0x9, KnightPromotion = 0x8
+};
 
-    class Board;
-    class Move
-    {
-    public:
-        Move();
-        Move(Square, Square);
-        Move(Square, Square, Square);
+class Board;
+class Move
+{
+public:
+  Move();
+  Move(Square, Square);
+  Move(Square, Square, Square);
+  Move(unsigned short);
 
-        Square FromSquare() const;
-        Square ToSquare() const;
-        Square PiecePromoted() const;
+  Square FromSquare() const;
+  Square ToSquare() const;
+  Square PiecePromoted() const;
 
-        int ButterflyIndex() const;
-        bool IsNull() const;
-        bool IsCastle() const;
-        bool IsCastleOO() const;
-        bool IsCastleOOO() const;
-        bool IsPromotion() const;
-        bool IsEnPassant() const;
-        bool operator== (const Move&) const;
-        bool operator!= (const Move&) const;
-        std::string ToAlgebraic() const;
-        std::string ToSan(Board&) const;
+  int ButterflyIndex() const;
+  bool IsNull() const;
+  bool IsCastle() const;
+  bool IsCastleOO() const;
+  bool IsCastleOOO() const;
+  bool IsPromotion() const;
+  bool IsEnPassant() const;
+  bool operator== (const Move&) const;
+  bool operator!= (const Move&) const;
+  std::string ToAlgebraic() const;
+  std::string ToSan(Board&) const;
 
-    private:
-        unsigned short move;
+private:
+  unsigned short move;
 
-    };
+};
 
-    INLINE Move::Move() { }
+INLINE Move::Move() { }
 
-    inline Move::Move(Square from, Square to)
-    {
-        move = (from & 0x3f) | ((to & 0x3f) << 6);
-    }
+inline Move::Move(unsigned short butterflyIndex) {
+  move = butterflyIndex & 0xfff;
+}
 
-    inline Move::Move(Square from, Square to, Square flag)
-    {
-        move = (from & 0x3f) | ((to & 0x3f) << 6) | ((flag & 0xf) << 12);
-    }
+inline Move::Move(Square from, Square to)
+{
+  move = (from & 0x3f) | ((to & 0x3f) << 6);
+}
 
-    inline Square Move::FromSquare() const
-    {
-        return move & 0x3f;
-    }
+inline Move::Move(Square from, Square to, Square flag)
+{
+  move = (from & 0x3f) | ((to & 0x3f) << 6) | ((flag & 0xf) << 12);
+}
 
-    inline Square Move::ToSquare() const
-    {
-        return (move >> 6) & 0x3f;
-    }
+inline Square Move::FromSquare() const
+{
+  return move & 0x3f;
+}
 
-    inline int Move::ButterflyIndex() const // used to index from-to based tables
-    {
-        if (IsNull()) { // Null moves do not necessarily have from=0 and to=0, so we return 0 just in case.
-          return 0;
-        }
-        return (move & 0xfff);
-    }
+inline Square Move::ToSquare() const
+{
+  return (move >> 6) & 0x3f;
+}
 
-    inline Square Move::PiecePromoted() const
-    {
-        if (!IsPromotion())
-            return PieceType::None;
+inline int Move::ButterflyIndex() const // used to index from-to based tables
+{
+  if (IsNull()) { // Null moves do not necessarily have from=0 and to=0, so we return 0 just in case.
+    return 0;
+  }
+  return (move & 0xfff);
+}
 
-        return ((move >> 12) & 0x3) + 1;
-    }
+inline Square Move::PiecePromoted() const
+{
+  if (!IsPromotion())
+    return PieceType::None;
 
-    inline bool Move::IsEnPassant() const
-    {
-        return ((move >> 12) == EnPassant); // e.p. are encoded 0101
-    }
+  return ((move >> 12) & 0x3) + 1;
+}
 
-    inline bool Move::IsCastle() const
-    {
-        return (((move >> 12) == KingCastle) || ((move >> 12) == QueenCastle));
-    }
+inline bool Move::IsEnPassant() const
+{
+  return ((move >> 12) == EnPassant); // e.p. are encoded 0101
+}
 
-    inline bool Move::IsPromotion() const
-    {
-        return ((move >> 12) & 0x8);
-    }
+inline bool Move::IsCastle() const
+{
+  return (((move >> 12) == KingCastle) || ((move >> 12) == QueenCastle));
+}
 
-    inline bool Move::operator ==(const Move& other) const
-    {
-        return (move == other.move);
-    }
+inline bool Move::IsPromotion() const
+{
+  return ((move >> 12) & 0x8);
+}
 
-    inline bool Move::operator !=(const Move& other) const
-    {
-        return (move != other.move);
-    }
+inline bool Move::operator ==(const Move& other) const
+{
+  return (move == other.move);
+}
+
+inline bool Move::operator !=(const Move& other) const
+{
+  return (move != other.move);
+}
 }
 #endif // MOVE_H
