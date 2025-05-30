@@ -23,7 +23,8 @@ thread Uci::search;
 
 void Uci::Start()
 {
-  const std::string model_path = "./models/g8oemn8l.onnx";
+  // const std::string model_path = "./models/g8oemn8l.onnx";
+  const std::string model_path = "./models/750isx2q.onnx"; // policy_head, policy_depth=10, policy_classes=4096
   int gpu_device = 0;
   bool exit = false;
   string line;
@@ -180,7 +181,13 @@ void Uci::Start()
     }
     else if (cmd == "nneval") {
       Evaluation::PrintEval(board);
-      std::cout << Evaluation::evaluateNN(board) << std::endl;
+      auto eval_info = Evaluation::evaluateNN(board, true);
+      std::cout << "Score: " << eval_info.score << std::endl;
+      std::cout << "PV: ";
+      for (const auto& move : eval_info.moves.value()) { 
+        std::cout << move.ToAlgebraic() << " ";
+      }
+      std::cout << std::endl;
     }
     else if (cmd == "go")
     {

@@ -5,7 +5,9 @@
 #include "knight.h"
 #include "queen.h"
 #include "model_runner.hpp"
+#include <algorithm>
 #include <cassert>
+#include <optional>
 
 namespace Napoleon
 {
@@ -127,22 +129,34 @@ void Evaluation::init(const std::string& model_path, int gpu_device) {
   modelRunner = new ModelRunner(model_path, gpu_device);
 }
 
-auto Evaluation::evaluateNN(const Board& board) -> int {
-  // TODO: Mock batch data
-  // std::vector<float> bitboards (1*12*8*8, 0.5f);
+auto Evaluation::evaluateNN(const Board& board, bool return_policy) -> EvaluationInfo {
   auto ep = static_cast<float>(board.EnPassantSquare());
   auto castle = static_cast<float>(board.CastlingStatus());
   auto stm = static_cast<float>(board.SideToMove());
   auto bitboards = board.bitboardsTensor();
-  // std::vector<float> bitboards (1*12*8*8, 0.5f);
   std::vector<int64_t> bitboards_shape = {1,12,8,8};
   std::vector<float> aux = {stm, ep, castle};
   std::vector<int64_t> aux_shape = {1,3};
 
   // TODO: custom target scale as an argument
-  auto score = modelRunner->run(bitboards, bitboards_shape, aux, aux_shape) * 100;
-  return score * (-2 * stm + 1);
+  modelRunner->run(bitboards, bitboards_shape, aux, aux_shape);
+  auto score = modelRunner->fetchOutput<0, 1>()[0];
+  auto info = EvaluationInfo {
+    .score=static_cast<int>(score * (-2 * stm + 1) * 100),
+    .sideToMove=board.SideToMove(),
+  };
+
+  if (return_policy) {
+    auto moves_idx = modelRunner->fetchCategorical<1, Constants::MaxPolicyDepth, Constants::PolicyClasses>();
+    info.moves.emplace(); // Call std::array default constructor within std::optional
+    std::ranges::transform(moves_idx, info.moves.value().begin(),
+                           [](int i) { return Move(i); });
+  }
+
+  return info;
+
 }
+
 
 int Evaluation::Evaluate(Board& board)
 {

@@ -17,7 +17,13 @@ namespace Napoleon
 namespace Evaluation
 {
 
-auto evaluateNN(const Board&) -> int;
+struct EvaluationInfo {
+  int score;
+  Color sideToMove;
+  std::optional<std::array<Move, Constants::MaxPolicyDepth>> moves;
+};
+
+auto evaluateNN(const Board&, bool = false) -> EvaluationInfo;
 int Evaluate(Board&);
 Score EvaluatePiece(Piece, Square, BitBoard, Board&);
 Score PieceSquareValue(Piece, Square);
@@ -48,7 +54,8 @@ extern BitBoard unpinnedKnightAttacks[2]; // color
 extern PawnTable pawnTable;
 extern int hangingValue[2]; // color
 extern int kingAttacks[200]; // number of weighted attacks
-    }
+
+}
 
 INLINE void Evaluation::updateScore(std::pair<int, int>& scores, int openingBonus, int endBonus)
 {

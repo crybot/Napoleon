@@ -711,7 +711,8 @@ int Search::quiescence(int alpha, int beta, Board& board)
   if (!inCheck)
   {
     #ifdef NN_EVAL
-      stand_pat = Evaluation::evaluateNN(board);
+      auto eval_info = Evaluation::evaluateNN(board);
+      stand_pat = eval_info.score;
     #else 
       stand_pat = Evaluation::Evaluate(board);
     #endif
