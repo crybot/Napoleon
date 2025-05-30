@@ -1,12 +1,12 @@
 #include "model_runner.hpp"
-#include <cuda_runtime.h>
+#include <algorithm>
+#include <span>
 // #ifdef USE_CUDA
 // #include <cuda_provider_factory.h>   // for AppendExecutionProvider_CUDA
 // #endif
 
 ModelRunner::ModelRunner(const std::string& model_path, int gpu_device)
-  : env_(ORT_LOGGING_LEVEL_WARNING, "ModelRunner"),
-  opts_() {
+  : env_(ORT_LOGGING_LEVEL_WARNING, "ModelRunner"), opts_() {
   // Optional: enable CUDA if requested
 
   if (gpu_device >= 0) {
@@ -77,14 +77,18 @@ ModelRunner::ModelRunner(const std::string& model_path, int gpu_device)
 
   // Bind output (let ORT allocate memory on device)
   Ort::MemoryInfo output_mem_info("Cuda", OrtDeviceAllocator, gpu_device, OrtMemTypeDefault);
-  io_binding.BindOutput(out_names_[0], output_mem_info);
 
+  for (const auto name : out_names_) {
+    io_binding.BindOutput(name, output_mem_info);
+  }
 }
 
-float ModelRunner::run(const std::vector<float>& data1,
+void ModelRunner::run(const std::vector<float>& data1,
                        const std::vector<int64_t>& shape1,
                        const std::vector<float>& data2,
                        const std::vector<int64_t>& shape2) {
+  outputs_.clear();
+
   // Create CPU memory info (tensors will be copied to GPU internally if CUDA EP is active)
   auto mem_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
@@ -107,10 +111,9 @@ float ModelRunner::run(const std::vector<float>& data1,
   Ort::RunOptions run_opts;
   session_.value().Run(run_opts, io_binding);
 
-  auto host_output = std::array<float, 1>{0.0f};
-  auto outputs = io_binding.GetOutputValues();
-  auto out_ptr = outputs[0].GetTensorMutableData<float>();
-  cudaMemcpy(host_output.data(), out_ptr, sizeof(float) * host_output.size(), cudaMemcpyDeviceToHost);
-
-  return host_output[0];
+  for (const auto& output: io_binding.GetOutputValues()) {
+    auto out_ptr = output.GetTensorData<float>();
+    outputs_.push_back(out_ptr);
+  }
 }
+
