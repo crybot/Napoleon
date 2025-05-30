@@ -47,7 +47,7 @@ EXTRA_FLAGS ?=
 # -mtune=native: Tune code for the build machine's CPU
 # -Wall -W: Enable common warnings
 # -I.: Include current directory (for local headers like "constants.h")
-CXXFLAGS = $(OPTIMIZE) $(EXTRA_FLAGS) -pipe -std=c++20 -pthread -mtune=znver4 -Wall -W -I.
+CXXFLAGS = $(OPTIMIZE) $(EXTRA_FLAGS) -pipe -std=c++23 -pthread -mtune=znver4 -Wall -W -I.
 
 # Linker Flags
 # -flto: Enable Link-Time Optimization (must match CXXFLAGS)
